@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     tools:context=".ChatActivity"
     android:background="@color/colorPrimary">
+
+    <include layout="@layout/common_toolbar" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="@color/colorDivide"/>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/srl_chat"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_chat"
@@ -24,65 +32,23 @@
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 
-    <LinearLayout
-        android:id="@+id/ll_chat"
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@color/colorChatLL"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_height="0.5dp"
+        android:background="@color/colorDivide"/>
 
-        <ImageView
-            android:id="@+id/iv_audio"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="bottom|start"
-            android:src="@drawable/ic_audio"
-            android:layout_marginTop="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginBottom="10dp"/>
+    <include
+        android:id="@+id/ll_edit"
+        layout="@layout/chat_edit_layout" />
 
-        <RelativeLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp">
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="@color/colorDivide"/>
 
-            <EditText
-                android:id="@+id/ed_chat"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_chat_et"
-                android:textCursorDrawable="@drawable/bg_chat_et_cursor"
-                android:padding="8dp" />
+    <include
+        android:id="@+id/cl_more"
+        android:visibility="gone"
+        layout="@layout/chat_more_layout" />
 
-        </RelativeLayout>
-
-        <ImageView
-            android:id="@+id/iv_emoji"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_emoji"
-            android:layout_gravity="bottom"
-            android:layout_marginTop="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="4dp"
-            android:layout_marginBottom="10dp"/>
-
-        <ImageView
-            android:id="@+id/iv_add"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="bottom|end"
-            android:src="@drawable/ic_add"
-            android:layout_marginTop="8dp"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="10dp"/>
-
-
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

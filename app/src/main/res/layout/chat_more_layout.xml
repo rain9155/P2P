@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorSecondPrimary"
+    android:paddingTop="30dp"
+    android:paddingBottom="30dp"
+    tools:showIn="@layout/activity_chat">
+
+    <RelativeLayout
+        android:id="@+id/rl_album"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_chat_rl"
+        android:padding="15dp"
+        android:clickable="true"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/rl_camera"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_album"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_album" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_chat_rl"
+        android:padding="15dp"
+        android:clickable="true"
+        app:layout_constraintLeft_toRightOf="@id/rl_album"
+        app:layout_constraintRight_toLeftOf="@+id/rl_location"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_camera"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_camera" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_chat_rl"
+        android:padding="15dp"
+        android:clickable="true"
+        app:layout_constraintLeft_toRightOf="@id/rl_camera"
+        app:layout_constraintRight_toLeftOf="@+id/rl_file"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_location"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_location" />
+
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/rl_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_chat_rl"
+        android:padding="15dp"
+        android:clickable="true"
+        app:layout_constraintLeft_toRightOf="@id/rl_location"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_file"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_file" />
+
+    </RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
