@@ -51,4 +51,8 @@
         android:visibility="gone"
         layout="@layout/chat_more_layout" />
 
+    <include
+        android:id="@+id/ll_emoji"
+        layout="@layout/chat_emoji_layout" />
+
 </LinearLayout>
