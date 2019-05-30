@@ -9,6 +9,14 @@ public class EmojiBean {
     private int id;
     private int unicodeInt;
 
+    public EmojiBean() {
+    }
+
+    public EmojiBean(int id, int unicodeInt) {
+        this.id = id;
+        this.unicodeInt = unicodeInt;
+    }
+
     public String getEmojiString() {
         return  getEmojiStringByUnicode(unicodeInt);
     }

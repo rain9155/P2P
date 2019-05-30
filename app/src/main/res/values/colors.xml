@@ -9,4 +9,6 @@
     <color name="colorDivide">#d9d9d9</color>
     <color name="colorCursor">#4CAF50</color>
     <color name="colorChatBtnSendSelected">#81C784</color>
+    <color name="colorIndicator">#6DB6B6B6</color>
+    <color name="colorIndicatorSelected">#FF888888</color>
 </resources>

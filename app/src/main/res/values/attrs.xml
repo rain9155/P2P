@@ -5,6 +5,7 @@
         <attr name="indicatorColor" format="color"/>
         <attr name="indicatorColorSelected" format="color"/>
         <attr name="indicatorRadius" format="dimension"/>
+        <attr name="indicatorRadiusSelected" format="dimension"/>
         <attr name="indicatorOffset" format="dimension"/>
         <attr name="indicatorCount" format="integer"/>
     </declare-styleable>

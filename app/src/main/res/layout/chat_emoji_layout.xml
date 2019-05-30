@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -9,15 +10,18 @@
 
     <com.example.p2p.widget.WrapViewPager
         android:id="@+id/vp_emoji"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="30dp" />
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:paddingTop="20dp"/>
 
     <com.example.p2p.widget.IndicatorView
         android:id="@+id/idv_emoji"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:padding="10dp"/>
+        android:padding="10dp"
+        custom:indicatorColor="@color/colorIndicator"
+        custom:indicatorColorSelected="@color/colorIndicatorSelected"
+        custom:indicatorOffset="12dp"/>
 
 </LinearLayout>

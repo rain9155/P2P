@@ -1,30 +1,35 @@
 package com.example.p2p.adapter;
 
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.baseadapter.AdapterDelegateManager;
+import com.example.baseadapter.BaseAdapter;
+import com.example.baseadapter.BaseViewHolder;
+import com.example.p2p.R;
+import com.example.p2p.bean.EmojiBean;
+
+import java.util.List;
+
 /**
  * Created by 陈健宇 at 2019/5/29
  */
-public class RvEmojiAdapter extends RecyclerView.Adapter {
+public class RvEmojiAdapter extends BaseAdapter<EmojiBean> {
 
-
-
-    @NonNull
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return null;
+    public RvEmojiAdapter(List<EmojiBean> datas, int layoutId) {
+        super(datas, layoutId);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
-    }
-
-    @Override
-    public int getItemCount() {
-        return 0;
+    protected void onBindView(BaseViewHolder holder, EmojiBean item) {
+        if(item.getId() == 0){
+            holder.setBackgroundResource(R.id.tv_emoji, R.drawable.ic_delete);
+        }else {
+            holder.setText(R.id.tv_emoji, item.getUnicodeInt());
+        }
     }
 }
