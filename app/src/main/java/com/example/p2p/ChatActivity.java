@@ -83,6 +83,8 @@ public class ChatActivity extends BaseActivity {
     private ViewGroup mContentView;
     private boolean isKeyboardShowing;
     private int screenHeight;
+    private List<RvEmojiAdapter> mEmojiAdapters;
+    private List<EmojiBean> mEmojiBeans;
 
     @Override
     protected int getLayoutId() {
@@ -129,31 +131,40 @@ public class ChatActivity extends BaseActivity {
         });
 
         //获取表情
-        List<EmojiBean> list = EmojiDao.getInstance().getEmojiBeanList();
+        mEmojiBeans = EmojiDao.getInstance().getEmojiBeanList();
         //添加删除表情按钮信息
         EmojiBean emojiDelete = new EmojiBean(0, 000);
-        int emojiDeleteCount = (int) Math.ceil(list.size() * 1.0 / 21);
+        int emojiDeleteCount = (int) Math.ceil(mEmojiBeans.size() * 1.0 / 21);
         for(int i = 1; i <= emojiDeleteCount; i++){
             if (i == emojiDeleteCount) {
-                list.add(list.size(), emojiDelete);
+                mEmojiBeans.add(mEmojiBeans.size(), emojiDelete);
             } else {
-                list.add(i * 21 - 1, emojiDelete);
+                mEmojiBeans.add(i * 21 - 1, emojiDelete);
             }
         }
         //为每个Vp添加Rv
         List<View> views = new ArrayList<>();
-        RvEmojiAdapter emojiAdapter;
+        mEmojiAdapters = new ArrayList<>(emojiDeleteCount);
         for(int i = 0; i < emojiDeleteCount; i++){
             RecyclerView recyclerView = (RecyclerView) LayoutInflater.from(this).inflate(R.layout.item_emoji_vp, vpEmoji, false);
             //recyclerView.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
             recyclerView.setLayoutManager(new GridLayoutManager(this, 7));
             if(i == emojiDeleteCount - 1){
-                emojiAdapter = new RvEmojiAdapter(list.subList(i * 21, list.size()), R.layout.item_emoji);
+                mEmojiAdapters.add( new RvEmojiAdapter(mEmojiBeans.subList(i * 21, mEmojiBeans.size()), R.layout.item_emoji));
             }else {
-                emojiAdapter = new RvEmojiAdapter(list.subList(i * 21, i * 21 + 21), R.layout.item_emoji);
+                mEmojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, i * 21 + 21), R.layout.item_emoji));
             }
-            recyclerView.setAdapter(emojiAdapter);
+            recyclerView.setAdapter(mEmojiAdapters.get(i));
             views.add(recyclerView);
+            int index = i;
+            mEmojiAdapters.get(i).setOnItemClickListener((adapter, view, position) -> {
+                EmojiBean emojiBean = mEmojiBeans.get(position + index * 21);
+                edEdit.setText(emojiBean.getUnicodeInt());
+                edEdit.setSelection(emojiBean.getEmojiString().length());
+            });
+            mEmojiAdapters.get(i).setOnItemChildClickListener((adapter, view, position) -> {
+                edEdit.setText("");
+            });
         }
         VpEmojiAdapter vpEmojiAdapter = new VpEmojiAdapter(views);
         vpEmoji.setAdapter(vpEmojiAdapter);
@@ -215,7 +226,6 @@ public class ChatActivity extends BaseActivity {
      * 改变表情布局显示
      */
     private void changeEmojiLayout() {
-        edEdit.clearFocus();
         int visibility = llEmoji.isShown() ? View.GONE : View.VISIBLE;
         if (!llEmoji.isShown() && !isKeyboardShowing) {
             llEmoji.setVisibility(visibility);

@@ -22,6 +22,7 @@ public class BaseViewHolder extends RecyclerView.ViewHolder {
 
     private SparseArrayCompat<View> mViews;//缓存itemView中所有的子View
     private View mItemView;
+    private BaseAdapter mAdapter;
 
     public BaseViewHolder(@NonNull View itemView) {
         super(itemView);
@@ -72,6 +73,45 @@ public class BaseViewHolder extends RecyclerView.ViewHolder {
         return this;
     }
 
+    public BaseViewHolder setChildClickListener(int id){
+        View view = getView(id);
+        if(view == null) return this;
+        if(!view.isClickable()) view.setClickable(true);
+        view.setOnClickListener( v -> {
+            if(mAdapter.getOnItemChildClickListener() != null){
+                mAdapter.getOnItemChildClickListener().onItemChildClickListener(mAdapter, view, this.getLayoutPosition());
+            }
+        });
+        return this;
+    }
+
+    public BaseViewHolder setChildClickListener(int id, View.OnClickListener listener){
+        View view = getView(id);
+        if(view == null) return this;
+        view.setOnClickListener(listener);
+        return this;
+    }
+
+    public BaseViewHolder setChildLongListener(int id){
+        View view = getView(id);
+        if(view == null) return this;
+        if(!view.isClickable()) view.setClickable(true);
+        view.setOnLongClickListener( v -> {
+            if(mAdapter.getOnItemChildLongListener() != null){
+               return mAdapter.getOnItemChildLongListener().onItemChildLongListener(mAdapter, view, this.getLayoutPosition());
+            }
+            return false;
+        });
+        return this;
+    }
+
+    public BaseViewHolder setChildLongListener(int id, View.OnLongClickListener listener){
+        View view = getView(id);
+        if(view == null) return this;
+        view.setOnLongClickListener(listener);
+        return this;
+    }
+
     /**
      * 通过id从缓存中获取view实例，如果缓存没有，就从itemView中获取
      * @param id 要获取的view的id
@@ -85,5 +125,22 @@ public class BaseViewHolder extends RecyclerView.ViewHolder {
         }
         return (T) view;
     }
+
+    /**
+     * 获得itemView实例
+     * @return
+     */
+    public View getItemView() {
+        return mItemView;
+    }
+
+    /**
+     * 设置适配器实例给BaseHolder
+     * @param adapter 适配器
+     */
+    public void setAdapter(BaseAdapter adapter){
+        mAdapter = adapter;
+    }
+
 
 }

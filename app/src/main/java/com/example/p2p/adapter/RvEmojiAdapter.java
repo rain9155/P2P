@@ -1,13 +1,5 @@
 package com.example.p2p.adapter;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.baseadapter.AdapterDelegateManager;
 import com.example.baseadapter.BaseAdapter;
 import com.example.baseadapter.BaseViewHolder;
 import com.example.p2p.R;

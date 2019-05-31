@@ -11,8 +11,7 @@
     <com.example.p2p.widget.WrapViewPager
         android:id="@+id/vp_emoji"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:paddingTop="20dp"/>
+        android:layout_height="150dp"/>
 
     <com.example.p2p.widget.IndicatorView
         android:id="@+id/idv_emoji"
@@ -23,5 +22,6 @@
         custom:indicatorColor="@color/colorIndicator"
         custom:indicatorColorSelected="@color/colorIndicatorSelected"
         custom:indicatorOffset="12dp"/>
+
 
 </LinearLayout>
