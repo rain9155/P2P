@@ -8,12 +8,12 @@
     android:background="@color/colorSecondPrimary"
     tools:showIn="@layout/activity_chat">
 
-    <com.example.p2p.widget.WrapViewPager
+    <com.example.p2p.widget.customView.WrapViewPager
         android:id="@+id/vp_emoji"
         android:layout_width="match_parent"
         android:layout_height="150dp"/>
 
-    <com.example.p2p.widget.IndicatorView
+    <com.example.p2p.widget.customView.IndicatorView
         android:id="@+id/idv_emoji"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

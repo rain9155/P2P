@@ -22,54 +22,6 @@ import com.example.p2p.R;
  */
 public class CommonUtils {
 
-
-    /**
-     * 隐藏软键盘
-     * @param context 上下文
-     * @param editText 正在接受输入的editText
-     */
-    public static void hideSoftInput(Context context, EditText editText){
-        InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
-    }
-
-    /**
-     * 显示软键盘
-     * @param context 上下文
-     * @param editText 想要接受输入的editText
-     */
-    public static void showoftInput(Context context, EditText editText){
-        editText.requestFocus();
-        InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-        inputMethodManager.showSoftInput(editText, 0);
-    }
-
-    /**
-     * 获取屏幕高度
-     * @return 屏幕高度
-     */
-    public static int getScreenHeight(Context context) {
-        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        Point point = new Point();
-        windowManager.getDefaultDisplay().getSize(point);
-        return point.y;
-    }
-
-    /**
-     * 获取系统状态栏高度
-     * @param context
-     * @return
-     */
-    public static int getStatusBarHeight(Context context) {
-        int statusBarHeight = 0;
-        Resources res = context.getResources();
-        int resourceId = res.getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            statusBarHeight = res.getDimensionPixelSize(resourceId);
-        }
-        return statusBarHeight;
-    }
-
     /**
      * 设置状态栏字体颜色
      * @param activity 上下文

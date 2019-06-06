@@ -9,11 +9,20 @@ import android.widget.TextView;
 import androidx.appcompat.widget.Toolbar;
 
 import com.example.p2p.base.BaseActivity;
+import com.example.p2p.kernel.Ping;
+import com.example.p2p.utils.IpUtils;
+import com.example.p2p.utils.LogUtils;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Collections;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends BaseActivity {
+
+    private String TAG = MainActivity.class.getSimpleName();
 
     @BindView(R.id.tv_title)
     TextView tvTitle;
@@ -30,15 +39,13 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void initView() {
-
         ivBack.setVisibility(View.GONE);
         tvTitle.setText(getString(R.string.main_tlTitle));
-
     }
 
     @Override
     protected void loadData() {
-
+        Ping.getInstance().start();
     }
 
     public void onTextViewClick(View view) {

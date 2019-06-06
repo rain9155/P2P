@@ -67,7 +67,7 @@
         app:layout_constraintLeft_toRightOf="@id/iv_emoji"/>
 
 
-    <com.example.p2p.widget.SendButton
+    <com.example.p2p.widget.customView.SendButton
         android:id="@+id/btn_send"
         android:layout_width="45dp"
         android:layout_height="32dp"

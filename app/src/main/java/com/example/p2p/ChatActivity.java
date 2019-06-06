@@ -25,11 +25,12 @@ import com.example.p2p.adapter.VpEmojiAdapter;
 import com.example.p2p.base.BaseActivity;
 import com.example.p2p.bean.EmojiBean;
 import com.example.p2p.db.EmojiDao;
-import com.example.p2p.utils.CommonUtils;
 import com.example.p2p.utils.SimpleTextWatchListener;
-import com.example.p2p.widget.IndicatorView;
-import com.example.p2p.widget.SendButton;
-import com.example.p2p.widget.WrapViewPager;
+import com.example.p2p.widget.customView.IndicatorView;
+import com.example.p2p.widget.customView.SendButton;
+import com.example.p2p.widget.customView.WrapViewPager;
+import com.example.utils.DisplayUtil;
+import com.example.utils.KeyBoardUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +98,7 @@ public class ChatActivity extends BaseActivity {
 
         tvTitle.setText(getString(R.string.chat_tlTitle));
 
-        screenHeight = CommonUtils.getScreenHeight(ChatActivity.this);
+        screenHeight = DisplayUtil.getScreenHeight(ChatActivity.this);
         mContentView = getWindow().getDecorView().findViewById(android.R.id.content);
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             //当前窗口可见区域的大小
@@ -124,7 +125,7 @@ public class ChatActivity extends BaseActivity {
         });
         rvChat.setOnTouchListener((view, event) -> {
             edEdit.clearFocus();
-            CommonUtils.hideSoftInput(ChatActivity.this, edEdit);
+            KeyBoardUtil.closeKeyBoard(ChatActivity.this, edEdit);
             if(clMore.isShown()) clMore.setVisibility(View.GONE);
             if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
             return false;
@@ -210,10 +211,10 @@ public class ChatActivity extends BaseActivity {
             if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         } else if (clMore.isShown() && !isKeyboardShowing) {//如果键盘没有显示，但更多布局显示，隐藏更多布局，显示键盘
             clMore.setVisibility(visibility);
-            CommonUtils.showoftInput(this, edEdit);
+            KeyBoardUtil.openKeyBoard(this, edEdit);
         } else if (!clMore.isShown() && isKeyboardShowing) {//如果只有键盘显示，就隐藏键盘，显示更多布局
             lockContentHeight();
-            CommonUtils.hideSoftInput(this, edEdit);
+            KeyBoardUtil.closeKeyBoard(this, edEdit);
             edEdit.postDelayed(() -> {
                 unlockContentHeightDelayed();
                 clMore.setVisibility(visibility);
@@ -232,10 +233,10 @@ public class ChatActivity extends BaseActivity {
             if(clMore.isShown()) clMore.setVisibility(View.GONE);
         } else if (llEmoji.isShown() && !isKeyboardShowing) {
             llEmoji.setVisibility(visibility);
-            CommonUtils.showoftInput(this, edEdit);
+            KeyBoardUtil.openKeyBoard(this, edEdit);
         } else if (!llEmoji.isShown() && isKeyboardShowing) {
             lockContentHeight();
-            CommonUtils.hideSoftInput(this, edEdit);
+            KeyBoardUtil.closeKeyBoard(this, edEdit);
             edEdit.postDelayed(() -> {
                 unlockContentHeightDelayed();
                 llEmoji.setVisibility(visibility);

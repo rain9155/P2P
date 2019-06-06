@@ -1,18 +1,14 @@
-package com.example.p2p.widget;
+package com.example.p2p.widget.customView;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.ViewPropertyAnimator;
 import android.view.animation.AccelerateInterpolator;
 
 import androidx.appcompat.widget.AppCompatButton;
-import androidx.interpolator.view.animation.LinearOutSlowInInterpolator;
 
-import com.example.p2p.R;
 import com.example.p2p.utils.SimpleAnimatorListener;
 
 /**

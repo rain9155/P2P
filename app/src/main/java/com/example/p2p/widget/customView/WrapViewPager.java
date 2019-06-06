@@ -1,4 +1,4 @@
-package com.example.p2p.widget;
+package com.example.p2p.widget.customView;
 
 import android.content.Context;
 import android.util.AttributeSet;
