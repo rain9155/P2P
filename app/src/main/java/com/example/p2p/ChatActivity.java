@@ -179,7 +179,7 @@ public class ChatActivity extends BaseActivity {
     }
 
     @Override
-    protected void loadData() {
+    protected void initCallback() {
 
     }
 

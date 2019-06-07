@@ -21,6 +21,6 @@ public class RvMainAdapter extends BaseAdapter<String> {
 
     @Override
     protected void onBindView(BaseViewHolder holder, String item) {
-        holder.setText(R.id.tv_name, item);
+        holder.setText(R.id.tv_name, "用户" + (holder.getAdapterPosition() + 1) + " - " + item);
     }
 }

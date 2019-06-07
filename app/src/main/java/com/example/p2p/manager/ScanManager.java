@@ -1,14 +1,18 @@
-package com.example.p2p.kernel;
+package com.example.p2p.manager;
 
 import android.app.Activity;
+import android.net.wifi.WifiManager;
 
 import com.example.p2p.callback.IScanCallback;
 import com.example.p2p.utils.IpUtils;
 import com.example.p2p.utils.LogUtils;
+import com.example.p2p.utils.WifiUtils;
 import com.example.utils.NetWorkUtil;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -18,9 +22,9 @@ import java.util.concurrent.Executors;
  * 扫描获得同一个局域网下的所有ip地址
  * Created by 陈健宇 at 2019/6/6
  */
-public class Scan {
+public class ScanManager {
 
-    private String TAG = Scan.class.getSimpleName();
+    private String TAG = ScanManager.class.getSimpleName();
 
     private Runtime mRuntime;
     private String mPingArgs = "ping -c 1 -w 1 ";
@@ -29,21 +33,21 @@ public class Scan {
     private CountDownLatch mCountDownLatch;
     private IScanCallback mScanCallback;
 
-    private static Scan sInstance;
+    private static ScanManager sInstance;
 
-    private Scan(){
+    private ScanManager(){
         mRuntime = Runtime.getRuntime();
         mExecutor = Executors.newCachedThreadPool();
         mPingSuccessList = new CopyOnWriteArrayList<>();
         mCountDownLatch = new CountDownLatch(0);
     }
 
-    public static Scan getInstance(){
+    public static ScanManager getInstance(){
         if(sInstance == null){
-            synchronized (Scan.class){
-                Scan ping;
+            synchronized (ScanManager.class){
+                ScanManager ping;
                 if(sInstance == null){
-                    ping = new Scan();
+                    ping = new ScanManager();
                     sInstance = ping;
                 }
             }
@@ -54,14 +58,15 @@ public class Scan {
     /**
      * 枚举的ping后缀1 ~ 255 的本局域网内的ip地址
      */
-    public void start(Activity activity){
-        if(NetWorkUtil.isWifiConnected(activity)){
+    public void startScan(Activity activity){
+        if(!WifiUtils.isWifiConnected(activity)){
             if(mScanCallback != null){
                 mScanCallback.onScanError();
             }
             return;
         }
         if(mCountDownLatch.getCount() == 0){
+            mPingSuccessList.clear();
             mCountDownLatch = new CountDownLatch(254);
             String locIpAddressPrefix = IpUtils.getLocIpAddressPrefix();
             String locIpAddress = IpUtils.getLocIpAddress();
@@ -77,7 +82,7 @@ public class Scan {
                 });
             }
         }
-        waitResult(activity);
+        waitForResult(activity);
     }
 
     /**
@@ -111,7 +116,23 @@ public class Scan {
     }
 
     /**
-     * 关闭ping过程
+     * 是否正在扫描中
+     * @return true表示是，false反之
+     */
+    public boolean isScanning(){
+        return mCountDownLatch.getCount() > 0;
+    }
+
+    /**
+     * 是否关闭
+     * @return true表示是，false反之
+     */
+    public boolean isClose(){
+        return mExecutor.isTerminated();
+    }
+
+    /**
+     * 关闭扫描过程
      */
     public void close(){
         mExecutor.shutdownNow();
@@ -120,7 +141,7 @@ public class Scan {
     /**
      * 等待获得ping成功的ip地址列表
      */
-    private void waitResult(Activity activity) {
+    private void waitForResult(Activity activity) {
         new Thread(() -> {
             try {
                 mCountDownLatch.await();

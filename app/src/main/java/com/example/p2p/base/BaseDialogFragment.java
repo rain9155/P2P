@@ -1,6 +1,5 @@
 package com.example.p2p.base;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -13,9 +12,13 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+
+import com.example.p2p.R;
+import com.example.p2p.callback.IDialogCallback;
 
 import java.lang.reflect.Field;
 
@@ -25,49 +28,36 @@ import java.lang.reflect.Field;
  */
 public abstract class BaseDialogFragment extends DialogFragment {
 
-
-    protected abstract int getDialogViewId();
-    protected abstract void initView(View view);
-    protected abstract void loadData();
-    private Dialog mDialog;
-    private View mView;
+    private IDialogCallback mDialogCallback;
+    protected abstract int getMessage();
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        View view = LayoutInflater.from(getActivity()).inflate(getDialogViewId(), null);
-        mDialog = new AlertDialog.Builder(getActivity())
-                .setView(view)
-                .setCancelable(false)
+        AlertDialog alertDialog = new AlertDialog.Builder(getActivity())
+                .setMessage(getString(getMessage()))
+                .setTitle(getString(R.string.dialog_toast))
+                .setPositiveButton(getString(R.string.dialog_positive), (dialog, which) -> {
+                    if(mDialogCallback != null){
+                        mDialogCallback.onAgree();
+                    }
+                    this.dismiss();
+                })
+                .setNegativeButton(getString(R.string.dialog_negative), (dialog, which) -> {
+                    if(mDialogCallback != null){
+                        mDialogCallback.onDismiss();
+                    }
+                    this.dismiss();
+                })
                 .create();
-        mDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        mDialog.getWindow().setGravity(Gravity.CENTER);
-        mView = view;
-        initView(view);
-        return mDialog;
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.setOnKeyListener((dialog, keyCode, event) -> event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0);
+        return alertDialog;
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        loadData();
+    public void setDialogCallback(IDialogCallback callback){
+        this.mDialogCallback = callback;
     }
-
-    /**
-     * 根据id获取View
-     */
-    protected <T> T getView(int id){
-        return (T) mView.findViewById(id);
-    }
-
-    /**
-     * 禁止按返回键取消dialog
-     * 设置点击屏幕Dialog不消失
-     */
-    protected void cancelBackDismiss() {
-        mDialog.setCanceledOnTouchOutside(false);
-        mDialog.setOnKeyListener((dialog1, keyCode, event) -> keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0);
-    }
-
 
     @Override
     public void show(FragmentManager manager, String tag) {
