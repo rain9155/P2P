@@ -9,10 +9,11 @@
 
     <include layout="@layout/common_toolbar"/>
 
-    <TextView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_main"
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:text="Hello World!"
-        android:onClick="onTextViewClick"/>
+        android:layout_height="match_parent">
+
+    </androidx.recyclerview.widget.RecyclerView>
 
 </LinearLayout>

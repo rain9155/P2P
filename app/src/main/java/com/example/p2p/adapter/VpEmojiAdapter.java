@@ -9,6 +9,7 @@ import androidx.viewpager.widget.PagerAdapter;
 import java.util.List;
 
 /**
+ * 表情页面的adapter
  * Created by 陈健宇 at 2019/5/30
  */
 public class VpEmojiAdapter extends PagerAdapter {

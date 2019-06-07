@@ -32,6 +32,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0-alpha05'
 
     implementation 'com.jianyu:utils:v1.0'
+    implementation 'com.github.rain9155:Loading:v1.0'
     implementation 'com.jakewharton:butterknife:10.1.0'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.1.0'
 

@@ -76,9 +76,10 @@ public class IpUtils {
      * 获取本机ip地址的前缀
      */
     public static String getLocIpAddressPrefix(){
-        String ipPrefix = getLocIpAddress().substring(0, 12);
-        LogUtils.d(TAG, "本机ip地址的前缀为， ipPrefix = " + ipPrefix);
-        return ipPrefix;
+        String ip = getLocIpAddress();
+        String prefix = ip.substring(0, ip.lastIndexOf(".") + 1);
+        LogUtils.d(TAG, "本机ip地址的前缀为， ipPrefix = " + prefix);
+        return prefix;
     }
 
 }

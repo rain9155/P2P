@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">P2P</string>
-    <string name="main_tlTitle">聊天记录</string>
+    <string name="main_tlTitle">在线用户</string>
     <string name="chat_tlTitle">rain</string>
     <string name="chat_btnSend">发送</string>
+    <string name="main_scaning_tvScanning">扫描中...</string>
+    <string name="main_scan_tvEmpty">没有用户在线</string>
 </resources>
