@@ -59,6 +59,10 @@ public abstract class BaseDialogFragment extends DialogFragment {
         this.mDialogCallback = callback;
     }
 
+    public void show(FragmentManager manager){
+        show(manager, this.getClass().getName());
+    }
+
     @Override
     public void show(FragmentManager manager, String tag) {
         if(this.isAdded())

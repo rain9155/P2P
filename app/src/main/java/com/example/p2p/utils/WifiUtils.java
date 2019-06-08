@@ -14,6 +14,13 @@ import android.net.wifi.WifiManager;
 public class WifiUtils {
 
     /**
+     * 跳转到wifi设置界面
+     */
+    public static void gotoWifiSettings(Activity activity){
+        gotoWifiSettings(activity, 0x9155);
+    }
+
+    /**
      * 跳转到wifi设置界面，带请求码
      */
     public static void gotoWifiSettings(Activity activity, int requestCode){

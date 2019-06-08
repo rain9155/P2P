@@ -5,17 +5,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.os.Bundle;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.baseadapter.BaseAdapter;
 import com.example.loading.Loading;
 import com.example.loading.StatusView;
 import com.example.p2p.adapter.RvMainAdapter;
@@ -23,7 +22,8 @@ import com.example.p2p.base.BaseActivity;
 import com.example.p2p.base.BaseDialogFragment;
 import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.callback.IScanCallback;
-import com.example.p2p.manager.ScanManager;
+import com.example.p2p.core.ScanManager;
+import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.WifiUtils;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
 import com.example.utils.CommonUtil;
@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class MainActivity extends BaseActivity {
@@ -50,32 +49,31 @@ public class MainActivity extends BaseActivity {
     ImageView ivAdd;
 
     private String TAG = MainActivity.class.getSimpleName();
-    private final int REQUEST_WIFI_CODE = 0X000;
     private RvMainAdapter mRvMainAdapter;
     private StatusView mStatusView;
     private BaseDialogFragment mGotoWifiSettingsDialog;
     private List<String> mPingSuccessList;
-    private NetWorkConnectionReceiver mNetWorkConnectionReceiver;
+    private WifiConnectionReceiver mNetWorkConnectionReceiver;
 
     @Override
     protected void onStart() {
-        mNetWorkConnectionReceiver = new NetWorkConnectionReceiver();
-        IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(mNetWorkConnectionReceiver, intentFilter);
         super.onStart();
+        mNetWorkConnectionReceiver = new WifiConnectionReceiver();
+        IntentFilter intentFilter = new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mNetWorkConnectionReceiver, intentFilter);
     }
 
     @Override
     protected void onStop() {
-        unregisterReceiver(mNetWorkConnectionReceiver);
         super.onStop();
+        unregisterReceiver(mNetWorkConnectionReceiver);
     }
 
     @Override
     protected int getLayoutId() {
         return R.layout.activity_main;
     }
-
 
     @Override
     protected void initView() {
@@ -92,24 +90,27 @@ public class MainActivity extends BaseActivity {
         mRvMainAdapter = new RvMainAdapter(mPingSuccessList, R.layout.item_main);
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
+        mStatusView.showLoading();
     }
 
     @Override
     protected void initCallback() {
-        mStatusView.showLoading();
         mGotoWifiSettingsDialog.setDialogCallback(new IDialogCallback() {
             @Override
             public void onAgree() {
-                WifiUtils.gotoWifiSettings(MainActivity.this, REQUEST_WIFI_CODE);
+                WifiUtils.gotoWifiSettings(MainActivity.this);
             }
 
             @Override
             public void onDismiss() {
                 ToastUtil.showToast(MainActivity.this, getString(R.string.toast_wifi_settings));
-                mStatusView.showEmpty();
+                if(mPingSuccessList.isEmpty()){
+                    mStatusView.showEmpty();
+                    return;
+                }
+                mStatusView.showSuccess();
             }
         });
-
         ScanManager.getInstance().setScanCallback(new IScanCallback() {
             @Override
             public void onScanSuccess(List<String> pingSuccessList) {
@@ -126,25 +127,13 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onScanError() {
-                mGotoWifiSettingsDialog.show(getSupportFragmentManager(), GotoWifiSettingsDialog.class.getName());
+                mGotoWifiSettingsDialog.show(getSupportFragmentManager());
             }
         });
-        ScanManager.getInstance().startScan(this);
+        ScanManager.getInstance().startScan();
         mRvMainAdapter.setOnItemChildClickListener((adapter, view, position) -> {
 
         });
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == REQUEST_WIFI_CODE) {
-            if (WifiUtils.isWifiConnected(this)) {
-                ScanManager.getInstance().startScan(MainActivity.this);
-            } else {
-                ToastUtil.showToast(MainActivity.this, getString(R.string.toast_wifi_settings));
-                mStatusView.showEmpty();
-            }
-        }
     }
 
     @OnClick({R.id.iv_add})
@@ -153,7 +142,7 @@ public class MainActivity extends BaseActivity {
             case R.id.iv_add:
                 if(!ScanManager.getInstance().isScanning()){
                     mStatusView.showLoading();
-                    ScanManager.getInstance().startScan(this);
+                    ScanManager.getInstance().startScan();
                 }
                 break;
             default:
@@ -161,16 +150,45 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-
     /**
      * 监听Wifi网络变化广播
      */
-    public class NetWorkConnectionReceiver extends BroadcastReceiver {
+    public class WifiConnectionReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                if (!WifiUtils.isWifiConnected(context) && ScanManager.getInstance().isScanning()) {
-                    mGotoWifiSettingsDialog.show(getSupportFragmentManager(), GotoWifiSettingsDialog.class.getName());
+            if(intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)){
+                NetworkInfo networkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
+                if(networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_WIFI){
+                    NetworkInfo.State state = networkInfo.getState();
+                    switch (state){
+                        case CONNECTED:
+                            LogUtils.d(TAG, "wifi已经连接");
+                            mStatusView.showLoading();
+                            ScanManager.getInstance().startScan();
+                            if(mGotoWifiSettingsDialog.isAdded()) mGotoWifiSettingsDialog.dismiss();
+                            break;
+                        case DISCONNECTED:
+                            LogUtils.d(TAG, "wifi已经断开");
+                            mGotoWifiSettingsDialog.show(getSupportFragmentManager());
+                            break;
+                        default:
+                            LogUtils.d(TAG, "wifi已其他状态 = " + state);
+                            break;
+                    }
+                }
+            }
+            if(intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)){
+                int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_UNKNOWN);
+                switch (state){
+                    case WifiManager.WIFI_STATE_ENABLED:
+                        LogUtils.d(TAG, "wifi已经打开");
+                        break;
+                    case WifiManager.WIFI_STATE_DISABLED:
+                        LogUtils.d(TAG, "wifi已经关闭");
+                        break;
+                    default:
+                        LogUtils.d(TAG, "wifi的其他状态 = " + state);
+                        break;
                 }
             }
         }
