@@ -4,15 +4,15 @@ package com.example.p2p.bean;
  * Describe: 表情的实体类
   */
 
-public class EmojiBean {
+public class Emoji {
 
     private int id;
     private int unicodeInt;
 
-    public EmojiBean() {
+    public Emoji() {
     }
 
-    public EmojiBean(int id, int unicodeInt) {
+    public Emoji(int id, int unicodeInt) {
         this.id = id;
         this.unicodeInt = unicodeInt;
     }
@@ -43,9 +43,9 @@ public class EmojiBean {
 
     @Override
     public String toString() {
-        return "EmojiBean{" +
+        return "Emoji[" +
                 "id=" + id +
                 ", unicodeInt=" + unicodeInt +
-                '}';
+                ']';
     }
 }

@@ -1,13 +1,12 @@
 package com.example.p2p.db;
 
-import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.example.p2p.app.App;
-import com.example.p2p.bean.EmojiBean;
+import com.example.p2p.bean.Emoji;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -82,12 +81,12 @@ public class EmojiDao {
     /**
      * 获得表情包列表
      */
-    public List<EmojiBean> getEmojiBeanList(){
-        List<EmojiBean> emojiBeanList = new ArrayList<>();
+    public List<Emoji> getEmojiBeanList(){
+        List<Emoji> emojiBeanList = new ArrayList<>();
         SQLiteDatabase db = SQLiteDatabase.openDatabase(mPath, null, SQLiteDatabase.OPEN_READONLY);
         Cursor cursor = db.query("emoji", new String[]{"unicodeInt","_id"}, null, null, null, null, null);
         while (cursor.moveToNext()){
-            EmojiBean bean = new EmojiBean();
+            Emoji bean = new Emoji();
             int unicodeInt = cursor.getInt(0);
             int id = cursor.getInt(1);
             bean.setUnicodeInt(unicodeInt);

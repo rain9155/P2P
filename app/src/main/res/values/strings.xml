@@ -3,8 +3,11 @@
     <string name="main_tlTitle">在线用户</string>
     <string name="chat_tlTitle">rain</string>
     <string name="chat_btnSend">发送</string>
-    <string name="main_scaning_tvScanning">扫描中...</string>
-    <string name="main_scan_tvEmpty">没有用户在线</string>
+    <string name="main_tvScanning">扫描中...</string>
+    <string name="main_tvEmpty">没有用户在线</string>
+    <string name="main_connecting_success">连接成功</string>
+    <string name="main_connecting_fail">连接失败</string>
+    <string name="dialog_connecting">连接中...</string>
     <string name="dialog_wifi_settings">没有连接上Wifi，是否前往设置中心打开并连接上一个Wifi?</string>
     <string name="dialog_wifi_settings2">没有连接上Wifi，是否前往设置中心连接上一个Wifi?</string>
     <string name="toast_wifi_settings">没有连接上Wifi</string>

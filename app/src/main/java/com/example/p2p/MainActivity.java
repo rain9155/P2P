@@ -19,12 +19,16 @@ import com.example.loading.Loading;
 import com.example.loading.StatusView;
 import com.example.p2p.adapter.RvMainAdapter;
 import com.example.p2p.base.BaseActivity;
-import com.example.p2p.base.BaseDialogFragment;
+import com.example.p2p.bean.User;
+import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.callback.IScanCallback;
+import com.example.p2p.config.Constant;
 import com.example.p2p.core.ScanManager;
+import com.example.p2p.core.ConnectManager;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.WifiUtils;
+import com.example.p2p.widget.dialog.ConnectingDialog;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
 import com.example.utils.CommonUtil;
 import com.example.utils.ToastUtil;
@@ -45,15 +49,19 @@ public class MainActivity extends BaseActivity {
     Toolbar toolBar;
     @BindView(R.id.iv_back)
     ImageView ivBack;
-    @BindView(R.id.iv_add)
+    @BindView(R.id.iv_scan)
     ImageView ivAdd;
 
     private String TAG = MainActivity.class.getSimpleName();
+    private static final int REQUEST_SOCKET_STATE = 0x000;
+
     private RvMainAdapter mRvMainAdapter;
     private StatusView mStatusView;
-    private BaseDialogFragment mGotoWifiSettingsDialog;
-    private List<String> mPingSuccessList;
+    private GotoWifiSettingsDialog mGotoWifiSettingsDialog;
+    private ConnectingDialog mConnectingDialog;
+    private List<User> mPingSuccessList;
     private WifiConnectionReceiver mNetWorkConnectionReceiver;
+    private int mPosition;
 
     @Override
     protected void onStart() {
@@ -82,19 +90,26 @@ public class MainActivity extends BaseActivity {
         tvTitle.setText(getString(R.string.main_tlTitle));
         mStatusView = Loading.beginBuildStatusView(this)
                 .warp(findViewById(R.id.rv_main))
-                .addLoadingView(R.layout.main_scanning)
-                .addEmptyView(R.layout.main_scan_empty)
+                .addLoadingView(R.layout.loading_view)
+                .addEmptyView(R.layout.empty_view)
                 .create();
         mPingSuccessList = new ArrayList<>();
         rvMain.setLayoutManager(new LinearLayoutManager(MainActivity.this));
         mRvMainAdapter = new RvMainAdapter(mPingSuccessList, R.layout.item_main);
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
+        mConnectingDialog = new ConnectingDialog();
         mStatusView.showLoading();
     }
 
     @Override
     protected void initCallback() {
+        mRvMainAdapter.setOnItemClickListener((adapter, view, position) -> {
+            if(mPingSuccessList.isEmpty()) return;
+            mPosition = position;
+            mConnectingDialog.show(getSupportFragmentManager());
+            ConnectManager.getInstance().connect(mPingSuccessList.get(position).getIp());
+        });
         mGotoWifiSettingsDialog.setDialogCallback(new IDialogCallback() {
             @Override
             public void onAgree() {
@@ -111,11 +126,12 @@ public class MainActivity extends BaseActivity {
                 mStatusView.showSuccess();
             }
         });
+        //扫描回调监听
         ScanManager.getInstance().setScanCallback(new IScanCallback() {
             @Override
             public void onScanSuccess(List<String> pingSuccessList) {
                 if (!CommonUtil.isEmptyList(mPingSuccessList)) mPingSuccessList.clear();
-                mPingSuccessList.addAll(pingSuccessList);
+                mPingSuccessList.addAll(mRvMainAdapter.wrap(pingSuccessList));
                 mRvMainAdapter.notifyDataSetChanged();
                 mStatusView.showSuccess();
             }
@@ -131,15 +147,32 @@ public class MainActivity extends BaseActivity {
             }
         });
         ScanManager.getInstance().startScan();
-        mRvMainAdapter.setOnItemChildClickListener((adapter, view, position) -> {
+        //连接回调监听
+        ConnectManager.getInstance().setConnectCallback(new IConnectCallback() {
+            @Override
+            public void onConnectSuccess(String targetIp) {
+                mConnectingDialog.dismiss();
+                ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_success));
+                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+                intent.putExtra(Constant.EXTRA_TARGET_USER, mPingSuccessList.get(mPosition));
+                startActivityForResult(intent, REQUEST_SOCKET_STATE);
+            }
 
+            @Override
+            public void onConnectFail(String targetIp) {
+                mConnectingDialog.dismiss();
+                ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_fail));
+                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+                intent.putExtra(Constant.EXTRA_TARGET_USER, mPingSuccessList.get(mPosition));
+                startActivityForResult(intent, REQUEST_SOCKET_STATE);
+            }
         });
     }
 
-    @OnClick({R.id.iv_add})
+    @OnClick({R.id.iv_scan})
     public void onViewClick(View view) {
         switch (view.getId()) {
-            case R.id.iv_add:
+            case R.id.iv_scan:
                 if(!ScanManager.getInstance().isScanning()){
                     mStatusView.showLoading();
                     ScanManager.getInstance().startScan();
@@ -169,6 +202,7 @@ public class MainActivity extends BaseActivity {
                             break;
                         case DISCONNECTED:
                             LogUtils.d(TAG, "wifi已经断开");
+                            if(mConnectingDialog.isAdded()) mConnectingDialog.dismiss();
                             mGotoWifiSettingsDialog.show(getSupportFragmentManager());
                             break;
                         default:

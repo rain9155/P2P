@@ -32,8 +32,34 @@ import static android.graphics.Color.*;
  */
 public class GotoWifiSettingsDialog extends BaseDialogFragment {
 
+    private IDialogCallback mDialogCallback;
+
+    @NonNull
     @Override
-    protected int getMessage() {
-        return R.string.dialog_wifi_settings;
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        AlertDialog alertDialog = new AlertDialog.Builder(getActivity())
+                .setMessage(getString(R.string.dialog_wifi_settings))
+                .setTitle(getString(R.string.dialog_toast))
+                .setPositiveButton(getString(R.string.dialog_positive), (dialog, which) -> {
+                    if(mDialogCallback != null){
+                        mDialogCallback.onAgree();
+                    }
+                    this.dismiss();
+                })
+                .setNegativeButton(getString(R.string.dialog_negative), (dialog, which) -> {
+                    if(mDialogCallback != null){
+                        mDialogCallback.onDismiss();
+                    }
+                    this.dismiss();
+                })
+                .create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.setOnKeyListener((dialog, keyCode, event) -> event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0);
+        return alertDialog;
+    }
+
+
+    public void setDialogCallback(IDialogCallback callback){
+        this.mDialogCallback = callback;
     }
 }

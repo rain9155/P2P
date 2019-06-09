@@ -22,7 +22,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:textColor="@color/colorBlack"
-            android:text="@string/main_scaning_tvScanning"
+            android:text="@string/main_tvScanning"
             tools:text="loading..."/>
 
     </LinearLayout>

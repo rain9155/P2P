@@ -28,37 +28,6 @@ import java.lang.reflect.Field;
  */
 public abstract class BaseDialogFragment extends DialogFragment {
 
-    private IDialogCallback mDialogCallback;
-    protected abstract int getMessage();
-
-    @NonNull
-    @Override
-    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        AlertDialog alertDialog = new AlertDialog.Builder(getActivity())
-                .setMessage(getString(getMessage()))
-                .setTitle(getString(R.string.dialog_toast))
-                .setPositiveButton(getString(R.string.dialog_positive), (dialog, which) -> {
-                    if(mDialogCallback != null){
-                        mDialogCallback.onAgree();
-                    }
-                    this.dismiss();
-                })
-                .setNegativeButton(getString(R.string.dialog_negative), (dialog, which) -> {
-                    if(mDialogCallback != null){
-                        mDialogCallback.onDismiss();
-                    }
-                    this.dismiss();
-                })
-                .create();
-        alertDialog.setCanceledOnTouchOutside(false);
-        alertDialog.setOnKeyListener((dialog, keyCode, event) -> event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0);
-        return alertDialog;
-    }
-
-    public void setDialogCallback(IDialogCallback callback){
-        this.mDialogCallback = callback;
-    }
-
     public void show(FragmentManager manager){
         show(manager, this.getClass().getName());
     }

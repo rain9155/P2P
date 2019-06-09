@@ -27,8 +27,9 @@ public class ScanManager {
 
     private String TAG = ScanManager.class.getSimpleName();
     private static ScanManager sInstance;
-    private static final int TYPE_EMPTY = 0x000;
-    private static final int TYPE_SUCCESS = 0x001;
+    private static final int TYPE_SCAN_EMPTY = 0x000;
+    private static final int TYPE_SCAN_SUCCESS = 0x001;
+
     private Runtime mRuntime;
     private List<String> mPingSuccessList;
     private ExecutorService mExecutor;
@@ -39,10 +40,10 @@ public class ScanManager {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what){
-                case TYPE_EMPTY:
+                case TYPE_SCAN_EMPTY:
                     mScanCallback.onScanEmpty();
                     break;
-                case TYPE_SUCCESS:
+                case TYPE_SCAN_SUCCESS:
                     mScanCallback.onScanSuccess(mPingSuccessList);
                     break;
                 default:
@@ -55,10 +56,10 @@ public class ScanManager {
         mRuntime = Runtime.getRuntime();
         mExecutor = new ThreadPoolExecutor(
                 mRuntime.availableProcessors() * 2,
-                100,
+                200,
                 60L,
                 TimeUnit.SECONDS,
-                new ArrayBlockingQueue<Runnable>(200));
+                new ArrayBlockingQueue<>(150));
         mPingSuccessList = new CopyOnWriteArrayList<>();
         mCountDownLatch = new CountDownLatch(0);
 
@@ -101,7 +102,6 @@ public class ScanManager {
                     mPingSuccessList.add(ipAddress);
                 }
                 mCountDownLatch.countDown();
-                LogUtils.d(TAG, Thread.currentThread().getName());
             });
         }
         waitForResult();
@@ -116,7 +116,7 @@ public class ScanManager {
         int exit = -1;
         Process process = null;
         try{
-            String pingArgs = "ping -c 1 -w 1 ";
+            String pingArgs = "ping -c 1 -w 3 ";
             process = mRuntime.exec(pingArgs + ipAddress);
             exit = process.waitFor();
             if(exit == 0){
@@ -174,9 +174,9 @@ public class ScanManager {
             }
             if(mScanCallback != null){
                 if(mPingSuccessList.isEmpty()){
-                    mHandler.obtainMessage(TYPE_EMPTY).sendToTarget();
+                    mHandler.obtainMessage(TYPE_SCAN_EMPTY).sendToTarget();
                 }else {
-                    mHandler.obtainMessage(TYPE_SUCCESS).sendToTarget();
+                    mHandler.obtainMessage(TYPE_SCAN_SUCCESS).sendToTarget();
                 }
             }
         }).start();
