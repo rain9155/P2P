@@ -17,16 +17,22 @@ import android.widget.TextView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager.widget.ViewPager;
 
+import com.example.p2p.adapter.RvChatAdapter;
 import com.example.p2p.adapter.RvEmojiAdapter;
 import com.example.p2p.adapter.VpEmojiAdapter;
 import com.example.p2p.base.BaseActivity;
 import com.example.p2p.bean.Emoji;
+import com.example.p2p.bean.Message;
 import com.example.p2p.bean.User;
+import com.example.p2p.callback.IReceiveMessageCallback;
+import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.config.Constant;
+import com.example.p2p.core.ConnectManager;
 import com.example.p2p.db.EmojiDao;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.SimpleTextWatchListener;
@@ -35,6 +41,7 @@ import com.example.p2p.widget.customView.SendButton;
 import com.example.p2p.widget.customView.WrapViewPager;
 import com.example.utils.DisplayUtil;
 import com.example.utils.KeyBoardUtil;
+import com.example.utils.ToastUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +100,8 @@ public class ChatActivity extends BaseActivity {
     private List<RvEmojiAdapter> mEmojiAdapters;
     private List<Emoji> mEmojiBeans;
     private User mTargetUser;
+    private RvChatAdapter mRvChatAdapter;
+    private List<Message> mMessageList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,12 +160,14 @@ public class ChatActivity extends BaseActivity {
             //为每个Rv添加item监听
             mEmojiAdapters.get(i).setOnItemClickListener((adapter, view, position) -> {
                 Emoji emojiBean = mEmojiBeans.get(position + index * 21);
-                edEdit.setText(emojiBean.getUnicodeInt());
-                edEdit.setSelection(emojiBean.getEmojiString().length());
+                if(emojiBean.getId() == 0){
+                   edEdit.setText("");
+                }else {
+                    edEdit.setText(edEdit.getText().append(emojiBean.getUnicodeInt()));
+                }
+                edEdit.setSelection(edEdit.length());
             });
-            mEmojiAdapters.get(i).setOnItemChildClickListener((adapter, view, position) -> {
-                edEdit.setText("");
-            });
+
         }
 
         //初始化Vp
@@ -164,6 +175,11 @@ public class ChatActivity extends BaseActivity {
         vpEmoji.setAdapter(vpEmojiAdapter);
         idvEmoji.setIndicatorCount(views.size());
 
+        //初始化聊天的Rv
+        mMessageList = new ArrayList<>();
+        mRvChatAdapter = new RvChatAdapter(mMessageList);
+        rvChat.setLayoutManager(new LinearLayoutManager(this));
+        rvChat.setAdapter(mRvChatAdapter);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -196,6 +212,32 @@ public class ChatActivity extends BaseActivity {
                 idvEmoji.setCurrentIndicator(position);
             }
         });
+        ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
+            @Override
+            public void onSendSuccess(String message) {
+                Message mes = new Message(Constant.TYPE_ITEM_SEND, message);
+                mMessageList.add(mes);
+                mRvChatAdapter.notifyItemInserted(mMessageList.size());
+            }
+
+            @Override
+            public void onSendFail(String message) {
+                ToastUtil.showToast(ChatActivity.this, "发送消息失败");
+            }
+        });
+        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), new IReceiveMessageCallback() {
+            @Override
+            public void onReceiveSuccess(String message) {
+                Message mes = new Message(Constant.TYPE_ITEM_RECEIVE, message);
+                mMessageList.add(mes);
+                mRvChatAdapter.notifyItemInserted(mMessageList.size());
+            }
+
+            @Override
+            public void onReceiveFail(String message) {
+                LogUtils.d(TAG, "接受消息失败， message = " + message);
+            }
+        });
     }
 
     @OnClick({R.id.iv_scan, R.id.iv_back, R.id.iv_emoji, R.id.btn_send})
@@ -208,7 +250,7 @@ public class ChatActivity extends BaseActivity {
                 changeEmojiLayout();
                 break;
             case R.id.btn_send:
-                edEdit.getText().toString();
+               ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), edEdit.getText().toString());
                 break;
             case R.id.iv_back:
                 finish();
@@ -216,6 +258,14 @@ public class ChatActivity extends BaseActivity {
             default:
                 break;
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        KeyBoardUtil.closeKeyBoard(this, edEdit);
+        if(clMore.isShown()) clMore.setVisibility(View.GONE);
+        if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+        super.onBackPressed();
     }
 
     /**

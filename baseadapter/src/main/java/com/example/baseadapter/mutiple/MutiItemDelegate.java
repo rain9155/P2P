@@ -19,9 +19,9 @@ public abstract class MutiItemDelegate<T>{
      * @param position item在数据源中的索引
      * @return true表示item要使用该position位置处的ViewType
      */
-    abstract boolean isForViewType(T items, int position);
+    protected abstract boolean isForViewType(T items, int position);
 
-     abstract BaseViewHolder onCreateViewHolder(ViewGroup parent);
+    protected abstract BaseViewHolder onCreateViewHolder(ViewGroup parent);
 
-     abstract void onBindView(BaseViewHolder holder, T items, int position);
+    protected abstract void onBindView(BaseViewHolder holder, T items, int position);
 }

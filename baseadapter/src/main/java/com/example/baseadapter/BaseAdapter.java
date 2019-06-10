@@ -19,7 +19,7 @@ import java.util.List;
 public class BaseAdapter<T> extends RecyclerView.Adapter<BaseViewHolder>{
 
 
-    private MutiItemDelegateManager<T> mAdapterDelegateManager;
+    protected MutiItemDelegateManager<T> adapterDelegateManager;
     private static final int NO_DELEGTE = -1;
     private OnItemClickListener mOnItemClickListener;
     private OnItemLongClickListener mOnItemLongClickListener;
@@ -29,10 +29,14 @@ public class BaseAdapter<T> extends RecyclerView.Adapter<BaseViewHolder>{
     protected List<T> mDatas;
     protected int mLayoutId;
 
+    public BaseAdapter(List<T> datas) {
+        this(datas, -1);
+    }
+
     public BaseAdapter(List<T> datas, int layoutId) {
         mDatas = datas;
         mLayoutId = layoutId;
-        mAdapterDelegateManager = new MutiItemDelegateManager<>();
+        adapterDelegateManager = new MutiItemDelegateManager<>();
     }
 
     @NonNull
@@ -42,7 +46,7 @@ public class BaseAdapter<T> extends RecyclerView.Adapter<BaseViewHolder>{
         if(viewType == NO_DELEGTE){
             holder = new BaseViewHolder(LayoutInflater.from(parent.getContext()).inflate(mLayoutId, parent, false));
         }else {
-            holder = mAdapterDelegateManager.onCreateViewHolder(parent, viewType);
+            holder = adapterDelegateManager.onCreateViewHolder(parent, viewType);
         }
         bindItemClickLisitener(holder);
         return holder;
@@ -54,7 +58,7 @@ public class BaseAdapter<T> extends RecyclerView.Adapter<BaseViewHolder>{
         if(holder.getItemViewType() == NO_DELEGTE){
             onBindView(holder, mDatas.get(position));
         }else {
-            mAdapterDelegateManager.onBindViewHolder(holder, mDatas.get(position), position);
+            adapterDelegateManager.onBindViewHolder(holder, mDatas.get(position), position);
         }
     }
 
@@ -62,10 +66,10 @@ public class BaseAdapter<T> extends RecyclerView.Adapter<BaseViewHolder>{
 
     @Override
     public int getItemViewType(int position) {
-        if(mAdapterDelegateManager.getItemDelegateCount() == 0){
+        if(adapterDelegateManager.getItemDelegateCount() == 0){
             return NO_DELEGTE;
         }else {
-            return mAdapterDelegateManager.getItemViewType(mDatas.get(position), position);
+            return adapterDelegateManager.getItemViewType(mDatas.get(position), position);
         }
     }
 
@@ -91,7 +95,7 @@ public class BaseAdapter<T> extends RecyclerView.Adapter<BaseViewHolder>{
      * @param delegate item的AdapterDelegte
      */
     public BaseAdapter<T> addItemAdapterDelegte(MutiItemDelegate<T> delegate){
-        mAdapterDelegateManager.addDelegte(delegate);
+        adapterDelegateManager.addDelegte(delegate);
         return this;
     }
 

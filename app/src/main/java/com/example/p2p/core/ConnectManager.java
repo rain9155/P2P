@@ -6,19 +6,21 @@ import android.os.Message;
 import android.util.Log;
 
 import com.example.p2p.callback.IConnectCallback;
+import com.example.p2p.callback.IReceiveMessageCallback;
+import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.utils.LogUtils;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * 管理着每个客户端的连接状态，控制和客户端的连接
@@ -30,25 +32,37 @@ public class ConnectManager {
     private static ConnectManager sInstance;
     private static final int TYPE_CONNECTION_SUCCESS = 0x000;
     private static final int TYPE_CONNECTION_FAIL = 0x001;
+    private static final int TYPE_SEND_SUCCESS = 0x002;
+    private static final int TYPE_SEND_FAIL = 0x003;
+    private static final int TYPE_RECONNECTION_SUCCESS = 0x004;
+    private static final int TYPE_RECONNECTION_FAIL = 0x005;
 
     private ServerSocket mServerSocket;
     private Map<String, Socket> mClients;//保存每个Socket连接到ip地址的映射
+    private Map<String, IReceiveMessageCallback> mReceiveCallbacks;//保存每个消息接受回调到ip地址的映射
     private ExecutorService mExecutor;
     private int mPort = 9155;
-    private IConnectCallback mCallback;
-
+    private IConnectCallback mConnectCallback;
+    private ISendMessgeCallback mSendMessgeCallback;
 
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
         public void handleMessage(Message msg) {
-            String targetIp = (String) msg.obj;
             switch (msg.what){
                 case TYPE_CONNECTION_SUCCESS:
-                    mCallback.onConnectSuccess(targetIp);
+                    mConnectCallback.onConnectSuccess((String) msg.obj);
                     break;
                 case TYPE_CONNECTION_FAIL:
-                    mCallback.onConnectFail(targetIp);
+                    mConnectCallback.onConnectFail((String) msg.obj);
+                    break;
+                case TYPE_SEND_SUCCESS:
+                    mSendMessgeCallback.onSendSuccess((String) msg.obj);
+                    break;
+                case TYPE_SEND_FAIL:
+                    mSendMessgeCallback.onSendFail((String) msg.obj);
+                    break;
+                case TYPE_RECONNECTION_SUCCESS:
                     break;
                 default:
                     break;
@@ -58,6 +72,7 @@ public class ConnectManager {
 
     private ConnectManager(){
         mClients = new HashMap<>();
+        mReceiveCallbacks = new HashMap<>();
         mExecutor = Executors.newCachedThreadPool();
     }
 
@@ -95,7 +110,7 @@ public class ConnectManager {
                     if(isClose(ipAddress)){
                         LogUtils.d(TAG, "一个用户加入聊天，socket = " + socket);
                         //每个客户端连接用一个线程不断的读
-                        ReadWriteThread readWriteThread = new ReadWriteThread(socket);
+                        ReceiveThread readWriteThread = new ReceiveThread(socket);
                         //缓存客户端的连接
                         mClients.put(ipAddress, socket);
                         LogUtils.d(TAG, "已连接的客户端数量：" + mClients.size());
@@ -134,15 +149,70 @@ public class ConnectManager {
                 SocketAddress socketAddress = new InetSocketAddress(targetIp, mPort);
                 socket.connect(socketAddress, 5000);
                 Log.d(TAG, "连接targetIp = " + targetIp + "成功");
-                if(mCallback != null){
+                if(mConnectCallback != null){
                     mHandler.obtainMessage(TYPE_CONNECTION_SUCCESS, targetIp).sendToTarget();
                 }
                 mClients.put(targetIp, socket);
+                if(mReceiveCallbacks.containsKey(targetIp)){
+                    ReceiveThread receiveThread = new ReceiveThread(socket);
+                    receiveThread.setReceiveMessageCallback(mReceiveCallbacks.get(targetIp));
+                    mExecutor.execute(receiveThread);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.d(TAG, "连接targetIp = " + targetIp + "失败，e = " + e.getMessage());
-                if(mCallback != null){
+                if(mConnectCallback != null){
                     mHandler.obtainMessage(TYPE_CONNECTION_FAIL, targetIp).sendToTarget();
+                }
+            }
+        });
+    }
+
+    /**
+     * 根据给定的ip重新建立Socket连接
+     * @param targetIp 客户端ip
+     */
+    public void reConnect(String targetIp){
+        mExecutor.execute(() -> {
+            try {
+                Socket socket = new Socket();
+                SocketAddress socketAddress = new InetSocketAddress(targetIp, mPort);
+                socket.connect(socketAddress, 3000);
+                Log.d(TAG, "重新连接targetIp = " + targetIp + "成功");
+                mClients.put(targetIp, socket);
+                mHandler.obtainMessage(TYPE_RECONNECTION_SUCCESS, targetIp).sendToTarget();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d(TAG, "重新连接targetIp = " + targetIp + "失败，e = " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * 发送消息给给定ip的客户端
+     * @param targetIp 客户端的ip
+     */
+    public void sendMessage(String targetIp, String message){
+        if(!isContains(targetIp)){
+            LogUtils.d(TAG, "客户端连接已经断开");
+            //reConnect(targetIp);
+            return;
+        }
+        Socket socket = mClients.get(targetIp);
+        mExecutor.execute(() -> {
+            try {
+                OutputStream os = socket.getOutputStream();
+                DataOutputStream dataOutputStream = new DataOutputStream(os);
+                dataOutputStream.writeUTF(message);
+                Log.d(TAG, "发送消息成功， message = " + message);
+                if(mSendMessgeCallback != null){
+                    mHandler.obtainMessage(TYPE_SEND_SUCCESS, message).sendToTarget();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d(TAG, "发送消息失败， e = " + e.getMessage());
+                if(mSendMessgeCallback != null){
+                    mHandler.obtainMessage(TYPE_SEND_FAIL, message).sendToTarget();
                 }
             }
         });
@@ -192,7 +262,21 @@ public class ConnectManager {
         return socket.isClosed();
     }
 
-    public void setConnectCallback(IConnectCallback callback){
-        this.mCallback = callback;
+    /**
+     * 给指定客户端ip添加一个接受消息的回调
+     * @param targetIp 客户端ip
+     * @param callback 接受消息的回调
+     */
+    public void addReceiveMessageCallback(String targetIp, IReceiveMessageCallback callback){
+        mReceiveCallbacks.put(targetIp, callback);
     }
+
+    public void setConnectCallback(IConnectCallback callback){
+        this.mConnectCallback = callback;
+    }
+
+    public void setSendMessgeCallback(ISendMessgeCallback callback){
+        this.mSendMessgeCallback = callback;
+    }
+
 }
