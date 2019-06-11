@@ -23,10 +23,10 @@ import java.util.concurrent.TimeUnit;
  * 扫描获得同一个局域网下的所有ip地址
  * Created by 陈健宇 at 2019/6/6
  */
-public class ScanManager {
+public class PingManager {
 
-    private String TAG = ScanManager.class.getSimpleName();
-    private static ScanManager sInstance;
+    private String TAG = PingManager.class.getSimpleName();
+    private static PingManager sInstance;
     private static final int TYPE_SCAN_EMPTY = 0x000;
     private static final int TYPE_SCAN_SUCCESS = 0x001;
 
@@ -52,7 +52,7 @@ public class ScanManager {
         }
     };
 
-    private ScanManager(){
+    private PingManager(){
         mRuntime = Runtime.getRuntime();
         mExecutor = new ThreadPoolExecutor(
                 mRuntime.availableProcessors() * 2,
@@ -65,12 +65,12 @@ public class ScanManager {
 
     }
 
-    public static ScanManager getInstance(){
+    public static PingManager getInstance(){
         if(sInstance == null){
-            synchronized (ScanManager.class){
-                ScanManager ping;
+            synchronized (PingManager.class){
+                PingManager ping;
                 if(sInstance == null){
-                    ping = new ScanManager();
+                    ping = new PingManager();
                     sInstance = ping;
                 }
             }

@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -20,17 +21,20 @@ import com.example.loading.StatusView;
 import com.example.p2p.adapter.RvMainAdapter;
 import com.example.p2p.base.BaseActivity;
 import com.example.p2p.bean.User;
+import com.example.p2p.callback.IBroadcastCallback;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.callback.IScanCallback;
 import com.example.p2p.config.Constant;
-import com.example.p2p.core.ScanManager;
+import com.example.p2p.core.BroadcastManager;
+import com.example.p2p.core.PingManager;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.WifiUtils;
 import com.example.p2p.widget.dialog.ConnectingDialog;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
 import com.example.utils.CommonUtil;
+import com.example.utils.FileUtil;
 import com.example.utils.ToastUtil;
 
 import java.util.ArrayList;
@@ -59,7 +63,7 @@ public class MainActivity extends BaseActivity {
     private StatusView mStatusView;
     private GotoWifiSettingsDialog mGotoWifiSettingsDialog;
     private ConnectingDialog mConnectingDialog;
-    private List<User> mPingSuccessList;
+    private List<User> mOnlineUsers;
     private WifiConnectionReceiver mNetWorkConnectionReceiver;
     private int mPosition;
 
@@ -68,7 +72,7 @@ public class MainActivity extends BaseActivity {
         super.onStart();
         mNetWorkConnectionReceiver = new WifiConnectionReceiver();
         IntentFilter intentFilter = new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+       // intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(mNetWorkConnectionReceiver, intentFilter);
     }
 
@@ -93,9 +97,9 @@ public class MainActivity extends BaseActivity {
                 .addLoadingView(R.layout.loading_view)
                 .addEmptyView(R.layout.empty_view)
                 .create();
-        mPingSuccessList = new ArrayList<>();
+        mOnlineUsers = new ArrayList<>();
         rvMain.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-        mRvMainAdapter = new RvMainAdapter(mPingSuccessList, R.layout.item_main);
+        mRvMainAdapter = new RvMainAdapter(mOnlineUsers, R.layout.item_main);
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         mConnectingDialog = new ConnectingDialog();
@@ -105,10 +109,10 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void initCallback() {
         mRvMainAdapter.setOnItemClickListener((adapter, view, position) -> {
-            if(mPingSuccessList.isEmpty()) return;
+            if(mOnlineUsers.isEmpty()) return;
             mPosition = position;
             mConnectingDialog.show(getSupportFragmentManager());
-            ConnectManager.getInstance().connect(mPingSuccessList.get(position).getIp());
+            ConnectManager.getInstance().connect(mOnlineUsers.get(position).getIp());
         });
         mGotoWifiSettingsDialog.setDialogCallback(new IDialogCallback() {
             @Override
@@ -119,7 +123,7 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onDismiss() {
                 ToastUtil.showToast(MainActivity.this, getString(R.string.toast_wifi_settings));
-                if(mPingSuccessList.isEmpty()){
+                if(mOnlineUsers.isEmpty()){
                     mStatusView.showEmpty();
                     return;
                 }
@@ -127,60 +131,96 @@ public class MainActivity extends BaseActivity {
             }
         });
         //扫描回调监听
-        ScanManager.getInstance().setScanCallback(new IScanCallback() {
-            @Override
-            public void onScanSuccess(List<String> pingSuccessList) {
-                if (!CommonUtil.isEmptyList(mPingSuccessList)) mPingSuccessList.clear();
-                mPingSuccessList.addAll(mRvMainAdapter.wrap(pingSuccessList));
-                mRvMainAdapter.notifyDataSetChanged();
-                mStatusView.showSuccess();
-            }
-
-            @Override
-            public void onScanEmpty() {
-                mStatusView.showEmpty();
-            }
-
-            @Override
-            public void onScanError() {
-                mGotoWifiSettingsDialog.show(getSupportFragmentManager());
-            }
-        });
-        ScanManager.getInstance().startScan();
+//        PingManager.getInstance().setScanCallback(new IScanCallback() {
+//            @Override
+//            public void onScanSuccess(List<String> pingSuccessList) {
+//                if (!CommonUtil.isEmptyList(mOnlineUsers)) mOnlineUsers.clear();
+//                mOnlineUsers.addAll(mRvMainAdapter.wrap(pingSuccessList));
+//                mRvMainAdapter.notifyDataSetChanged();
+//                mStatusView.showSuccess();
+//            }
+//
+//            @Override
+//            public void onScanEmpty() {
+//                mStatusView.showEmpty();
+//            }
+//
+//            @Override
+//            public void onScanError() {
+//                mGotoWifiSettingsDialog.show(getSupportFragmentManager());
+//            }
+//        });
+        //PingManager.getInstance().startScan();
         //连接回调监听
         ConnectManager.getInstance().setConnectCallback(new IConnectCallback() {
             @Override
             public void onConnectSuccess(String targetIp) {
                 mConnectingDialog.dismiss();
                 ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_success));
-                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-                intent.putExtra(Constant.EXTRA_TARGET_USER, mPingSuccessList.get(mPosition));
-                startActivityForResult(intent, REQUEST_SOCKET_STATE);
             }
 
             @Override
             public void onConnectFail(String targetIp) {
                 mConnectingDialog.dismiss();
                 ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_fail));
-                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-                intent.putExtra(Constant.EXTRA_TARGET_USER, mPingSuccessList.get(mPosition));
-                startActivityForResult(intent, REQUEST_SOCKET_STATE);
             }
         });
+        BroadcastManager.getInstance().setBroadcastCallback(new IBroadcastCallback() {
+            @Override
+            public void onJoin(String ip){
+            }
+
+            @Override
+            public void onExit(String ip) {
+
+            }
+        });
+        
+    }
+
+    @Override
+    protected void loadData() {
+        new Handler().postDelayed(() -> {
+            List<String> tempList =BroadcastManager.getInstance().getOnlineUsers();
+            if(tempList.isEmpty()){
+                mStatusView.showEmpty();
+            }else {
+                mOnlineUsers.addAll(mRvMainAdapter.wrap(tempList));
+                mRvMainAdapter.notifyDataSetChanged();
+                mStatusView.showSuccess();
+            }
+        }, 2000);
     }
 
     @OnClick({R.id.iv_scan})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.iv_scan:
-                if(!ScanManager.getInstance().isScanning()){
-                    mStatusView.showLoading();
-                    ScanManager.getInstance().startScan();
-                }
+//                if(!PingManager.getInstance().isScanning()){
+//                    mStatusView.showLoading();
+//                    PingManager.getInstance().startScan();
+//                }
+                mStatusView.showLoading();
+                new Handler().postDelayed(() -> {
+                    List<String> tempList = BroadcastManager.getInstance().getOnlineUsers();
+                    if(tempList.isEmpty()){
+                        mStatusView.showEmpty();
+                    }else {
+                        mOnlineUsers.addAll(mRvMainAdapter.wrap(tempList));
+                        mRvMainAdapter.notifyDataSetChanged();
+                        mStatusView.showSuccess();
+                    }
+                }, 2000);
                 break;
             default:
                 break;
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        BroadcastManager.getInstance().exit();
+        super.onBackPressed();
     }
 
     /**
@@ -197,7 +237,7 @@ public class MainActivity extends BaseActivity {
                         case CONNECTED:
                             LogUtils.d(TAG, "wifi已经连接");
                             mStatusView.showLoading();
-                            ScanManager.getInstance().startScan();
+                            PingManager.getInstance().startScan();
                             if(mGotoWifiSettingsDialog.isAdded()) mGotoWifiSettingsDialog.dismiss();
                             break;
                         case DISCONNECTED:

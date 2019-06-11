@@ -19,6 +19,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,8 +72,8 @@ public class ConnectManager {
     };
 
     private ConnectManager(){
-        mClients = new HashMap<>();
-        mReceiveCallbacks = new HashMap<>();
+        mClients = new ConcurrentHashMap<>();
+        mReceiveCallbacks = new ConcurrentHashMap<>();
         mExecutor = Executors.newCachedThreadPool();
     }
 
@@ -97,7 +98,7 @@ public class ConnectManager {
             try {
                 //创建ServerSocket监听，并绑定端口号
                 mServerSocket = new ServerSocket(mPort);
-                LogUtils.d(TAG, "绑定端口号，port = " + mPort);
+                LogUtils.d(TAG, "开启服务端监听，端口号 = " + mPort);
             } catch (IOException e) {
                 e.printStackTrace();
                 LogUtils.e(TAG, "绑定端口号失败，e = " + e.getMessage());
@@ -141,6 +142,9 @@ public class ConnectManager {
     public void connect(String targetIp){
         if(isContains(targetIp)){
             LogUtils.d(TAG, "客户端连接已经存在");
+            if(mConnectCallback != null){
+                mConnectCallback.onConnectSuccess(targetIp);
+            }
             return;
         }
         mExecutor.execute(() -> {

@@ -13,6 +13,8 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected abstract int getLayoutId();
     protected abstract void initView();
     protected abstract void initCallback();
+    protected abstract void loadData();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,5 +24,6 @@ public abstract class BaseActivity extends AppCompatActivity {
         CommonUtils.darkMode(this, true);
         initView();
         initCallback();
+        loadData();
     }
 }

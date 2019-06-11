@@ -1,6 +1,9 @@
 package com.example.p2p;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Editable;
@@ -226,6 +229,7 @@ public class ChatActivity extends BaseActivity {
             }
         });
         ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), new IReceiveMessageCallback() {
+
             @Override
             public void onReceiveSuccess(String message) {
                 Message mes = new Message(Constant.TYPE_ITEM_RECEIVE, message);
@@ -238,6 +242,11 @@ public class ChatActivity extends BaseActivity {
                 LogUtils.d(TAG, "接受消息失败， message = " + message);
             }
         });
+    }
+
+    @Override
+    protected void loadData() {
+
     }
 
     @OnClick({R.id.iv_scan, R.id.iv_back, R.id.iv_emoji, R.id.btn_send})
@@ -266,6 +275,12 @@ public class ChatActivity extends BaseActivity {
         if(clMore.isShown()) clMore.setVisibility(View.GONE);
         if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         super.onBackPressed();
+    }
+
+    public static void startActiivty(Activity context, User user, int code){
+        Intent intent = new Intent(context, ChatActivity.class);
+        intent.putExtra(Constant.EXTRA_TARGET_USER, user);
+        context.startActivityForResult(intent, code);
     }
 
     /**

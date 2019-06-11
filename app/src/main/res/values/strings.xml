@@ -3,6 +3,9 @@
     <string name="main_tlTitle">在线用户</string>
     <string name="chat_tlTitle">rain</string>
     <string name="chat_btnSend">发送</string>
+    <string name="login_tvName">用户名：</string>
+    <string name="login_btnLogin">登陆</string>
+    <string name="login_tvTitle">P2P</string>
     <string name="main_tvScanning">扫描中...</string>
     <string name="main_tvEmpty">没有用户在线</string>
     <string name="main_connecting_success">连接成功</string>
