@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -43,6 +44,7 @@ import com.example.p2p.widget.customView.IndicatorView;
 import com.example.p2p.widget.customView.SendButton;
 import com.example.p2p.widget.customView.WrapViewPager;
 import com.example.utils.DisplayUtil;
+import com.example.utils.FileUtil;
 import com.example.utils.KeyBoardUtil;
 import com.example.utils.ToastUtil;
 
@@ -103,13 +105,29 @@ public class ChatActivity extends BaseActivity {
     private List<RvEmojiAdapter> mEmojiAdapters;
     private List<Emoji> mEmojiBeans;
     private User mTargetUser;
+    private User mUser;
     private RvChatAdapter mRvChatAdapter;
     private List<Message> mMessageList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mTargetUser = (User) getIntent().getSerializableExtra(Constant.EXTRA_TARGET_USER);
+        mUser = (User) FileUtil.restoreObject(this, Constant.FILE_NAME);
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onResume() {
+        if(edEdit.hasFocus()) edEdit.clearFocus();
+        super.onResume();
+    }
+
+    @Override
+    public void onBackPressed() {
+        KeyBoardUtil.closeKeyBoard(this, edEdit);
+        if(clMore.isShown()) clMore.setVisibility(View.GONE);
+        if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+        super.onBackPressed();
     }
 
     @Override
@@ -188,6 +206,13 @@ public class ChatActivity extends BaseActivity {
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void initCallback() {
+        //下拉刷新监听
+        srlChat.setOnRefreshListener(() -> {
+            new Handler().postDelayed(() -> {
+                srlChat.setRefreshing(false);
+            }, 2000);
+        });
+        //editText文本变化监听
         edEdit.addTextChangedListener(new SimpleTextWatchListener() {
             @Override
             public void afterTextChanged(Editable s) {
@@ -195,6 +220,7 @@ public class ChatActivity extends BaseActivity {
                 btnSend.setVisibility(visibility);
             }
         });
+        //editText触摸监听
         edEdit.setOnTouchListener((view, event) -> {
             if (event.getAction() == MotionEvent.ACTION_UP && isButtomLayoutShown()) {
                 if (clMore.isShown()) clMore.setVisibility(View.GONE);
@@ -202,6 +228,7 @@ public class ChatActivity extends BaseActivity {
             }
             return false;
         });
+        //聊天列表触摸监听
         rvChat.setOnTouchListener((view, event) -> {
             edEdit.clearFocus();
             KeyBoardUtil.closeKeyBoard(ChatActivity.this, edEdit);
@@ -209,30 +236,19 @@ public class ChatActivity extends BaseActivity {
             if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
             return false;
         });
+        //表情列表左右滑动监听
         vpEmoji.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
                 idvEmoji.setCurrentIndicator(position);
             }
         });
-        ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
-            @Override
-            public void onSendSuccess(String message) {
-                Message mes = new Message(Constant.TYPE_ITEM_SEND, message);
-                mMessageList.add(mes);
-                mRvChatAdapter.notifyItemInserted(mMessageList.size());
-            }
-
-            @Override
-            public void onSendFail(String message) {
-                ToastUtil.showToast(ChatActivity.this, "发送消息失败");
-            }
-        });
+        //接收消息回调监听
         ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), new IReceiveMessageCallback() {
 
             @Override
             public void onReceiveSuccess(String message) {
-                Message mes = new Message(Constant.TYPE_ITEM_RECEIVE, message);
+                Message mes = new Message(Constant.TYPE_ITEM_RECEIVE, message, mTargetUser.getName());
                 mMessageList.add(mes);
                 mRvChatAdapter.notifyItemInserted(mMessageList.size());
             }
@@ -242,17 +258,26 @@ public class ChatActivity extends BaseActivity {
                 LogUtils.d(TAG, "接受消息失败， message = " + message);
             }
         });
+        //发送消息回调监听
+        ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
+            @Override
+            public void onSendSuccess(String message) {
+                Message mes = new Message(Constant.TYPE_ITEM_SEND, message, mUser.getName());
+                mMessageList.add(mes);
+                mRvChatAdapter.notifyItemInserted(mMessageList.size());
+            }
+
+            @Override
+            public void onSendFail(String message) {
+                ToastUtil.showToast(ChatActivity.this, "发送消息失败");
+            }
+        });
     }
 
-    @Override
-    protected void loadData() {
-
-    }
-
-    @OnClick({R.id.iv_scan, R.id.iv_back, R.id.iv_emoji, R.id.btn_send})
+    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send})
     public void onViewClick(View view) {
         switch (view.getId()) {
-            case R.id.iv_scan:
+            case R.id.iv_add:
                 changeMoreLayout();
                 break;
             case R.id.iv_emoji:
@@ -260,6 +285,7 @@ public class ChatActivity extends BaseActivity {
                 break;
             case R.id.btn_send:
                ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), edEdit.getText().toString());
+               edEdit.setText("");
                 break;
             case R.id.iv_back:
                 finish();
@@ -268,15 +294,6 @@ public class ChatActivity extends BaseActivity {
                 break;
         }
     }
-
-    @Override
-    public void onBackPressed() {
-        KeyBoardUtil.closeKeyBoard(this, edEdit);
-        if(clMore.isShown()) clMore.setVisibility(View.GONE);
-        if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
-        super.onBackPressed();
-    }
-
     public static void startActiivty(Activity context, User user, int code){
         Intent intent = new Intent(context, ChatActivity.class);
         intent.putExtra(Constant.EXTRA_TARGET_USER, user);

@@ -30,6 +30,7 @@ public class SendMessageDelegte extends MutiItemDelegate<Message> {
 
     @Override
     protected void onBindView(BaseViewHolder holder, Message items, int position) {
-        holder.setText(R.id.tv_message, items.getText());
+        holder.setText(R.id.tv_message, items.getText())
+                .setText(R.id.tv_name, items.getName());
     }
 }

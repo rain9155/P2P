@@ -9,11 +9,13 @@ import androidx.annotation.NonNull;
 public class Message {
 
     private int id;
+    private String name;
     private String text;
 
-    public Message(int id, String text) {
+    public Message(int id, String text, String name) {
         this.id = id;
         this.text = text;
+        this.name = name;
     }
 
     public int getId() {
@@ -32,9 +34,17 @@ public class Message {
         this.text = text;
     }
 
+    public String getName() {
+        return name == null ? "" : name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @NonNull
     @Override
     public String toString() {
-        return "Message[id = " + id + ", text = " + text + "]";
+        return "Message[id = " + id + ", text = " + text + ", name = " + name + "]";
     }
 }

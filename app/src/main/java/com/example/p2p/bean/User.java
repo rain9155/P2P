@@ -1,6 +1,7 @@
 package com.example.p2p.bean;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.Serializable;
 
@@ -32,6 +33,15 @@ public class User implements Serializable {
 
     public void setIp(String ip) {
         this.ip = ip;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if(this == obj) return true;
+        if(obj == null || obj.getClass() != this.getClass()) return false;
+        User user = (User)obj;
+        if(!this.getName().equals(user.getName())) return false;
+        return this.ip.equals(user.getIp());
     }
 
     @NonNull

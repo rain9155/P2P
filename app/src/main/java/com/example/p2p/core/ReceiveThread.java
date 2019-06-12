@@ -11,7 +11,9 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.Stack;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by 陈健宇 at 2019/6/9
@@ -24,7 +26,8 @@ public class ReceiveThread implements Runnable{
 
     private Socket mSocket;
     private String mClientIp;
-    private IReceiveMessageCallback mReceiveMessageCallback;
+    private List<String> mMessageList;
+    private volatile IReceiveMessageCallback mReceiveMessageCallback;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
@@ -45,6 +48,7 @@ public class ReceiveThread implements Runnable{
     public ReceiveThread(Socket socket) {
         this.mSocket = socket;
         this.mClientIp = socket.getInetAddress().getHostAddress();
+        this.mMessageList = new CopyOnWriteArrayList<>();
     }
 
     @Override
@@ -57,23 +61,53 @@ public class ReceiveThread implements Runnable{
                 DataInputStream dataInputStream = new DataInputStream(in);
                 message = dataInputStream.readUTF();
                 LogUtils.d(TAG, "收到来自客户端的信息，message = " + message);
-                if(mReceiveMessageCallback != null){
+                //用一个列表暂时保存信息
+                //mMessageList.add(message);
+                if(hasReceviceCallback(mClientIp)){
                     mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, message).sendToTarget();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                ConnectManager.getInstance().remove(mClientIp);
                 LogUtils.e(TAG, "获取客户端输入流失败, 连接断开，e = " + e.getMessage());
-                if(mReceiveMessageCallback != null){
+                ConnectManager.getInstance().removeConnect(mClientIp);
+                ConnectManager.getInstance().removeReceiveCallback(mClientIp);
+                if(hasReceviceCallback(mClientIp))
                     mHandler.obtainMessage(TYPE_RECEVICE_FAIL, message).sendToTarget();
-                }
                 break;
             }
         }
     }
 
-    public void setReceiveMessageCallback(IReceiveMessageCallback callback){
-        this.mReceiveMessageCallback = callback;
+    /**
+     * 获得暂存的信息列表
+     */
+    public List<String> getMessageList() {
+        if (mMessageList == null) {
+            return new ArrayList<>();
+        }
+        return mMessageList;
+    }
+
+    /**
+     * 清空信息列表
+     */
+    public void clearMessageList() {
+        mMessageList.clear();
+    }
+
+    /**
+     * 判断是否有设置回调
+     * @param targetIp 客户端ip
+     * @return true表示有，false表示没有
+     */
+    public boolean hasReceviceCallback(String targetIp){
+        if(mReceiveMessageCallback == null){
+            IReceiveMessageCallback receiveMessageCallback = ConnectManager.getInstance().getReceiveCallback(targetIp);
+            if(receiveMessageCallback == null)
+                return false;
+            mReceiveMessageCallback = receiveMessageCallback;
+        }
+        return true;
     }
 
 }

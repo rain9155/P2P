@@ -3,24 +3,41 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/dp_10">
+
+    <TextView
+        android:id="@+id/tv_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/sp_14"
+        android:textColor="@color/colorBlack"
+        app:layout_constraintTop_toTopOf="@+id/rl_message"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:text="rain"/>
 
     <RelativeLayout
+        android:id="@+id/rl_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="@dimen/dp_10"
+        android:layout_marginEnd="@dimen/dp_5"
+        android:backgroundTint="@color/colorGreenSend"
+        android:backgroundTintMode="multiply"
         android:background="@drawable/ic_send_message"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent">
+        app:layout_constraintRight_toLeftOf="@id/tv_name"
+        tools:ignore="UnusedAttribute">
 
         <TextView
             android:id="@+id/tv_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/colorBlack"
-            android:textSize="@dimen/sp_14"
-            tools:text="你好"/>
+            android:textSize="@dimen/sp_16"
+            android:maxWidth="@dimen/dp_200"
+            tools:text="你好fdnfdkfjdkfjdfjdjfdfdhdfdjfdjfdjfdfdff"/>
 
     </RelativeLayout>
 

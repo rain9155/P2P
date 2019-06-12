@@ -7,6 +7,7 @@ package com.example.p2p.config;
 public class Constant {
 
     public static final String EXTRA_TARGET_USER = "targetUser";
+    public static final String FILE_NAME = "user";
     public static final int TYPE_ITEM_SEND = 0x000;
     public static final int TYPE_ITEM_RECEIVE = 0x001;
 }

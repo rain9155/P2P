@@ -17,7 +17,8 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -41,11 +42,10 @@ public class ConnectManager {
     private ServerSocket mServerSocket;
     private Map<String, Socket> mClients;//保存每个Socket连接到ip地址的映射
     private Map<String, IReceiveMessageCallback> mReceiveCallbacks;//保存每个消息接受回调到ip地址的映射
+    private volatile IConnectCallback mConnectCallback;
+    private volatile ISendMessgeCallback mSendMessgeCallback;
     private ExecutorService mExecutor;
     private int mPort = 9155;
-    private IConnectCallback mConnectCallback;
-    private ISendMessgeCallback mSendMessgeCallback;
-
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
@@ -111,12 +111,12 @@ public class ConnectManager {
                     if(isClose(ipAddress)){
                         LogUtils.d(TAG, "一个用户加入聊天，socket = " + socket);
                         //每个客户端连接用一个线程不断的读
-                        ReceiveThread readWriteThread = new ReceiveThread(socket);
+                        ReceiveThread receiveThread = new ReceiveThread(socket);
                         //缓存客户端的连接
                         mClients.put(ipAddress, socket);
                         LogUtils.d(TAG, "已连接的客户端数量：" + mClients.size());
                         //放到线程池中执行
-                        mExecutor.execute(readWriteThread);
+                        mExecutor.execute(receiveThread);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -156,12 +156,9 @@ public class ConnectManager {
                 if(mConnectCallback != null){
                     mHandler.obtainMessage(TYPE_CONNECTION_SUCCESS, targetIp).sendToTarget();
                 }
+                ReceiveThread receiveThread = new ReceiveThread(socket);
                 mClients.put(targetIp, socket);
-                if(mReceiveCallbacks.containsKey(targetIp)){
-                    ReceiveThread receiveThread = new ReceiveThread(socket);
-                    receiveThread.setReceiveMessageCallback(mReceiveCallbacks.get(targetIp));
-                    mExecutor.execute(receiveThread);
-                }
+                mExecutor.execute(receiveThread);
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.d(TAG, "连接targetIp = " + targetIp + "失败，e = " + e.getMessage());
@@ -202,7 +199,7 @@ public class ConnectManager {
             //reConnect(targetIp);
             return;
         }
-        Socket socket = mClients.get(targetIp);
+        final Socket socket = mClients.get(targetIp);
         mExecutor.execute(() -> {
             try {
                 OutputStream os = socket.getOutputStream();
@@ -222,28 +219,29 @@ public class ConnectManager {
         });
     }
 
-    /**
-     * 放入一个连接到客户端集合中
-     * @param ipAddress 客户端的ip地址
-     * @param socket socket连接
-     */
-    public void put(String ipAddress, Socket socket){
-        if(mClients.containsKey(ipAddress)) return;
-        mClients.put(ipAddress, socket);
-    }
 
     /**
      * 从客户端集合中移除一个连接
      * @param ipAddress 客户端的ip地址
      */
-    public void remove(String ipAddress){
+    public void removeConnect(String ipAddress){
         Socket socket = mClients.remove(ipAddress);
-        try {
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            LogUtils.d(TAG, "关闭移除的Socket连接出现错误， e = " + e.getMessage());
+        if(socket != null){
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                LogUtils.d(TAG, "关闭移除的Socket连接出现错误， e = " + e.getMessage());
+            }
         }
+    }
+
+    /**
+     * 移除指定客户端ip的消息回调
+     * @param ipAddress 客户端的ip地址
+     */
+    public void removeReceiveCallback(String ipAddress){
+        mReceiveCallbacks.remove(ipAddress);
     }
 
     /**
@@ -273,6 +271,13 @@ public class ConnectManager {
      */
     public void addReceiveMessageCallback(String targetIp, IReceiveMessageCallback callback){
         mReceiveCallbacks.put(targetIp, callback);
+    }
+
+    /**
+     * 获得接受消息回调接口
+     */
+    public IReceiveMessageCallback getReceiveCallback(String targetIp) {
+        return mReceiveCallbacks.get(targetIp);
     }
 
     public void setConnectCallback(IConnectCallback callback){

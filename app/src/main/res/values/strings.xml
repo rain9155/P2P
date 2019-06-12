@@ -13,7 +13,8 @@
     <string name="dialog_connecting">连接中...</string>
     <string name="dialog_wifi_settings">没有连接上Wifi，是否前往设置中心打开并连接上一个Wifi?</string>
     <string name="dialog_wifi_settings2">没有连接上Wifi，是否前往设置中心连接上一个Wifi?</string>
-    <string name="toast_wifi_settings">没有连接上Wifi</string>
+    <string name="toast_wifi_noconnect">没有连接上Wifi</string>
+    <string name="toast_wifi_connecting">"wifi连接中..."</string>
     <string name="dialog_toast">提示</string>
     <string name="dialog_positive">确认</string>
     <string name="dialog_negative">取消</string>

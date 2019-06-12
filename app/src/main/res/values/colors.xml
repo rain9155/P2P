@@ -8,6 +8,7 @@
     <color name="colorBlack">#000000</color>
     <color name="colorGreen">#4CAF50</color>
     <color name="colorGreenSelected">#81C784</color>
+    <color name="colorGreenSend">#6AEC6A</color>
     <color name="colorDisenable">#B3FFFFFF</color>
     <color name="colorDivide">#d9d9d9</color>
     <color name="colorIndicator">#6DB6B6B6</color>
