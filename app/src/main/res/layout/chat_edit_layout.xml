@@ -19,7 +19,24 @@
         android:layout_marginEnd="8dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/rl_edit" />
+        app:layout_constraintRight_toLeftOf="@+id/rl_edit"
+        tools:ignore="UnusedAttribute" />
+
+    <ImageView
+        android:id="@+id/iv_keyborad"
+        android:layout_width="@dimen/dp_32"
+        android:layout_height="@dimen/dp_32"
+        android:src="@drawable/ic_keyboard"
+        android:tint="@color/colorBlack"
+        android:tintMode="multiply"
+        android:visibility="invisible"
+        android:layout_marginBottom="10dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/rl_edit"
+        tools:ignore="UnusedAttribute" />
 
     <RelativeLayout
         android:id="@+id/rl_edit"
@@ -27,6 +44,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
+        android:background="@drawable/bg_chat_et"
         app:layout_constraintLeft_toRightOf="@id/iv_audio"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -36,9 +54,22 @@
             android:id="@+id/ed_edit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_chat_et"
+            android:background="@null"
             android:textCursorDrawable="@drawable/bg_chat_et_cursor"
             android:padding="8dp" />
+
+
+        <com.example.p2p.widget.customView.AudioTextView
+            android:id="@+id/tv_audio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/chat_tvAudio_press"
+            android:gravity="center"
+            android:visibility="invisible"
+            android:layout_centerInParent="true"
+            android:textSize="@dimen/sp_16"
+            android:padding="@dimen/dp_8"
+            android:textColor="@color/colorBlack"/>
 
     </RelativeLayout>
 
@@ -71,7 +102,7 @@
         android:id="@+id/btn_send"
         android:layout_width="45dp"
         android:layout_height="32dp"
-        android:background="@drawable/selector_chat_btn"
+        android:background="@drawable/selector_chat_send"
         android:textColor="@color/colorWhite"
         android:text="@string/chat_btnSend"
         android:textSize="12sp"

@@ -82,9 +82,9 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
-    public void onBackPressed() {
+    protected void onDestroy() {
         BroadcastManager.getInstance().exit();
-        super.onBackPressed();
+        super.onDestroy();
     }
 
     @Override
@@ -101,7 +101,7 @@ public class MainActivity extends BaseActivity {
                         if(mOnlineUsers.isEmpty())
                             mStatusView.showEmpty();
                     }
-                }, 1000);
+                }, 3000);
             }
         }
     }
@@ -239,8 +239,6 @@ public class MainActivity extends BaseActivity {
                             break;
                         case DISCONNECTED:
                             LogUtils.d(TAG, "wifi已经断开");
-                            if(mConnectingDialog.isAdded()) mConnectingDialog.dismiss();
-                            mGotoWifiSettingsDialog.show(getSupportFragmentManager());
                             break;
                         default:
                             LogUtils.d(TAG, "wifi已其他状态 = " + state);
@@ -256,6 +254,8 @@ public class MainActivity extends BaseActivity {
                         break;
                     case WifiManager.WIFI_STATE_DISABLED:
                         LogUtils.d(TAG, "wifi已经关闭");
+                        if(mConnectingDialog.isAdded()) mConnectingDialog.dismiss();
+                        mGotoWifiSettingsDialog.show(getSupportFragmentManager());
                         break;
                     case WifiManager.WIFI_STATE_DISABLING:
                         LogUtils.d(TAG, "wifi关闭中...");

@@ -2,7 +2,8 @@ package com.example.p2p;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -96,7 +98,10 @@ public class ChatActivity extends BaseActivity {
     LinearLayout llEmoji;
     @BindView(R.id.iv_scan)
     ImageView ivScan;
-
+    @BindView(R.id.iv_keyborad)
+    ImageView ivKeyborad;
+    @BindView(R.id.tv_audio)
+    TextView tvAudio;
 
     private final String TAG = this.getClass().getSimpleName();
     private ViewGroup mContentView;
@@ -118,16 +123,22 @@ public class ChatActivity extends BaseActivity {
 
     @Override
     protected void onResume() {
-        if(edEdit.hasFocus()) edEdit.clearFocus();
+        if (edEdit.hasFocus()) edEdit.clearFocus();
         super.onResume();
     }
 
     @Override
     public void onBackPressed() {
         KeyBoardUtil.closeKeyBoard(this, edEdit);
-        if(clMore.isShown()) clMore.setVisibility(View.GONE);
-        if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+        if (clMore.isShown()) clMore.setVisibility(View.GONE);
+        if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         super.onBackPressed();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mMessageList.clear();
+        super.onDestroy();
     }
 
     @Override
@@ -181,9 +192,9 @@ public class ChatActivity extends BaseActivity {
             //为每个Rv添加item监听
             mEmojiAdapters.get(i).setOnItemClickListener((adapter, view, position) -> {
                 Emoji emojiBean = mEmojiBeans.get(position + index * 21);
-                if(emojiBean.getId() == 0){
-                   edEdit.setText("");
-                }else {
+                if (emojiBean.getId() == 0) {
+                    edEdit.setText("");
+                } else {
                     edEdit.setText(edEdit.getText().append(emojiBean.getUnicodeInt()));
                 }
                 edEdit.setSelection(edEdit.length());
@@ -250,7 +261,7 @@ public class ChatActivity extends BaseActivity {
             public void onReceiveSuccess(String message) {
                 Message mes = new Message(Constant.TYPE_ITEM_RECEIVE, message, mTargetUser.getName());
                 mMessageList.add(mes);
-                mRvChatAdapter.notifyItemInserted(mMessageList.size());
+                mRvChatAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -264,7 +275,7 @@ public class ChatActivity extends BaseActivity {
             public void onSendSuccess(String message) {
                 Message mes = new Message(Constant.TYPE_ITEM_SEND, message, mUser.getName());
                 mMessageList.add(mes);
-                mRvChatAdapter.notifyItemInserted(mMessageList.size());
+                mRvChatAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -274,9 +285,15 @@ public class ChatActivity extends BaseActivity {
         });
     }
 
-    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send})
+    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyborad})
     public void onViewClick(View view) {
         switch (view.getId()) {
+            case R.id.iv_audio:
+                changeAudioLayout();
+                break;
+            case R.id.iv_keyborad:
+                changeEditLayout();
+                break;
             case R.id.iv_add:
                 changeMoreLayout();
                 break;
@@ -284,8 +301,8 @@ public class ChatActivity extends BaseActivity {
                 changeEmojiLayout();
                 break;
             case R.id.btn_send:
-               ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), edEdit.getText().toString());
-               edEdit.setText("");
+                ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), edEdit.getText().toString());
+                edEdit.setText("");
                 break;
             case R.id.iv_back:
                 finish();
@@ -294,11 +311,41 @@ public class ChatActivity extends BaseActivity {
                 break;
         }
     }
-    public static void startActiivty(Activity context, User user, int code){
+
+    public static void startActiivty(Activity context, User user, int code) {
         Intent intent = new Intent(context, ChatActivity.class);
         intent.putExtra(Constant.EXTRA_TARGET_USER, user);
         context.startActivityForResult(intent, code);
     }
+
+    /**
+     * 改变输入键盘显示
+     */
+    private void changeEditLayout() {
+        ivKeyborad.setVisibility(View.INVISIBLE);
+        ivAudio.setVisibility(View.VISIBLE);
+        if(clMore.isShown()) clMore.setVisibility(View.GONE);
+        if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+        if(!isKeyboardShowing) KeyBoardUtil.openKeyBoard(this, edEdit);
+        edEdit.setVisibility(View.VISIBLE);
+        tvAudio.setVisibility(View.INVISIBLE);
+        edEdit.requestFocus();
+    }
+
+    /**
+     * 改变音频布局显示
+     */
+    private void changeAudioLayout() {
+        edEdit.clearFocus();
+        ivAudio.setVisibility(View.INVISIBLE);
+        ivKeyborad.setVisibility(View.VISIBLE);
+        if(clMore.isShown()) clMore.setVisibility(View.GONE);
+        if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+        if(isKeyboardShowing) KeyBoardUtil.closeKeyBoard(this, edEdit);
+        edEdit.setVisibility(View.INVISIBLE);
+        tvAudio.setVisibility(View.VISIBLE);
+    }
+
 
     /**
      * 改变更多布局显示

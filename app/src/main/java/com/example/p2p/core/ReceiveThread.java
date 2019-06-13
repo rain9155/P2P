@@ -101,12 +101,9 @@ public class ReceiveThread implements Runnable{
      * @return true表示有，false表示没有
      */
     public boolean hasReceviceCallback(String targetIp){
-        if(mReceiveMessageCallback == null){
-            IReceiveMessageCallback receiveMessageCallback = ConnectManager.getInstance().getReceiveCallback(targetIp);
-            if(receiveMessageCallback == null)
-                return false;
-            mReceiveMessageCallback = receiveMessageCallback;
-        }
+        IReceiveMessageCallback receiveMessageCallback = ConnectManager.getInstance().getReceiveCallback(targetIp);
+        if(receiveMessageCallback == null) return false;
+        mReceiveMessageCallback = receiveMessageCallback;
         return true;
     }
 
