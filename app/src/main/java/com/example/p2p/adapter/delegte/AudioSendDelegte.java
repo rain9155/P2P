@@ -12,24 +12,23 @@ import com.example.p2p.bean.Message;
 import com.example.p2p.config.Constant;
 
 /**
- * 接受消息的item
- * Created by 陈健宇 at 2019/6/10
+ * 音频发送的item
+ * Created by 陈健宇 at 2019/6/14
  */
-public class ReceiveMessageDelegte extends MutiItemDelegate<Message>{
+public class AudioSendDelegte extends MutiItemDelegate<Message> {
     @Override
     protected boolean isForViewType(Message items, int position) {
-        return items.getId() == Constant.TYPE_ITEM_RECEIVE;
+        return items.getId() == Constant.TYPE_ITEM_SEND_AUDIO;
     }
 
     @Override
     protected BaseViewHolder onCreateViewHolder(ViewGroup parent) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_receive, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_send_audio, null);
         return new BaseViewHolder(view);
     }
 
     @Override
     protected void onBindView(BaseViewHolder holder, Message items, int position) {
-        holder.setText(R.id.tv_message, items.getText())
-                .setText(R.id.tv_name, items.getName());
+
     }
 }

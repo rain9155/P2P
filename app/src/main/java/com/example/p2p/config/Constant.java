@@ -8,6 +8,8 @@ public class Constant {
 
     public static final String EXTRA_TARGET_USER = "targetUser";
     public static final String FILE_NAME = "user";
-    public static final int TYPE_ITEM_SEND = 0x000;
-    public static final int TYPE_ITEM_RECEIVE = 0x001;
+    public static final int TYPE_ITEM_SEND_TEXT = 0x000;
+    public static final int TYPE_ITEM_RECEIVE_TEXT = 0x001;
+    public static final int TYPE_ITEM_SEND_AUDIO = 0x002;
+    public static final int TYPE_ITEM_RECEIVE_AUDIO = 0x003;
 }

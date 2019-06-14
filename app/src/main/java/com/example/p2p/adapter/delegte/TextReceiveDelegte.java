@@ -11,20 +11,18 @@ import com.example.p2p.bean.Message;
 import com.example.p2p.config.Constant;
 
 /**
- * 发送消息的item
+ * 接受消息的item
  * Created by 陈健宇 at 2019/6/10
  */
-public class SendMessageDelegte extends MutiItemDelegate<Message> {
-
-
+public class TextReceiveDelegte extends MutiItemDelegate<Message>{
     @Override
     protected boolean isForViewType(Message items, int position) {
-        return items.getId() == Constant.TYPE_ITEM_SEND;
+        return items.getId() == Constant.TYPE_ITEM_RECEIVE_TEXT;
     }
 
     @Override
     protected BaseViewHolder onCreateViewHolder(ViewGroup parent) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_send, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_receive_text, parent, false);
         return new BaseViewHolder(view);
     }
 

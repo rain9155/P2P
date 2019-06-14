@@ -16,6 +16,7 @@
     <string name="chat_tvAudio_cancel">松开手指，取消发送</string>
     <string name="chat_tlTitle">rain</string>
     <string name="chat_btnSend">发送</string>
+    <string name="chat_audio_error">录音失败</string>
 
     <string name="toast_wifi_noconnect">没有连接上Wifi</string>
     <string name="toast_wifi_connecting">"wifi连接中..."</string>
@@ -28,5 +29,6 @@
     <string name="dialog_negative">取消</string>
     <string name="dialog_audio_undo">手指上滑，取消发送</string>
     <string name="dialog_audio_cancel">松开手指，取消发送</string>
+    <string name="dialog_audio_warnning">录音时间太短</string>
 
 </resources>

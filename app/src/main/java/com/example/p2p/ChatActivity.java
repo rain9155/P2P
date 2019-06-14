@@ -1,10 +1,10 @@
 package com.example.p2p;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,15 +13,17 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,12 +38,14 @@ import com.example.p2p.bean.Emoji;
 import com.example.p2p.bean.Message;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IReceiveMessageCallback;
+import com.example.p2p.callback.IRecordedCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.db.EmojiDao;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.SimpleTextWatchListener;
+import com.example.p2p.widget.customView.AudioTextView;
 import com.example.p2p.widget.customView.IndicatorView;
 import com.example.p2p.widget.customView.SendButton;
 import com.example.p2p.widget.customView.WrapViewPager;
@@ -101,9 +105,11 @@ public class ChatActivity extends BaseActivity {
     @BindView(R.id.iv_keyborad)
     ImageView ivKeyborad;
     @BindView(R.id.tv_audio)
-    TextView tvAudio;
+    AudioTextView tvAudio;
 
     private final String TAG = this.getClass().getSimpleName();
+    private final int REQUEST_PERMISSION_1 = 0x000;
+    private final int REQUEST_PERMISSION_2 = 0x001;
     private ViewGroup mContentView;
     private boolean isKeyboardShowing;
     private int screenHeight;
@@ -119,6 +125,20 @@ public class ChatActivity extends BaseActivity {
         mTargetUser = (User) getIntent().getSerializableExtra(Constant.EXTRA_TARGET_USER);
         mUser = (User) FileUtil.restoreObject(this, Constant.FILE_NAME);
         super.onCreate(savedInstanceState);
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    REQUEST_PERMISSION_1
+            );
+        }
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_PERMISSION_2
+            );
+        }
     }
 
     @Override
@@ -133,6 +153,20 @@ public class ChatActivity extends BaseActivity {
         if (clMore.isShown()) clMore.setVisibility(View.GONE);
         if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         super.onBackPressed();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(REQUEST_PERMISSION_1 == requestCode){
+            if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
+                finish();
+            }
+        }
+        if(REQUEST_PERMISSION_2 == requestCode){
+            if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
+                finish();
+            }
+        }
     }
 
     @Override
@@ -247,6 +281,13 @@ public class ChatActivity extends BaseActivity {
             if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
             return false;
         });
+        //底部布局弹出,聊天列表上滑
+        rvChat.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            if(bottom < oldBottom){
+                if(mMessageList.isEmpty()) return;
+                rvChat.post(() -> rvChat.smoothScrollToPosition(mMessageList.size() - 1));
+            }
+        });
         //表情列表左右滑动监听
         vpEmoji.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
@@ -259,9 +300,10 @@ public class ChatActivity extends BaseActivity {
 
             @Override
             public void onReceiveSuccess(String message) {
-                Message mes = new Message(Constant.TYPE_ITEM_RECEIVE, message, mTargetUser.getName());
+                Message mes = new Message(Constant.TYPE_ITEM_RECEIVE_TEXT, message, mTargetUser.getName());
                 mMessageList.add(mes);
-                mRvChatAdapter.notifyDataSetChanged();
+                mRvChatAdapter.notifyItemInserted(mMessageList.size());
+                rvChat.smoothScrollToPosition(mMessageList.size() - 1);
             }
 
             @Override
@@ -273,14 +315,27 @@ public class ChatActivity extends BaseActivity {
         ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
             @Override
             public void onSendSuccess(String message) {
-                Message mes = new Message(Constant.TYPE_ITEM_SEND, message, mUser.getName());
+                Message mes = new Message(Constant.TYPE_ITEM_SEND_TEXT, message, mUser.getName());
                 mMessageList.add(mes);
-                mRvChatAdapter.notifyDataSetChanged();
+                mRvChatAdapter.notifyItemInserted(mMessageList.size());
+                rvChat.smoothScrollToPosition(mMessageList.size() - 1);
             }
 
             @Override
             public void onSendFail(String message) {
                 ToastUtil.showToast(ChatActivity.this, "发送消息失败");
+            }
+        });
+        //录音回调
+        tvAudio.setRecordedCallback(new IRecordedCallback() {
+            @Override
+            public void onFinish(String audioPath, int duration) {
+
+            }
+
+            @Override
+            public void onError() {
+                ToastUtil.showToast(ChatActivity.this, getString(R.string.chat_audio_error));
             }
         });
     }

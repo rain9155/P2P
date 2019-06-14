@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:drawable="@drawable/ic_volume_1"
+        android:maxLevel="0"/>
+    <item
+        android:drawable="@drawable/ic_volume_2"
+        android:maxLevel="1"/>
+
+    <item
+        android:drawable="@drawable/ic_volume_3"
+        android:maxLevel="2"/>
+
+    <item
+        android:drawable="@drawable/ic_volume_4"
+        android:maxLevel="4"/>
+
+    <item
+        android:drawable="@drawable/ic_volume_5"
+        android:maxLevel="5"/>
+
+    <item
+        android:drawable="@drawable/ic_volume_6"
+        android:maxLevel="6"/>
+
+    <item
+        android:drawable="@drawable/ic_volume_7"
+        android:maxLevel="7"/>
+
+    <item
+        android:drawable="@drawable/ic_volume_cancel"
+        android:maxLevel="8"/>
+
+    <item
+        android:drawable="@drawable/ic_volume_wraning"
+        android:maxLevel="9"/>
+
+</level-list>

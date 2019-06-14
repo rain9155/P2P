@@ -1,8 +1,10 @@
 package com.example.p2p.adapter;
 
 import com.example.baseadapter.BaseAdapter;
-import com.example.p2p.adapter.delegte.ReceiveMessageDelegte;
-import com.example.p2p.adapter.delegte.SendMessageDelegte;
+import com.example.p2p.adapter.delegte.AudioReceiveDelegte;
+import com.example.p2p.adapter.delegte.AudioSendDelegte;
+import com.example.p2p.adapter.delegte.TextReceiveDelegte;
+import com.example.p2p.adapter.delegte.TextSendDelegte;
 import com.example.p2p.bean.Message;
 import com.example.p2p.config.Constant;
 
@@ -16,7 +18,9 @@ public class RvChatAdapter extends BaseAdapter<Message> {
 
     public RvChatAdapter(List<Message> datas) {
         super(datas);
-        adapterDelegateManager.addDelegte(Constant.TYPE_ITEM_SEND, new SendMessageDelegte())
-                .addDelegte(Constant.TYPE_ITEM_RECEIVE, new ReceiveMessageDelegte());
+        adapterDelegateManager.addDelegte(Constant.TYPE_ITEM_SEND_TEXT, new TextSendDelegte())
+                .addDelegte(Constant.TYPE_ITEM_RECEIVE_TEXT, new TextReceiveDelegte())
+                .addDelegte(Constant.TYPE_ITEM_SEND_AUDIO, new AudioSendDelegte())
+                .addDelegte(Constant.TYPE_ITEM_RECEIVE_AUDIO, new AudioReceiveDelegte());
     }
 }

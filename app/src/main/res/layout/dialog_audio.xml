@@ -15,22 +15,22 @@
 
         <ImageView
             android:id="@+id/iv_audio"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/dp_100"
+            android:layout_width="@dimen/dp_120"
+            android:layout_height="@dimen/dp_120"
             android:backgroundTint="@color/colorWhite"
             android:backgroundTintMode="multiply"
             android:layout_gravity="center_horizontal"
-            android:src="@drawable/ic_volume_1"
+            android:background="@drawable/lever_dialog_audio"
             tools:ignore="UnusedAttribute" />
 
         <TextView
             android:id="@+id/tv_toast"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/colorWhite"
             android:textSize="@dimen/sp_16"
             android:background="@drawable/bg_dialog_audio_toast"
-            android:layout_gravity="center_horizontal"
+            android:gravity="center"
             android:layout_marginTop="@dimen/dp_8"
             android:paddingBottom="@dimen/dp_8"
             android:paddingTop="@dimen/dp_8"
