@@ -5,6 +5,9 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import com.example.p2p.bean.Mes;
+import com.example.p2p.bean.MesType;
+import com.example.p2p.bean.User;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
@@ -17,8 +20,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -58,10 +59,10 @@ public class ConnectManager {
                     mConnectCallback.onConnectFail((String) msg.obj);
                     break;
                 case TYPE_SEND_SUCCESS:
-                    mSendMessgeCallback.onSendSuccess((String) msg.obj);
+                    mSendMessgeCallback.onSendSuccess((Mes<?>) msg.obj);
                     break;
                 case TYPE_SEND_FAIL:
-                    mSendMessgeCallback.onSendFail((String) msg.obj);
+                    mSendMessgeCallback.onSendFail((Mes<?>) msg.obj);
                     break;
                 case TYPE_RECONNECTION_SUCCESS:
                     break;
@@ -111,7 +112,8 @@ public class ConnectManager {
                     if(isClose(ipAddress)){
                         LogUtils.d(TAG, "一个用户加入聊天，socket = " + socket);
                         //每个客户端连接用一个线程不断的读
-                        ReceiveThread receiveThread = new ReceiveThread(socket);
+                        User user = BroadcastManager.getInstance().getOnlineUser(ipAddress);
+                        ReceiveThread receiveThread = new ReceiveThread(socket, user);
                         //缓存客户端的连接
                         mClients.put(ipAddress, socket);
                         LogUtils.d(TAG, "已连接的客户端数量：" + mClients.size());
@@ -156,7 +158,8 @@ public class ConnectManager {
                 if(mConnectCallback != null){
                     mHandler.obtainMessage(TYPE_CONNECTION_SUCCESS, targetIp).sendToTarget();
                 }
-                ReceiveThread receiveThread = new ReceiveThread(socket);
+                User user = BroadcastManager.getInstance().getOnlineUser(targetIp);
+                ReceiveThread receiveThread = new ReceiveThread(socket, user);
                 mClients.put(targetIp, socket);
                 mExecutor.execute(receiveThread);
             } catch (IOException e) {
@@ -193,7 +196,7 @@ public class ConnectManager {
      * 发送消息给给定ip的客户端
      * @param targetIp 客户端的ip
      */
-    public void sendMessage(String targetIp, String message){
+    public void sendMessage(String targetIp, Mes<?> message){
         if(!isContains(targetIp)){
             LogUtils.d(TAG, "客户端连接已经断开");
             //reConnect(targetIp);
@@ -204,7 +207,7 @@ public class ConnectManager {
             try {
                 OutputStream os = socket.getOutputStream();
                 DataOutputStream dataOutputStream = new DataOutputStream(os);
-                dataOutputStream.writeUTF(message);
+                sendMessageByType(dataOutputStream, message);
                 Log.d(TAG, "发送消息成功， message = " + message);
                 if(mSendMessgeCallback != null){
                     mHandler.obtainMessage(TYPE_SEND_SUCCESS, message).sendToTarget();
@@ -217,6 +220,30 @@ public class ConnectManager {
                 }
             }
         });
+    }
+
+    /**
+     * 根据消息类型发送消息
+     */
+    private void sendMessageByType(DataOutputStream os, Mes<?> message) {
+        MesType type = message.mesType;
+        switch (type){
+            case TEXT:
+                String text = (String)message.data;
+                try {
+                    os.writeInt(type.ordinal());
+                    os.writeUTF(text);
+                    Log.d(TAG, "发送文本消息成功， message = " + text);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "发送文本消息失败，e = " + e.getMessage());
+                }
+                break;
+            case AUDIO:
+                break;
+            default:
+                break;
+        }
     }
 
 

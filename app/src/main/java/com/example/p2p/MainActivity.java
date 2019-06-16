@@ -27,7 +27,6 @@ import com.example.p2p.callback.IBroadcastCallback;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.core.BroadcastManager;
-import com.example.p2p.core.PingManager;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.WifiUtils;
@@ -179,7 +178,7 @@ public class MainActivity extends BaseActivity {
                 if(users.isEmpty()){
                     mStatusView.showEmpty();
                 }else {
-                    mOnlineUsers.addAll(new ArrayList<>(users));
+                    mOnlineUsers.addAll(users);
                     mRvMainAdapter.notifyDataSetChanged();
                     mStatusView.showSuccess();
                 }

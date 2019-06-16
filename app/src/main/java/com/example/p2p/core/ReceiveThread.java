@@ -4,6 +4,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import com.example.p2p.bean.Mes;
+import com.example.p2p.bean.MesType;
+import com.example.p2p.bean.User;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.utils.LogUtils;
 
@@ -25,7 +28,7 @@ public class ReceiveThread implements Runnable{
     private static final int TYPE_RECEVICE_FAIL = 0x001;
 
     private Socket mSocket;
-    private String mClientIp;
+    private User mUser;
     private List<String> mMessageList;
     private volatile IReceiveMessageCallback mReceiveMessageCallback;
 
@@ -34,10 +37,10 @@ public class ReceiveThread implements Runnable{
         public void handleMessage(Message msg) {
             switch (msg.what){
                 case TYPE_RECEVICE_SUCCESS:
-                    mReceiveMessageCallback.onReceiveSuccess((String)msg.obj);
+                    mReceiveMessageCallback.onReceiveSuccess((Mes<?>) msg.obj);
                     break;
                 case TYPE_RECEVICE_FAIL:
-                    mReceiveMessageCallback.onReceiveFail((String)msg.obj);
+                    mReceiveMessageCallback.onReceiveFail((Mes<?>) msg.obj);
                     break;
                 default:
                     break;
@@ -45,37 +48,64 @@ public class ReceiveThread implements Runnable{
         }
     };
 
-    public ReceiveThread(Socket socket) {
+    public ReceiveThread(Socket socket, User user) {
         this.mSocket = socket;
-        this.mClientIp = socket.getInetAddress().getHostAddress();
+        this.mUser = user;
         this.mMessageList = new CopyOnWriteArrayList<>();
     }
 
     @Override
     public void run() {
         while (true){
-            String message = "";
+            Mes mes = null;
             try{
                 //获取输入流，读取客户端发送过来的消息
                 InputStream in = mSocket.getInputStream();
                 DataInputStream dataInputStream = new DataInputStream(in);
-                message = dataInputStream.readUTF();
-                LogUtils.d(TAG, "收到来自客户端的信息，message = " + message);
+                mes = receiveMessageByType(dataInputStream);
+                //message = dataInputStream.readUTF();
+                LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
                 //用一个列表暂时保存信息
                 //mMessageList.add(message);
-                if(hasReceviceCallback(mClientIp)){
-                    mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, message).sendToTarget();
+                if(hasReceviceCallback(mUser.getIp())){
+                    mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
                 LogUtils.e(TAG, "获取客户端输入流失败, 连接断开，e = " + e.getMessage());
-                ConnectManager.getInstance().removeConnect(mClientIp);
-                ConnectManager.getInstance().removeReceiveCallback(mClientIp);
-                if(hasReceviceCallback(mClientIp))
-                    mHandler.obtainMessage(TYPE_RECEVICE_FAIL, message).sendToTarget();
+                ConnectManager.getInstance().removeConnect(mUser.getIp());
+                ConnectManager.getInstance().removeReceiveCallback(mUser.getIp());
+                if(hasReceviceCallback(mUser.getIp()))
+                    mHandler.obtainMessage(TYPE_RECEVICE_FAIL, mes).sendToTarget();
                 break;
             }
         }
+    }
+
+    /**
+     * 根据消息类型接受消息
+     */
+    private Mes<?> receiveMessageByType(DataInputStream in) {
+        Mes mes = null;
+        try {
+            int type = in.readInt();
+            switch(type){
+                case 0:
+                    String text = in.readUTF();
+                    mes = new Mes<>(MesType.TEXT, mUser.getName(), text);
+                    break;
+                default:
+                    break;
+            }
+            LogUtils.d(TAG, "读取消息成功， type = " + type);
+        } catch (IOException e) {
+            e.printStackTrace();
+            if(hasReceviceCallback(mUser.getIp())){
+                mReceiveMessageCallback.onReceiveFail(mes);
+            }
+            LogUtils.d(TAG, "读取消息失败， e = " + e.getMessage());
+        }
+        return mes;
     }
 
     /**

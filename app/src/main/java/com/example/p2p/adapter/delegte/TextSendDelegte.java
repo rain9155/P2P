@@ -7,19 +7,19 @@ import android.view.ViewGroup;
 import com.example.baseadapter.BaseViewHolder;
 import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
-import com.example.p2p.bean.Message;
+import com.example.p2p.bean.Mes;
 import com.example.p2p.config.Constant;
 
 /**
  * 发送消息的item
  * Created by 陈健宇 at 2019/6/10
  */
-public class TextSendDelegte extends MutiItemDelegate<Message> {
+public class TextSendDelegte extends MutiItemDelegate<Mes> {
 
 
     @Override
-    protected boolean isForViewType(Message items, int position) {
-        return items.getId() == Constant.TYPE_ITEM_SEND_TEXT;
+    protected boolean isForViewType(Mes items, int position) {
+        return items.id == Constant.TYPE_ITEM_SEND_TEXT;
     }
 
     @Override
@@ -29,8 +29,8 @@ public class TextSendDelegte extends MutiItemDelegate<Message> {
     }
 
     @Override
-    protected void onBindView(BaseViewHolder holder, Message items, int position) {
-        holder.setText(R.id.tv_message, items.getText())
-                .setText(R.id.tv_name, items.getName());
+    protected void onBindView(BaseViewHolder holder, Mes items, int position) {
+        holder.setText(R.id.tv_message, (String) items.data)
+                .setText(R.id.tv_name, items.name);
     }
 }

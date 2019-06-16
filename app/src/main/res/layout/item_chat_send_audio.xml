@@ -47,9 +47,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:textColor="@color/colorBlack"
+            android:background="@drawable/anim_item_audio_right"
             android:backgroundTint="@color/colorBlack"
-            android:backgroundTintMode="multiply"
-            tools:src="@drawable/ic_audio"/>
+            android:backgroundTintMode="multiply"/>
 
     </LinearLayout>
 

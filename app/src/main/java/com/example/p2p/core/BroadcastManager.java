@@ -20,7 +20,10 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,7 +42,7 @@ public class BroadcastManager {
     private ExecutorService mExecutor;
     private int mPort = 9156;
     private DatagramSocket mDatagramSocket;
-    private List<User> mOnlineUsers;
+    private Map<String, User> mOnlineUsers;
     private IBroadcastCallback mBroadcastCallback;
     private volatile boolean isRefresh = true;
 
@@ -61,12 +64,12 @@ public class BroadcastManager {
 
     private BroadcastManager(){
         mExecutor = Executors.newCachedThreadPool();
-        mOnlineUsers = new CopyOnWriteArrayList<>();
+        mOnlineUsers = new ConcurrentHashMap<>();
     }
 
     public static BroadcastManager getInstance(){
         if(sInstance == null){
-            synchronized (PingManager.class){
+            synchronized (BroadcastManager.class){
                 BroadcastManager scan;
                 if(sInstance == null){
                     scan = new BroadcastManager();
@@ -105,8 +108,8 @@ public class BroadcastManager {
                     user.setIp(receiveIp);
                     if(code == 0){
                         //把它加入在线用户列表
-                        if(!mOnlineUsers.contains(user)){
-                            mOnlineUsers.add(user);
+                        if(!mOnlineUsers.containsKey(receiveIp)){
+                            mOnlineUsers.put(receiveIp, user);
                             if(mBroadcastCallback != null && !isRefresh){
                                 mHandler.obtainMessage(TYPE_JOIN_USER, user).sendToTarget();
                             }
@@ -115,14 +118,14 @@ public class BroadcastManager {
                         reply(receiveIp);
                     }else if(code == 1){
                         //用户退出在线用户列表
-                        mOnlineUsers.remove(user);
+                        mOnlineUsers.remove(receiveIp);
                         if(mBroadcastCallback != null && !isRefresh){
                             mHandler.obtainMessage(TYPE_EXIT_USER, user).sendToTarget();
                         }
                     }else {
                         //把它加入在线用户列表
-                        if(!mOnlineUsers.contains(user)) {
-                            mOnlineUsers.add(user);
+                        if(!mOnlineUsers.containsKey(receiveIp)) {
+                            mOnlineUsers.put(receiveIp, user);
                             if(mBroadcastCallback != null && !isRefresh){
                                 mHandler.obtainMessage(TYPE_JOIN_USER, user).sendToTarget();
                             }
@@ -181,20 +184,27 @@ public class BroadcastManager {
     }
 
     /**
-     * 返回在线用户列表
+     * 等待返回在线用户列表
      */
     public void getOnlineUsers() {
         isRefresh = true;
        new Handler().postDelayed(() -> {
            if(mBroadcastCallback != null){
-               mBroadcastCallback.onOnlineUsers(mOnlineUsers);
+               List<User> list = new ArrayList<>();
+               for(User user : mOnlineUsers.values()){
+                   list.add(user);
+               }
+               mBroadcastCallback.onOnlineUsers(list);
            }
            isRefresh = false;
        }, 2000);
     }
 
-    public void setBroadcastCallback(IBroadcastCallback callback){
-        this.mBroadcastCallback = callback;
+    /**
+     * 返回在线用户
+     */
+    public User getOnlineUser(String ip) {
+       return mOnlineUsers.get(ip);
     }
 
     /**
@@ -255,4 +265,7 @@ public class BroadcastManager {
         return datas;
     }
 
+    public void setBroadcastCallback(IBroadcastCallback callback){
+        this.mBroadcastCallback = callback;
+    }
 }

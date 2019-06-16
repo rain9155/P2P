@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat;
 import com.example.p2p.R;
 import com.example.p2p.app.App;
 import com.example.p2p.callback.IRecordedCallback;
+import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.VibrateUtils;
 import com.example.utils.DisplayUtil;
@@ -48,7 +49,6 @@ public class AudioTextView extends AppCompatTextView {
     private Drawable mPressBg;
     private Drawable mNormalBg;
     private MediaRecorder mMediaRecorder;
-    private MediaPlayer mMediaPlayer;
     private boolean isRecording;
     private String mFileName;
     private long mStartRecordTime;
@@ -147,24 +147,6 @@ public class AudioTextView extends AppCompatTextView {
     }
 
     /**
-     * 初始化音频播放
-     */
-    private void initRecordPlayer() {
-        if(mMediaPlayer == null){
-            mMediaPlayer = new MediaPlayer();
-        }else {
-            mMediaPlayer.reset();
-        }
-        try {
-            mMediaPlayer.setDataSource(mFileName);
-            mMediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-            LogUtils.e(TAG, "设置音频文件或准备错误，path = " + mFileName);
-        }
-    }
-
-    /**
      * 初始化MediaRecord
      */
     private void initRecord() {
@@ -237,9 +219,8 @@ public class AudioTextView extends AppCompatTextView {
         if(inteval < MIN_RECORS_TIME){
             cancelStartRecord();
         }else {
-            initRecordPlayer();
-            int duration = mMediaPlayer.getDuration();
-            if(duration == -1){
+            int duration = MediaPlayerManager.getInstance().getDuration(mFileName);
+            if(duration < 0){
                 if(mRecordedCallback != null){
                     mRecordedCallback.onError();
                 }
@@ -247,7 +228,7 @@ public class AudioTextView extends AppCompatTextView {
             }
             LogUtils.d(TAG, "音频文件位置，path = " + mFileName + ", 音频时长，duration = " + duration + "毫秒");
             if(mRecordedCallback != null){
-                mRecordedCallback.onFinish(mFileName, duration / 1000);
+                mRecordedCallback.onFinish(mFileName, duration);
             }
             mDialog.dismiss();
         }
@@ -294,10 +275,7 @@ public class AudioTextView extends AppCompatTextView {
             mMediaRecorder = null;
             isRecording = false;
         }
-        if(mMediaPlayer != null){
-            mMediaPlayer.release();
-            mMediaPlayer = null;
-        }
+        MediaPlayerManager.getInstance().release();
         LogUtils.d(TAG, "释放资源");
     }
 

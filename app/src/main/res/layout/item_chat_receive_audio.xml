@@ -36,7 +36,8 @@
             android:textColor="@color/colorBlack"
             android:backgroundTint="@color/colorBlack"
             android:backgroundTintMode="multiply"
-            tools:src="@drawable/ic_audio"/>
+            android:background="@drawable/anim_item_audio_left"
+            tools:ignore="UnusedAttribute" />
 
         <TextView
             android:id="@+id/tv_duration"
