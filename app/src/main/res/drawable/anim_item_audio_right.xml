@@ -10,7 +10,7 @@
         android:duration="100"/>
 
     <item
-        android:drawable="@drawable/ic_audio_right_2"
+        android:drawable="@drawable/ic_audio_right_3"
         android:duration="100"/>
 
 </animation-list>

@@ -16,7 +16,7 @@ public class Data {
     private User user;
 
     public Data(int code) {
-       this(code, (User) FileUtil.restoreObject(App.getContext(), Constant.FILE_NAME));
+       this(code, (User) FileUtil.restoreObject(App.getContext(), Constant.FILE_NAME_USER));
     }
 
     public Data(int code, User user) {

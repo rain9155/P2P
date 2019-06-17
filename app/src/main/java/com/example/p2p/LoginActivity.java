@@ -41,7 +41,7 @@ public class LoginActivity extends AppCompatActivity{
         ButterKnife.bind(this);
         CommonUtils.darkMode(this, true);
 
-        User restoreUser = (User) FileUtil.restoreObject(LoginActivity.this, Constant.FILE_NAME);
+        User restoreUser = (User) FileUtil.restoreObject(LoginActivity.this, Constant.FILE_NAME_USER);
         if(restoreUser != null){
             goMainActivity(restoreUser);
             return;
@@ -95,7 +95,7 @@ public class LoginActivity extends AppCompatActivity{
         String locIp = IpUtils.getLocIpAddress();
         String name = edInput.getText().toString().trim();
         User user = new User(name, locIp);
-        FileUtil.saveObject(LoginActivity.this, Constant.FILE_NAME, user);
+        FileUtil.saveObject(LoginActivity.this, Constant.FILE_NAME_USER, user);
         return user;
     }
 

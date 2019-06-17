@@ -2,6 +2,7 @@ package com.example.p2p.core;
 
 import android.media.MediaPlayer;
 
+import com.example.p2p.callback.IMediaPlayCompleteCallback;
 import com.example.p2p.utils.LogUtils;
 
 import java.io.IOException;
@@ -15,6 +16,8 @@ public class MediaPlayerManager {
     private static final String TAG = MediaPlayerManager.class.getSimpleName();
     private static MediaPlayerManager sInstance;
     private MediaPlayer mMediaPlayer;
+    private IMediaPlayCompleteCallback mCallback;
+    private int mLastPosition;
 
     private MediaPlayerManager(){}
 
@@ -36,16 +39,35 @@ public class MediaPlayerManager {
      * @param path 音频文件路径
      */
     public void startPlayAudio(String path){
-        initRecordPlayer(path);
+        startPlayAudio(path, null);
+    }
+
+    /**
+     * 开始播放音频
+     * @param path 音频文件路径
+     */
+    public void startPlayAudio(String path, MediaPlayer.OnCompletionListener onCompletionListener){
+        initRecordPlayer(path, onCompletionListener);
         mMediaPlayer.start();
     }
+
 
     /**
      * 停止播放音频
      */
-    public void startPlayAudio(){
+    public void stopPlayAudio(){
         if(mMediaPlayer == null) return;
         mMediaPlayer.stop();
+        mMediaPlayer.reset();
+    }
+
+    /**
+     * 重置播放器
+     */
+    public void reset(){
+        if(mMediaPlayer != null && isPlaying()){
+            mMediaPlayer.reset();
+        }
     }
 
     /**
@@ -62,7 +84,7 @@ public class MediaPlayerManager {
      * 获取音频时长，单位秒
      */
     public int getDuration(String path){
-        initRecordPlayer(path);
+        initRecordPlayer(path, null);
         return mMediaPlayer.getDuration() / 1000;
     }
 
@@ -77,15 +99,23 @@ public class MediaPlayerManager {
     }
 
     /**
+     * 设置播放结束回调
+     */
+    public void setOnPlayCompleteCallback(IMediaPlayCompleteCallback callback){
+        this.mCallback = callback;
+    }
+
+    /**
      * 初始化音频播放
      */
-    private void initRecordPlayer(String path) {
+    private void initRecordPlayer(String path, MediaPlayer.OnCompletionListener onCompletionListener) {
         if(mMediaPlayer == null){
             mMediaPlayer = new MediaPlayer();
         }else {
             mMediaPlayer.reset();
         }
         try {
+            mMediaPlayer.setOnCompletionListener(onCompletionListener);
             mMediaPlayer.setDataSource(path);
             mMediaPlayer.prepare();
         } catch (IOException e) {

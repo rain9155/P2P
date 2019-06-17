@@ -3,16 +3,28 @@ package com.example.p2p.core;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
+import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IReceiveMessageCallback;
+import com.example.p2p.config.Constant;
+import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
+import com.example.utils.FileUtil;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,14 +71,9 @@ public class ReceiveThread implements Runnable{
         while (true){
             Mes mes = null;
             try{
-                //获取输入流，读取客户端发送过来的消息
                 InputStream in = mSocket.getInputStream();
-                DataInputStream dataInputStream = new DataInputStream(in);
-                mes = receiveMessageByType(dataInputStream);
-                //message = dataInputStream.readUTF();
+                mes = receiveMessageByType(in);
                 LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
-                //用一个列表暂时保存信息
-                //mMessageList.add(message);
                 if(hasReceviceCallback(mUser.getIp())){
                     mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
                 }
@@ -85,14 +92,36 @@ public class ReceiveThread implements Runnable{
     /**
      * 根据消息类型接受消息
      */
-    private Mes<?> receiveMessageByType(DataInputStream in) {
-        Mes mes = null;
+    private Mes<?> receiveMessageByType(InputStream inputStream) {
+        DataInputStream in = new DataInputStream(inputStream);
+        Mes mes = new Mes(MesType.ERROR);
+        int type = -1;
         try {
-            int type = in.readInt();
+            type = in.readInt();
             switch(type){
                 case 0:
                     String text = in.readUTF();
                     mes = new Mes<>(MesType.TEXT, mUser.getName(), text);
+                    break;
+                case 1:
+                    int duration = in.readInt();
+                    int len = in.readInt();
+                    byte[] bytes = new byte[len];
+                    in.readFully(bytes);
+                    FileUtils.makeDirs(Constant.FILE_PATH_RECEIVE_AUDIO);
+                    String path = Constant.FILE_PATH_RECEIVE_AUDIO + System.currentTimeMillis() + ".mp3";
+                    File file = new File(path);
+                    if(!file.exists()){
+                        file.createNewFile();
+                    }
+                    try(
+                        FileOutputStream fileOutputStream = new FileOutputStream(file);
+                        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
+                    ){
+                        bufferedOutputStream.write(bytes);
+                    }
+                    Audio audio = new Audio(duration, path);
+                    mes = new Mes<>(MesType.AUDIO, mUser.getName(), audio);
                     break;
                 default:
                     break;
@@ -103,7 +132,7 @@ public class ReceiveThread implements Runnable{
             if(hasReceviceCallback(mUser.getIp())){
                 mReceiveMessageCallback.onReceiveFail(mes);
             }
-            LogUtils.d(TAG, "读取消息失败， e = " + e.getMessage());
+            Log.e(TAG, "读取消息失败，类型type = " + type + ", e = " + e.getMessage());
         }
         return mes;
     }

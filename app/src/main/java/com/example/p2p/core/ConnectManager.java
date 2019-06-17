@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
@@ -13,8 +14,11 @@ import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.utils.LogUtils;
 
+import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -206,8 +210,7 @@ public class ConnectManager {
         mExecutor.execute(() -> {
             try {
                 OutputStream os = socket.getOutputStream();
-                DataOutputStream dataOutputStream = new DataOutputStream(os);
-                sendMessageByType(dataOutputStream, message);
+                sendMessageByType(os, message);
                 Log.d(TAG, "发送消息成功， message = " + message);
                 if(mSendMessgeCallback != null){
                     mHandler.obtainMessage(TYPE_SEND_SUCCESS, message).sendToTarget();
@@ -221,31 +224,6 @@ public class ConnectManager {
             }
         });
     }
-
-    /**
-     * 根据消息类型发送消息
-     */
-    private void sendMessageByType(DataOutputStream os, Mes<?> message) {
-        MesType type = message.mesType;
-        switch (type){
-            case TEXT:
-                String text = (String)message.data;
-                try {
-                    os.writeInt(type.ordinal());
-                    os.writeUTF(text);
-                    Log.d(TAG, "发送文本消息成功， message = " + text);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Log.e(TAG, "发送文本消息失败，e = " + e.getMessage());
-                }
-                break;
-            case AUDIO:
-                break;
-            default:
-                break;
-        }
-    }
-
 
     /**
      * 从客户端集合中移除一个连接
@@ -315,4 +293,34 @@ public class ConnectManager {
         this.mSendMessgeCallback = callback;
     }
 
+    /**
+     * 根据消息类型发送消息
+     */
+    private void sendMessageByType(OutputStream outputStream, Mes<?> message) {
+        DataOutputStream os = new DataOutputStream(outputStream);
+        MesType type = message.mesType;
+        try {
+            switch (type){
+                case TEXT:
+                    String text = (String)message.data;
+                    os.writeInt(type.ordinal());
+                    os.writeUTF(text);
+                    Log.d(TAG, "发送文本消息成功， message = " + text);
+                    break;
+                case AUDIO:
+                    Audio audio = (Audio) message.data;
+                    os.writeInt(type.ordinal());
+                    os.writeInt(audio.duartion);
+                    os.writeInt(audio.bytes.length);
+                    os.write(audio.bytes);
+                    Log.d(TAG, "发送音频消息成功， message = " + audio.bytes);
+                    break;
+                default:
+                    break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "发送消息失败，类型type = " + type + ", e = " + e.getMessage());
+        }
+    }
 }

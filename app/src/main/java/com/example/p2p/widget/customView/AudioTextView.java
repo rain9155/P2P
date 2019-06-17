@@ -5,16 +5,13 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.os.Environment;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -22,9 +19,10 @@ import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.content.ContextCompat;
 
 import com.example.p2p.R;
-import com.example.p2p.app.App;
 import com.example.p2p.callback.IRecordedCallback;
+import com.example.p2p.config.Constant;
 import com.example.p2p.core.MediaPlayerManager;
+import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.VibrateUtils;
 import com.example.utils.DisplayUtil;
@@ -40,7 +38,6 @@ import java.io.IOException;
 public class AudioTextView extends AppCompatTextView {
 
     private static final String TAG = AudioTextView.class.getSimpleName();
-    private static final String FILE_NAME = getFilePath(App.getContext(), System.currentTimeMillis() + ".mp3");
     private static int MIN_RECORS_TIME = 1000;//最小录音间隔，1s
     private Dialog mDialog;
     private Drawable mAudioImage;
@@ -93,8 +90,6 @@ public class AudioTextView extends AppCompatTextView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        LogUtils.d(TAG, "onTouchEvent: event = " + event.getAction());
-        LogUtils.d(TAG, "onTouchEvent: y = " + event.getRawY());
         float curY = event.getRawY();
         switch (event.getAction()){
             case MotionEvent.ACTION_DOWN:
@@ -114,7 +109,7 @@ public class AudioTextView extends AppCompatTextView {
                         mAudioTextView.setBackgroundColor(Color.TRANSPARENT);
                         mAudioTextView.setText(getContext().getString(R.string.dialog_audio_undo));
                         int amplitude = mMediaRecorder.getMaxAmplitude();
-                        int index = amplitude / 800;
+                        int index = amplitude / 500;
                         if(index >= 8) index = 7;
                         mAudioImage.setLevel(index);
                     }
@@ -164,9 +159,10 @@ public class AudioTextView extends AppCompatTextView {
         //设置音频的采样率
         mMediaRecorder.setAudioSamplingRate(10000);
         //设置音频文件的输出路径
-        File file = new File(FILE_NAME);
-        mMediaRecorder.setOutputFile(FILE_NAME);
-        mFileName = FILE_NAME;
+        FileUtils.makeDirs(Constant.FILE_PATH_SEND_AUDIO);
+        mFileName = Constant.FILE_PATH_SEND_AUDIO + System.currentTimeMillis() + ".mp3";
+        File file = new File(mFileName);
+        mMediaRecorder.setOutputFile(mFileName);
         LogUtils.d(TAG, "初始化录音");
     }
 
@@ -226,7 +222,7 @@ public class AudioTextView extends AppCompatTextView {
                 }
                 return;
             }
-            LogUtils.d(TAG, "音频文件位置，path = " + mFileName + ", 音频时长，duration = " + duration + "毫秒");
+            LogUtils.d(TAG, "音频文件位置，path = " + mFileName + ", 音频时长，duration = " + duration + "秒");
             if(mRecordedCallback != null){
                 mRecordedCallback.onFinish(mFileName, duration);
             }
@@ -277,19 +273,6 @@ public class AudioTextView extends AppCompatTextView {
         }
         MediaPlayerManager.getInstance().release();
         LogUtils.d(TAG, "释放资源");
-    }
-
-    /**
-     * 获得应用关联文件路径
-     */
-    private static String getFilePath(Context context, String name){
-        String filePath;
-        if (!"mounted".equals(Environment.getExternalStorageState()) && Environment.isExternalStorageRemovable()) {
-            filePath = context.getFilesDir().getPath();
-        } else {
-            filePath = context.getExternalFilesDir(null).getPath();
-        }
-        return filePath + File.separator + name;
     }
 
     public void setRecordedCallback(IRecordedCallback callback){

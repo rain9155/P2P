@@ -248,9 +248,10 @@ public class BroadcastManager {
      */
     private Data resolveData(byte[] data){
         String receiveData = "";
-        try{
+        try(
             InputStream in = new ByteArrayInputStream(data);
             ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ){
             int c;
             while ((c = in.read()) != 0) {
                 os.write(c);

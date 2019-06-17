@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import com.example.baseadapter.BaseViewHolder;
 import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
+import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.config.Constant;
 
@@ -23,12 +24,14 @@ public class AudioReceiveDelegte extends MutiItemDelegate<Mes> {
 
     @Override
     protected BaseViewHolder onCreateViewHolder(ViewGroup parent) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_receive_audio, null);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_receive_audio, parent, false);
         return new BaseViewHolder(view);
     }
 
     @Override
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
-
+        Audio audio = (Audio) items.data;
+        holder.setText(R.id.tv_duration, audio.duartion + "'")
+                .setText(R.id.tv_name, items.name);
     }
 }
