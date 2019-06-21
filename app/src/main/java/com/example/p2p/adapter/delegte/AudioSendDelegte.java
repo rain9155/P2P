@@ -11,6 +11,7 @@ import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.MediaPlayerManager;
+import com.example.p2p.utils.FileUtils;
 
 /**
  * 音频发送的item
@@ -32,6 +33,6 @@ public class AudioSendDelegte extends MutiItemDelegate<Mes> {
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
         Audio audio = (Audio) items.data;
         holder.setText(R.id.tv_duration, audio.duartion + "'")
-                .setText(R.id.tv_name, items.name);
+                .setImageBitmap(R.id.iv_face, FileUtils.getUserBitmap());
     }
 }

@@ -101,7 +101,7 @@ public class ReceiveThread implements Runnable{
             switch(type){
                 case 0:
                     String text = in.readUTF();
-                    mes = new Mes<>(MesType.TEXT, mUser.getName(), text);
+                    mes = new Mes<>(MesType.TEXT, mUser.getIp(), text);
                     break;
                 case 1:
                     int duration = in.readInt();
@@ -121,7 +121,7 @@ public class ReceiveThread implements Runnable{
                         bufferedOutputStream.write(bytes);
                     }
                     Audio audio = new Audio(duration, path);
-                    mes = new Mes<>(MesType.AUDIO, mUser.getName(), audio);
+                    mes = new Mes<>(MesType.AUDIO, mUser.getIp(), audio);
                     break;
                 default:
                     break;

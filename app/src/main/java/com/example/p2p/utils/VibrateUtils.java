@@ -6,7 +6,7 @@ import android.content.Context;
 import android.os.Vibrator;
 
 /**
- * 手机震动帮助类，记得添加权限：<uses-permission android:name="android.permission.VIBRATE"/>
+ * 手机震动帮助类，记得添加权限：<uses-permission android:userIp="android.permission.VIBRATE"/>
  * Created by 陈健宇 at 2019/6/13
  */
 public class VibrateUtils {

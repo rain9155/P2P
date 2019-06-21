@@ -1,5 +1,7 @@
 package com.example.p2p.adapter.delegte;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,7 +10,9 @@ import com.example.baseadapter.BaseViewHolder;
 import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
 import com.example.p2p.bean.Mes;
+import com.example.p2p.bean.User;
 import com.example.p2p.config.Constant;
+import com.example.p2p.core.OnlineUserManager;
 
 /**
  * 接受消息的item
@@ -28,7 +32,8 @@ public class TextReceiveDelegte extends MutiItemDelegate<Mes>{
 
     @Override
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
-        holder.setText(R.id.tv_message, (String) items.data)
-                .setText(R.id.tv_name, items.name);
+//        User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
+//        Bitmap bitmap = BitmapFactory.decodeByteArray(user.getImageBytes(), 0, user.getImageBytes().length);
+        holder.setText(R.id.tv_message, (String) items.data);
     }
 }

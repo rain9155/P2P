@@ -6,18 +6,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="@dimen/dp_10">
 
-    <TextView
-        android:id="@+id/tv_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/sp_14"
-        android:textColor="@color/colorBlack"
-        app:layout_constraintTop_toTopOf="@+id/rl_message"
+    <ImageView
+        android:id="@+id/iv_face"
+        android:layout_width="@dimen/dp_35"
+        android:layout_height="@dimen/dp_35"
+        app:layout_constraintTop_toTopOf="@+id/ll_message"
         app:layout_constraintRight_toRightOf="parent"
-        tools:text="rain"/>
+        tools:src="@drawable/ic_user_image"/>
+
 
     <LinearLayout
-        android:id="@+id/rl_message"
+        android:id="@+id/ll_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -28,7 +27,7 @@
         android:background="@drawable/ic_send_message"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/tv_name"
+        app:layout_constraintRight_toLeftOf="@id/iv_face"
         tools:ignore="UnusedAttribute">
 
         <TextView

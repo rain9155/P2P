@@ -1,15 +1,28 @@
 package com.example.p2p.utils;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
 
+import com.example.p2p.config.Constant;
+import com.example.utils.FileUtil;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * 文件操作类
  * Created by 陈健宇 at 2019/6/17
  */
 public class FileUtils {
+
+    private static final String TAG = FileUtils.class.getSimpleName();
 
     /**
      * 获得应用关联文件路径
@@ -41,6 +54,45 @@ public class FileUtils {
             dir.mkdirs();
         }
         return dir.isDirectory();
+    }
+
+    /**
+     * 保存用户图片
+     * @param bitmap 图片
+     */
+    public static void saveUserBitmap(Bitmap bitmap){
+        BufferedOutputStream bufferedOutputStream = null;
+        FileOutputStream fileOutputStream = null;
+        makeDirs(Constant.FILE_PATH_USER_IMAGE);
+        File file = new File(Constant.FILE_USER_IMAGE);
+        if(!file.exists()){
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                LogUtils.e(TAG, "创建文件失败， e = " + e.getMessage());
+            }
+        }
+        try{
+            fileOutputStream = new FileOutputStream(file);
+            bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 80, bufferedOutputStream);
+            bufferedOutputStream.flush();
+            bufferedOutputStream.close();
+            fileOutputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * 获得用户图片
+     */
+    public static Bitmap getUserBitmap(){
+        return BitmapFactory.decodeFile(Constant.FILE_USER_IMAGE);
     }
 
 }

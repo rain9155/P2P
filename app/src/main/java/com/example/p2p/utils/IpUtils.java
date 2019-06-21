@@ -49,7 +49,7 @@ public class IpUtils {
             e.printStackTrace();
         }
         if("".equals(ip)) LogUtils.d(TAG, "获取本地IP地址为空");
-        else LogUtils.d(TAG, "获取本地IP地址成功，ip = " + ip);
+        else LogUtils.d(TAG, "获取本地IP地址成功，userIp = " + ip);
         return ip;
     }
 
@@ -68,7 +68,7 @@ public class IpUtils {
                 (ipAddress >> 16 & 0xff),
                 (ipAddress >> 24 & 0xff)
         );
-        LogUtils.d(TAG, "获取本机ip地址， ip = " + ip);
+        LogUtils.d(TAG, "获取本机ip地址， userIp = " + ip);
         return ip;
     }
 

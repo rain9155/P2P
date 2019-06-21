@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
@@ -21,11 +20,8 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,7 +37,6 @@ import com.example.p2p.bean.Emoji;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
-import com.example.p2p.callback.IMediaPlayCompleteCallback;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.IRecordedCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
@@ -55,16 +50,15 @@ import com.example.p2p.widget.customView.AudioTextView;
 import com.example.p2p.widget.customView.IndicatorView;
 import com.example.p2p.widget.customView.SendButton;
 import com.example.p2p.widget.customView.WrapViewPager;
+import com.example.permission.PermissionHelper;
+import com.example.permission.bean.Permission;
+import com.example.permission.callback.IPermissionsCallback;
 import com.example.utils.DisplayUtil;
 import com.example.utils.FileUtil;
 import com.example.utils.KeyBoardUtil;
 import com.example.utils.ToastUtil;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,8 +113,6 @@ public class ChatActivity extends BaseActivity {
     AudioTextView tvAudio;
 
     private final String TAG = this.getClass().getSimpleName();
-    private final int REQUEST_PERMISSION_1 = 0x000;
-    private final int REQUEST_PERMISSION_2 = 0x001;
     private ViewGroup mContentView;
     private boolean isKeyboardShowing;
     private int screenHeight;
@@ -137,20 +129,6 @@ public class ChatActivity extends BaseActivity {
         mTargetUser = (User) getIntent().getSerializableExtra(Constant.EXTRA_TARGET_USER);
         mUser = (User) FileUtil.restoreObject(this, Constant.FILE_NAME_USER);
         super.onCreate(savedInstanceState);
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.RECORD_AUDIO},
-                    REQUEST_PERMISSION_1
-            );
-        }
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_PERMISSION_2
-            );
-        }
     }
 
     @Override
@@ -166,21 +144,7 @@ public class ChatActivity extends BaseActivity {
         if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         super.onBackPressed();
     }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(REQUEST_PERMISSION_1 == requestCode){
-            if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
-                finish();
-            }
-        }
-        if(REQUEST_PERMISSION_2 == requestCode){
-            if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
-                finish();
-            }
-        }
-    }
-
+    
     @Override
     protected void onDestroy() {
         mMessageList.clear();
@@ -198,7 +162,21 @@ public class ChatActivity extends BaseActivity {
     protected void initView() {
         tvTitle.setText(mTargetUser.getName());
         ivScan.setVisibility(View.GONE);
+        PermissionHelper.getInstance().with(this).requestPermissions(
+                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                new IPermissionsCallback() {
+                    @Override
+                    public void onAccepted(List<Permission> permissions) {
 
+                    }
+
+                    @Override
+                    public void onDenied(List<Permission> permissions) {
+                        ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_permission_rejected));
+                        finish();
+                    }
+                }
+        );
         screenHeight = DisplayUtil.getScreenHeight(ChatActivity.this);
         mContentView = getWindow().getDecorView().findViewById(android.R.id.content);
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(() -> {
@@ -248,12 +226,10 @@ public class ChatActivity extends BaseActivity {
             });
 
         }
-
         //初始化Vp
         VpEmojiAdapter vpEmojiAdapter = new VpEmojiAdapter(views);
         vpEmoji.setAdapter(vpEmojiAdapter);
         idvEmoji.setIndicatorCount(views.size());
-
         //初始化聊天的Rv
         mMessageList = new ArrayList<>();
         mRvChatAdapter = new RvChatAdapter(mMessageList);
@@ -313,6 +289,7 @@ public class ChatActivity extends BaseActivity {
 
             @Override
             public void onReceiveSuccess(Mes<?> message) {
+                message.userIp = mTargetUser.getIp();
                 switch (message.mesType){
                     case TEXT:
                         message.id = Constant.TYPE_ITEM_RECEIVE_TEXT;
@@ -338,7 +315,7 @@ public class ChatActivity extends BaseActivity {
         ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
             @Override
             public void onSendSuccess(Mes<?> message) {
-                message.name = mUser.getName();
+                message.userIp = mUser.getIp();
                 switch (message.mesType){
                     case TEXT:
                         message.id = Constant.TYPE_ITEM_SEND_TEXT;
@@ -443,20 +420,9 @@ public class ChatActivity extends BaseActivity {
      * 发送音频消息
      */
     private void sendAudio(String audioPath, int duration) {
-
-        try(
-            InputStream in = new FileInputStream(audioPath);
-        ){
-            byte[] bytes = new byte[in.available()];
-            in.read(bytes);
-            Audio audio = new Audio(duration, bytes, audioPath);
-            Mes<Audio> message = new Mes<Audio>(MesType.AUDIO, audio);
-            ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message);
-            LogUtils.d(TAG, "读取音频流成功");
-        } catch (IOException e) {
-            e.printStackTrace();
-            LogUtils.d(TAG, "读取音频流失败，e = " + e.getMessage());
-        }
+        Audio audio = new Audio(duration, audioPath);
+        Mes<Audio> message = new Mes<Audio>(MesType.AUDIO, audio);
+        ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message);
     }
 
     /**

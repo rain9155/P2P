@@ -19,14 +19,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.loading.Loading;
 import com.example.loading.StatusView;
-import com.example.p2p.adapter.RvMainAdapter;
+import com.example.p2p.adapter.RvUsersAdapter;
 import com.example.p2p.base.BaseActivity;
 import com.example.p2p.bean.Data;
 import com.example.p2p.bean.User;
-import com.example.p2p.callback.IBroadcastCallback;
+import com.example.p2p.callback.IUserCallback;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IDialogCallback;
-import com.example.p2p.core.BroadcastManager;
+import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.WifiUtils;
@@ -42,7 +42,7 @@ import butterknife.OnClick;
 
 public class MainActivity extends BaseActivity {
 
-    @BindView(R.id.rv_main)
+    @BindView(R.id.rv_user)
     RecyclerView rvMain;
     @BindView(R.id.tv_title)
     TextView tvTitle;
@@ -57,7 +57,7 @@ public class MainActivity extends BaseActivity {
     private static final int REQUEST_SOCKET_STATE = 0x000;
     private static final int REQUEST_WIFI_ENABLE = 0x001;
 
-    private RvMainAdapter mRvMainAdapter;
+    private RvUsersAdapter mRvMainAdapter;
     private StatusView mStatusView;
     private GotoWifiSettingsDialog mGotoWifiSettingsDialog;
     private ConnectingDialog mConnectingDialog;
@@ -82,7 +82,7 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
-        BroadcastManager.getInstance().exit();
+        OnlineUserManager.getInstance().exit();
         super.onDestroy();
     }
 
@@ -116,18 +116,18 @@ public class MainActivity extends BaseActivity {
         ivBack.setVisibility(View.GONE);
         tvTitle.setText(getString(R.string.main_tlTitle));
         mStatusView = Loading.beginBuildStatusView(this)
-                .warp(findViewById(R.id.rv_main))
+                .warp(findViewById(R.id.rv_user))
                 .addLoadingView(R.layout.loading_view)
                 .addEmptyView(R.layout.empty_view)
                 .create();
         mOnlineUsers = new ArrayList<>();
         rvMain.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-        mRvMainAdapter = new RvMainAdapter(mOnlineUsers, R.layout.item_main);
+        mRvMainAdapter = new RvUsersAdapter(mOnlineUsers, R.layout.item_user);
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         mConnectingDialog = new ConnectingDialog();
         mStatusView.showLoading();
-        BroadcastManager.getInstance().getOnlineUsers();
+        OnlineUserManager.getInstance().getOnlineUsers();
     }
 
     @Override
@@ -171,7 +171,7 @@ public class MainActivity extends BaseActivity {
             }
         });
         //广播回调监听
-        BroadcastManager.getInstance().setBroadcastCallback(new IBroadcastCallback() {
+        OnlineUserManager.getInstance().setUserCallback(new IUserCallback() {
             @Override
             public void onOnlineUsers(List<User> users) {
                 mOnlineUsers.clear();
@@ -217,8 +217,8 @@ public class MainActivity extends BaseActivity {
      */
     private void refreshOnlineUsers() {
         mStatusView.showLoading();
-        BroadcastManager.getInstance().broadcast(new Data(0));
-        BroadcastManager.getInstance().getOnlineUsers();
+        //OnlineUserManager.getInstance().login(new Data(0));
+        OnlineUserManager.getInstance().getOnlineUsers();
     }
 
     /**

@@ -10,7 +10,7 @@ public class Mes<T>{
 
     public int id;
     public MesType mesType;
-    public String name;
+    public String userIp;
     public T data;
 
     public Mes(MesType type){
@@ -21,9 +21,9 @@ public class Mes<T>{
         this(type, "", data);
     }
 
-    public Mes(MesType type, String name, T data) {
+    public Mes(MesType type, String userIp, T data) {
         this.mesType = type;
-        this.name = name;
+        this.userIp = userIp;
         this.data = data;
     }
 
@@ -32,7 +32,7 @@ public class Mes<T>{
     public String toString() {
         return "Mes[id = " + id
                 + ", type = " + mesType
-                + ", name = " + name
+                + ", userIp = " + userIp
                 +  ", data = " + data
                 + "]";
     }

@@ -1,5 +1,7 @@
 package com.example.p2p.adapter;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -15,25 +17,16 @@ import java.util.List;
  * 主界面用户列表的adapter
  * Created by 陈健宇 at 2019/6/7
  */
-public class RvMainAdapter extends BaseAdapter<User> {
+public class RvUsersAdapter extends BaseAdapter<User> {
 
-    public RvMainAdapter(List<User> datas, int layoutId) {
+    public RvUsersAdapter(List<User> datas, int layoutId) {
         super(datas, layoutId);
     }
 
     @Override
     protected void onBindView(BaseViewHolder holder, User item) {
+        //Bitmap bitmap = BitmapFactory.decodeByteArray(item.getImageBytes(), 0, item.getImageBytes().length);
         holder.setText(R.id.tv_name, item.getName() + " - " + item.getIp());
-    }
-
-    public List<User> wrap(List<String> list){
-        List<User> userList = new ArrayList<>();
-        for(int i = 0; i < list.size(); i++){
-            String name = "用户" + (i + 1);
-            User user = new User(name, list.get(i));
-            userList.add(user);
-        }
-        return userList;
     }
 
 }

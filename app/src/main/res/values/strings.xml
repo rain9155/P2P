@@ -20,6 +20,10 @@
 
     <string name="toast_wifi_noconnect">没有连接上Wifi</string>
     <string name="toast_wifi_connecting">"wifi连接中..."</string>
+    <string name="toast_permission_rejected">"授予相关权限才能使用相应功能哦！"</string>
+    <string name="toast_open_image_fail">"获取图片失败！"</string>
+    <string name="toast_login_success">登陆成功</string>
+    <string name="toast_login_fail">登陆失败</string>
 
     <string name="dialog_connecting">连接中...</string>
     <string name="dialog_wifi_settings">没有连接上Wifi，是否前往设置中心打开并连接上一个Wifi?</string>

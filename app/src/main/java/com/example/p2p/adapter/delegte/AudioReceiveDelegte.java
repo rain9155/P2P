@@ -1,5 +1,7 @@
 package com.example.p2p.adapter.delegte;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +11,9 @@ import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
 import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Mes;
+import com.example.p2p.bean.User;
 import com.example.p2p.config.Constant;
+import com.example.p2p.core.OnlineUserManager;
 
 /**
  * 接收音频的item
@@ -31,7 +35,8 @@ public class AudioReceiveDelegte extends MutiItemDelegate<Mes> {
     @Override
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
         Audio audio = (Audio) items.data;
-        holder.setText(R.id.tv_duration, audio.duartion + "'")
-                .setText(R.id.tv_name, items.name);
+//        User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
+//        Bitmap bitmap = BitmapFactory.decodeByteArray(user.getImageBytes(), 0, user.getImageBytes().length);
+        holder.setText(R.id.tv_duration, audio.duartion + "'");
     }
 }

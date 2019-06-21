@@ -14,11 +14,10 @@ import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.utils.LogUtils;
 
-import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
-import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -69,6 +68,7 @@ public class ConnectManager {
                     mSendMessgeCallback.onSendFail((Mes<?>) msg.obj);
                     break;
                 case TYPE_RECONNECTION_SUCCESS:
+
                     break;
                 default:
                     break;
@@ -116,7 +116,7 @@ public class ConnectManager {
                     if(isClose(ipAddress)){
                         LogUtils.d(TAG, "一个用户加入聊天，socket = " + socket);
                         //每个客户端连接用一个线程不断的读
-                        User user = BroadcastManager.getInstance().getOnlineUser(ipAddress);
+                        User user = OnlineUserManager.getInstance().getOnlineUser(ipAddress);
                         ReceiveThread receiveThread = new ReceiveThread(socket, user);
                         //缓存客户端的连接
                         mClients.put(ipAddress, socket);
@@ -162,7 +162,7 @@ public class ConnectManager {
                 if(mConnectCallback != null){
                     mHandler.obtainMessage(TYPE_CONNECTION_SUCCESS, targetIp).sendToTarget();
                 }
-                User user = BroadcastManager.getInstance().getOnlineUser(targetIp);
+                User user = OnlineUserManager.getInstance().getOnlineUser(targetIp);
                 ReceiveThread receiveThread = new ReceiveThread(socket, user);
                 mClients.put(targetIp, socket);
                 mExecutor.execute(receiveThread);
@@ -177,33 +177,12 @@ public class ConnectManager {
     }
 
     /**
-     * 根据给定的ip重新建立Socket连接
-     * @param targetIp 客户端ip
-     */
-    public void reConnect(String targetIp){
-        mExecutor.execute(() -> {
-            try {
-                Socket socket = new Socket();
-                SocketAddress socketAddress = new InetSocketAddress(targetIp, mPort);
-                socket.connect(socketAddress, 3000);
-                Log.d(TAG, "重新连接targetIp = " + targetIp + "成功");
-                mClients.put(targetIp, socket);
-                mHandler.obtainMessage(TYPE_RECONNECTION_SUCCESS, targetIp).sendToTarget();
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.d(TAG, "重新连接targetIp = " + targetIp + "失败，e = " + e.getMessage());
-            }
-        });
-    }
-
-    /**
      * 发送消息给给定ip的客户端
      * @param targetIp 客户端的ip
      */
     public void sendMessage(String targetIp, Mes<?> message){
         if(!isContains(targetIp)){
             LogUtils.d(TAG, "客户端连接已经断开");
-            //reConnect(targetIp);
             return;
         }
         final Socket socket = mClients.get(targetIp);
@@ -222,8 +201,7 @@ public class ConnectManager {
                     mHandler.obtainMessage(TYPE_SEND_FAIL, message).sendToTarget();
                 }
             }
-        });
-    }
+        });    }
 
     /**
      * 从客户端集合中移除一个连接
@@ -293,6 +271,7 @@ public class ConnectManager {
         this.mSendMessgeCallback = callback;
     }
 
+
     /**
      * 根据消息类型发送消息
      */
@@ -301,6 +280,9 @@ public class ConnectManager {
         MesType type = message.mesType;
         try {
             switch (type){
+                case USER:
+                    User user = (User) message.data;
+                    break;
                 case TEXT:
                     String text = (String)message.data;
                     os.writeInt(type.ordinal());
@@ -311,9 +293,13 @@ public class ConnectManager {
                     Audio audio = (Audio) message.data;
                     os.writeInt(type.ordinal());
                     os.writeInt(audio.duartion);
-                    os.writeInt(audio.bytes.length);
-                    os.write(audio.bytes);
-                    Log.d(TAG, "发送音频消息成功， message = " + audio.bytes);
+                    byte[] bytes;
+                    try(InputStream in = new FileInputStream(audio.path)){
+                        bytes = new byte[in.available()];
+                        in.read(bytes);
+                    }
+                    os.writeInt(bytes.length);
+                    os.write(bytes);
                     break;
                 default:
                     break;

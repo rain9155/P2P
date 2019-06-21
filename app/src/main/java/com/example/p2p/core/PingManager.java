@@ -120,11 +120,11 @@ public class PingManager {
             process = mRuntime.exec(pingArgs + ipAddress);
             exit = process.waitFor();
             if(exit == 0){
-                LogUtils.d(TAG, "ping Ip成功， ip = " + ipAddress);
+                LogUtils.d(TAG, "ping Ip成功， userIp = " + ipAddress);
             }else if(exit == 1){
-                LogUtils.d(TAG, "ping Ip失败， ip = " + ipAddress + ", exit = " + exit);
+                LogUtils.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
             }else if(exit == 2){
-                LogUtils.d(TAG, "ping Ip失败， ip = " + ipAddress + ", exit = " + exit);
+                LogUtils.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

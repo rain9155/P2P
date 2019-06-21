@@ -8,7 +8,7 @@ import java.util.List;
  * 用户登陆、退出的回调接口
  * Created by 陈健宇 at 2019/6/11
  */
-public interface IBroadcastCallback {
+public interface IUserCallback {
     void onOnlineUsers(List<User> users);
     void onJoin(User user);
     void onExit(User user);

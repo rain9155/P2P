@@ -63,7 +63,6 @@ public class AudioTextView extends AppCompatTextView {
             mAudioTextView.setBackgroundColor(Color.TRANSPARENT);
             mStartRecordTime = System.currentTimeMillis();
             startRecord();
-            LogUtils.d(TAG, "长按");
             return false;
         });
     }
@@ -71,7 +70,7 @@ public class AudioTextView extends AppCompatTextView {
     private void init() {
         //初始化dialog及其资源
          View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_audio, null);
-         mDialog = new AlertDialog.Builder(getContext(), R.style.dialog_audio_style)
+         mDialog = new AlertDialog.Builder(getContext(), R.style.DialogAudioStyle)
                 .setView(view)
                 .setCancelable(false)
                 .create();

@@ -12,6 +12,9 @@ public class Constant {
     public static final String EXTRA_TARGET_USER = "targetUser";
 
     public static final String FILE_NAME_USER = "user";
+    public static final String FILE_NAME_USER_IMAGE = "userImage.png";
+    public static final String FILE_PATH_USER_IMAGE = FileUtils.getFilePath(App.getContext(), "user/");
+    public static final String FILE_USER_IMAGE = FILE_PATH_USER_IMAGE + FILE_NAME_USER_IMAGE;
     public static final String FILE_PATH_SEND_AUDIO = FileUtils.getFilePath(App.getContext(), "sendAudio/");
     public static final String FILE_PATH_RECEIVE_AUDIO = FileUtils.getFilePath(App.getContext(), "receiveAudio/");
 

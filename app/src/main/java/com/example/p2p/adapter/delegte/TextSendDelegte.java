@@ -9,6 +9,7 @@ import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.config.Constant;
+import com.example.p2p.utils.FileUtils;
 
 /**
  * 发送消息的item
@@ -31,6 +32,6 @@ public class TextSendDelegte extends MutiItemDelegate<Mes> {
     @Override
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
         holder.setText(R.id.tv_message, (String) items.data)
-                .setText(R.id.tv_name, items.name);
+                .setImageBitmap(R.id.iv_face, FileUtils.getUserBitmap());
     }
 }

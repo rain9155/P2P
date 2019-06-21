@@ -11,28 +11,63 @@ import java.io.Serializable;
  */
 public class User implements Serializable {
 
-    private String name;
-    private String ip;
+    private String mName;
+    private String mIp;
+    private String mImagePath;
+    private int mImageBytesLen;
+    private byte[] mBytes;
 
-    public User(String name, String ip) {
-        this.name = name;
-        this.ip = ip;
+
+    public User(String name, String ip, String imagePath) {
+       this(name, ip, imagePath, 0, null);
+    }
+
+    public User(String name, String ip, String imagePath, int imageBytesLen, byte[] bytes) {
+        this.mName = name;
+        this.mIp = ip;
+        this.mImagePath = imagePath;
+        this.mImageBytesLen = imageBytesLen;
+        this.mBytes = bytes;
+    }
+
+    public String getImagePath() {
+        return mImagePath == null ? "" : mImagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        mImagePath = imagePath;
+    }
+
+    public int getImageBytesLen() {
+        return mImageBytesLen;
+    }
+
+    public void setImageBytesLen(int imageBytesLen) {
+        mImageBytesLen = imageBytesLen;
+    }
+
+    public byte[] getBytes() {
+        return mBytes;
+    }
+
+    public void setBytes(byte[] bytes) {
+        mBytes = bytes;
     }
 
     public String getName() {
-        return name == null ? "" : name;
+        return mName == null ? "" : mName;
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.mName = name;
     }
 
     public String getIp() {
-        return ip == null ? "" : ip;
+        return mIp == null ? "" : mIp;
     }
 
     public void setIp(String ip) {
-        this.ip = ip;
+        this.mIp = ip;
     }
 
     @Override
@@ -41,12 +76,16 @@ public class User implements Serializable {
         if(obj == null || obj.getClass() != this.getClass()) return false;
         User user = (User)obj;
         if(!this.getName().equals(user.getName())) return false;
-        return this.ip.equals(user.getIp());
+        return this.mIp.equals(user.getIp());
     }
 
     @NonNull
     @Override
     public String toString() {
-        return "User[name = " + name + ", ip = " + ip + "]";
+        return "User[name = " + mName
+                + ", ip = " + mIp
+                + ", imagePath = " + mImagePath
+                + ", imageBytesLen = " + mImageBytesLen
+                + "]";
     }
 }

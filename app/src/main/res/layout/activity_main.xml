@@ -10,7 +10,7 @@
     <include layout="@layout/common_toolbar"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_main"
+        android:id="@+id/rv_user"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
