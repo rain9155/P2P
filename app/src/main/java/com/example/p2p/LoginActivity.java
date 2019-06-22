@@ -14,12 +14,9 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.p2p.bean.Data;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IDialogCallback;
-import com.example.p2p.callback.ILoginCallback;
 import com.example.p2p.config.Constant;
-import com.example.p2p.core.ConnectManager;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.utils.CommonUtils;
 import com.example.p2p.utils.FileUtils;
@@ -37,7 +34,6 @@ import com.example.utils.FileUtil;
 import com.example.utils.ToastUtil;
 import com.theartofdev.edmodo.cropper.CropImage;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -152,12 +148,6 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        OnlineUserManager.getInstance().setLoginCallback(null);
-        super.onDestroy();
-    }
-
     private User saveUserMessage() {
         String locIp = IpUtils.getLocIpAddress();
         String name = edInput.getText().toString().trim();
@@ -171,29 +161,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goMainActivity(User restoreUser) {
-        byte[] imageBytes = null;
-        try(InputStream in = new FileInputStream(Constant.FILE_USER_IMAGE)){
-            restoreUser.setImageBytesLen(in.available());
-            imageBytes = new byte[in.available()];
-            in.read(imageBytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-            LogUtils.e(TAG, "获取头像图片失败， e = " + e.getMessage());
-        }
-        OnlineUserManager.getInstance().setLoginCallback(new ILoginCallback() {
-            @Override
-            public void onSuccess() {
-                ToastUtil.showToast(LoginActivity.this, getString(R.string.toast_login_success));
-                //OnlineUserManager.getInstance().sendUserImage(bytes);
-            }
-
-            @Override
-            public void onFail() {
-                ToastUtil.showToast(LoginActivity.this, getString(R.string.toast_login_fail));
-            }
-        });
+        byte[] imageBytes = FileUtils.getImageBytes(restoreUser.getImagePath());
+        restoreUser.setImageBytesLen(imageBytes.length);
         OnlineUserManager.getInstance().login(restoreUser, imageBytes);
-//        MainActivity.startActivity(this);
-//        finish();
+        MainActivity.startActivity(this);
+        finish();
     }
 }

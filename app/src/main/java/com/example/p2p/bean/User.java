@@ -17,7 +17,6 @@ public class User implements Serializable {
     private int mImageBytesLen;
     private byte[] mBytes;
 
-
     public User(String name, String ip, String imagePath) {
        this(name, ip, imagePath, 0, null);
     }

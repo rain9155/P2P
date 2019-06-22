@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * 文件操作类
@@ -61,11 +62,63 @@ public class FileUtils {
      * @param bitmap 图片
      */
     public static void saveUserBitmap(Bitmap bitmap){
-        BufferedOutputStream bufferedOutputStream = null;
-        FileOutputStream fileOutputStream = null;
         makeDirs(Constant.FILE_PATH_USER_IMAGE);
         File file = new File(Constant.FILE_USER_IMAGE);
-        if(!file.exists()){
+        saveBitmap(bitmap, file);
+    }
+
+    /**
+     * 获得用户图片
+     */
+    public static Bitmap getUserBitmap(){
+        return BitmapFactory.decodeFile(Constant.FILE_USER_IMAGE);
+    }
+
+    /**
+     * 获得用户图片流
+     */
+    public static byte[] getImageBytes(String imagePath){
+        byte[] imageBytes = new byte[0];
+        try(InputStream in = new FileInputStream(imagePath)){
+            imageBytes = new byte[in.available()];
+            in.read(imageBytes);
+            return imageBytes;
+        } catch (IOException e) {
+            e.printStackTrace();
+            LogUtils.e(TAG, "获取头像图片失败， e = " + e.getMessage());
+        }
+        return imageBytes;
+    }
+
+    /**
+     * 保存在线用户图片
+     * @param bitmap 图片
+     * @param name 用户名
+     * @return 文件路径
+     */
+    public static String saveOnlineUserBitmap(Bitmap bitmap, String name){
+        String path = Constant.FILE_PATH_ONLINE_USER + name + File.separator + "image" + File.separator;
+        makeDirs(path);
+        String fileName = path + "onLineUserImage.png";
+        File file = new File(fileName);
+        saveBitmap(bitmap, file);
+        return fileName;
+    }
+
+    /**
+     * 获得保存的在线用户图片
+     * @param userName 用户名
+     * @return 在线用户图片
+     */
+    public static Bitmap getOnlineUserBitmap(String userName){
+        String fileName = Constant.FILE_PATH_ONLINE_USER + userName + File.separator + "image" + File.separator + "onLineUserImage.png";
+        return BitmapFactory.decodeFile(fileName);
+    }
+
+    private static void saveBitmap(Bitmap bitmap, File file) {
+        FileOutputStream fileOutputStream;
+        BufferedOutputStream bufferedOutputStream;
+        if (!file.exists()) {
             try {
                 file.createNewFile();
             } catch (IOException e) {
@@ -73,7 +126,7 @@ public class FileUtils {
                 LogUtils.e(TAG, "创建文件失败， e = " + e.getMessage());
             }
         }
-        try{
+        try {
             fileOutputStream = new FileOutputStream(file);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
             bitmap.compress(Bitmap.CompressFormat.PNG, 80, bufferedOutputStream);
@@ -85,14 +138,5 @@ public class FileUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
-
-    /**
-     * 获得用户图片
-     */
-    public static Bitmap getUserBitmap(){
-        return BitmapFactory.decodeFile(Constant.FILE_USER_IMAGE);
-    }
-
 }

@@ -13,6 +13,7 @@ import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.User;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
+import com.example.p2p.utils.FileUtils;
 
 /**
  * 接受消息的item
@@ -32,8 +33,7 @@ public class TextReceiveDelegte extends MutiItemDelegate<Mes>{
 
     @Override
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
-//        User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
-//        Bitmap bitmap = BitmapFactory.decodeByteArray(user.getImageBytes(), 0, user.getImageBytes().length);
-        holder.setText(R.id.tv_message, (String) items.data);
+        holder.setText(R.id.tv_message, (String) items.data)
+                .setImageBitmap(R.id.iv_face, FileUtils.getOnlineUserBitmap(items.userIp));
     }
 }

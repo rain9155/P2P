@@ -14,6 +14,7 @@ import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.User;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
+import com.example.p2p.utils.FileUtils;
 
 /**
  * 接收音频的item
@@ -35,8 +36,8 @@ public class AudioReceiveDelegte extends MutiItemDelegate<Mes> {
     @Override
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
         Audio audio = (Audio) items.data;
-//        User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
-//        Bitmap bitmap = BitmapFactory.decodeByteArray(user.getImageBytes(), 0, user.getImageBytes().length);
-        holder.setText(R.id.tv_duration, audio.duartion + "'");
+        holder.setText(R.id.tv_duration, audio.duartion + "'")
+                .setImageBitmap(R.id.iv_face, FileUtils.getOnlineUserBitmap(items.userIp));
+
     }
 }

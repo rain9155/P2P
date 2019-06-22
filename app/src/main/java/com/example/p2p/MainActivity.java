@@ -217,7 +217,6 @@ public class MainActivity extends BaseActivity {
      */
     private void refreshOnlineUsers() {
         mStatusView.showLoading();
-        //OnlineUserManager.getInstance().login(new Data(0));
         OnlineUserManager.getInstance().getOnlineUsers();
     }
 
