@@ -19,6 +19,7 @@ import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.content.ContextCompat;
 
 import com.example.p2p.R;
+import com.example.p2p.bean.User;
 import com.example.p2p.callback.IRecordedCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.MediaPlayerManager;
@@ -50,7 +51,7 @@ public class AudioTextView extends AppCompatTextView {
     private String mFileName;
     private long mStartRecordTime;
     private IRecordedCallback mRecordedCallback;
-    private int mRepeatCount = 0;
+    private User mTargetUser;
 
     public AudioTextView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -96,7 +97,6 @@ public class AudioTextView extends AppCompatTextView {
                 this.setText(getContext().getString(R.string.chat_tvAudio_undo));
                 break;
             case MotionEvent.ACTION_MOVE:
-                mRepeatCount = 0;
                 if(isRecording){
                     if(curY < mBoundary){
                         this.setText(getContext().getString(R.string.chat_tvAudio_cancel));
@@ -158,8 +158,8 @@ public class AudioTextView extends AppCompatTextView {
         //设置音频的采样率
         mMediaRecorder.setAudioSamplingRate(10000);
         //设置音频文件的输出路径
-        FileUtils.makeDirs(Constant.FILE_PATH_SEND_AUDIO);
-        mFileName = Constant.FILE_PATH_SEND_AUDIO + System.currentTimeMillis() + ".mp3";
+        String audioPath = FileUtils.getAudioPath(mTargetUser.getIp(), Constant.TYPE_ITEM_SEND_AUDIO);
+        mFileName = audioPath + System.currentTimeMillis() + ".mp3";
         File file = new File(mFileName);
         mMediaRecorder.setOutputFile(mFileName);
         LogUtils.d(TAG, "初始化录音");
@@ -274,7 +274,8 @@ public class AudioTextView extends AppCompatTextView {
         LogUtils.d(TAG, "释放资源");
     }
 
-    public void setRecordedCallback(IRecordedCallback callback){
+    public void setRecordedCallback(User user, IRecordedCallback callback){
+        mTargetUser = user;
         this.mRecordedCallback = callback;
     }
 }

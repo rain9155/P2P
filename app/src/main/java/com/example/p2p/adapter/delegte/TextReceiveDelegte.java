@@ -33,7 +33,9 @@ public class TextReceiveDelegte extends MutiItemDelegate<Mes>{
 
     @Override
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
+        User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
+        Bitmap bitmap = BitmapFactory.decodeFile(user.getImagePath());
         holder.setText(R.id.tv_message, (String) items.data)
-                .setImageBitmap(R.id.iv_face, FileUtils.getOnlineUserBitmap(items.userIp));
+                .setImageBitmap(R.id.iv_face, bitmap);
     }
 }

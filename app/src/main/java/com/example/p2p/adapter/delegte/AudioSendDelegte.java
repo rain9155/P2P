@@ -7,17 +7,23 @@ import android.view.ViewGroup;
 import com.example.baseadapter.BaseViewHolder;
 import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
+import com.example.p2p.app.App;
 import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Mes;
+import com.example.p2p.bean.User;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.utils.FileUtils;
+import com.example.utils.FileUtil;
 
 /**
  * 音频发送的item
  * Created by 陈健宇 at 2019/6/14
  */
 public class AudioSendDelegte extends MutiItemDelegate<Mes> {
+
+    private User mUser;
+
     @Override
     protected boolean isForViewType(Mes items, int position) {
         return items.id == Constant.TYPE_ITEM_SEND_AUDIO;

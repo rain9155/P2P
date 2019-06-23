@@ -22,6 +22,8 @@ import com.example.p2p.utils.FileUtils;
  */
 public class AudioReceiveDelegte extends MutiItemDelegate<Mes> {
 
+
+
     @Override
     protected boolean isForViewType(Mes items, int position) {
         return items.id == Constant.TYPE_ITEM_RECEIVE_AUDIO;
@@ -36,8 +38,10 @@ public class AudioReceiveDelegte extends MutiItemDelegate<Mes> {
     @Override
     protected void onBindView(BaseViewHolder holder, Mes items, int position) {
         Audio audio = (Audio) items.data;
+        User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
+        Bitmap bitmap = BitmapFactory.decodeFile(user.getImagePath());
         holder.setText(R.id.tv_duration, audio.duartion + "'")
-                .setImageBitmap(R.id.iv_face, FileUtils.getOnlineUserBitmap(items.userIp));
+                .setImageBitmap(R.id.iv_face, bitmap);
 
     }
 }

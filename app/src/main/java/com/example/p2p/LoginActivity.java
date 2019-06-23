@@ -53,6 +53,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final int REQUEST_WIFI_CODE = 0X000;
     private Bitmap mUserBitmap;
+    private String mImagePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,10 +63,10 @@ public class LoginActivity extends AppCompatActivity {
         CommonUtils.darkMode(this, true);
 
         User restoreUser = (User) FileUtil.restoreObject(LoginActivity.this, Constant.FILE_NAME_USER);
-        if (restoreUser != null) {
-            goMainActivity(restoreUser);
-            return;
-        }
+//        if (restoreUser != null) {
+//            goMainActivity(restoreUser);
+//            return;
+//        }
 
         GotoWifiSettingsDialog gotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         gotoWifiSettingsDialog.setDialogCallback(new IDialogCallback() {
@@ -136,8 +137,8 @@ public class LoginActivity extends AppCompatActivity {
                 CropImage.ActivityResult result = CropImage.getActivityResult(data);
                 Uri resultUri = result.getUri();
                 try (InputStream in = this.getContentResolver().openInputStream(resultUri)){
-                   mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.5f,  0.5f);
-                   FileUtils.saveUserBitmap(mUserBitmap);
+                   mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.1f,  0.1f);
+                   mImagePath = FileUtils.saveUserBitmap(mUserBitmap);
                    ivIcon.setImageBitmap(mUserBitmap);
                 }catch (IOException e) {
                     e.printStackTrace();
@@ -153,9 +154,9 @@ public class LoginActivity extends AppCompatActivity {
         String name = edInput.getText().toString().trim();
         if(mUserBitmap == null){
             mUserBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_user_image);
-            FileUtils.saveUserBitmap(mUserBitmap);
+            mImagePath = FileUtils.saveUserBitmap(mUserBitmap);
         }
-        User user = new User(name, locIp, Constant.FILE_USER_IMAGE);
+        User user = new User(name, locIp, mImagePath);
         FileUtil.saveObject(LoginActivity.this, Constant.FILE_NAME_USER, user);
         return user;
     }
@@ -163,8 +164,9 @@ public class LoginActivity extends AppCompatActivity {
     private void goMainActivity(User restoreUser) {
         byte[] imageBytes = FileUtils.getImageBytes(restoreUser.getImagePath());
         restoreUser.setImageBytesLen(imageBytes.length);
+        restoreUser.setImagePath(null);
         OnlineUserManager.getInstance().login(restoreUser, imageBytes);
-        MainActivity.startActivity(this);
-        finish();
+//        MainActivity.startActivity(this);
+//        finish();
     }
 }

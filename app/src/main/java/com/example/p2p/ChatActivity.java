@@ -44,6 +44,7 @@ import com.example.p2p.config.Constant;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.db.EmojiDao;
+import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.SimpleTextWatchListener;
 import com.example.p2p.widget.customView.AudioTextView;
@@ -148,8 +149,8 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         mMessageList.clear();
-        FileUtil.deleteDir(new File(Constant.FILE_PATH_SEND_AUDIO));
-        FileUtil.deleteDir(new File(Constant.FILE_PATH_RECEIVE_AUDIO));
+        FileUtil.deleteDir(new File(FileUtils.getAudioPath(mTargetUser.getIp(), Constant.TYPE_ITEM_RECEIVE_AUDIO)));
+        FileUtil.deleteDir(new File(FileUtils.getAudioPath(mUser.getIp(), Constant.TYPE_ITEM_SEND_AUDIO)));
         super.onDestroy();
     }
 
@@ -337,7 +338,7 @@ public class ChatActivity extends BaseActivity {
             }
         });
         //录音结束回调
-        tvAudio.setRecordedCallback(new IRecordedCallback() {
+        tvAudio.setRecordedCallback(mTargetUser, new IRecordedCallback() {
             @Override
             public void onFinish(String audioPath, int duration) {
                 sendAudio(audioPath, duration);

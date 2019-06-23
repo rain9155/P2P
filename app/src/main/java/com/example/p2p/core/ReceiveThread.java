@@ -108,19 +108,8 @@ public class ReceiveThread implements Runnable{
                     int len = in.readInt();
                     byte[] bytes = new byte[len];
                     in.readFully(bytes);
-                    FileUtils.makeDirs(Constant.FILE_PATH_RECEIVE_AUDIO);
-                    String path = Constant.FILE_PATH_RECEIVE_AUDIO + System.currentTimeMillis() + ".mp3";
-                    File file = new File(path);
-                    if(!file.exists()){
-                        file.createNewFile();
-                    }
-                    try(
-                        FileOutputStream fileOutputStream = new FileOutputStream(file);
-                        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
-                    ){
-                        bufferedOutputStream.write(bytes);
-                    }
-                    Audio audio = new Audio(duration, path);
+                    String audioPath = saveReceiveAudio(bytes);
+                    Audio audio = new Audio(duration, audioPath);
                     mes = new Mes<>(MesType.AUDIO, mUser.getIp(), audio);
                     break;
                 default:
@@ -166,4 +155,24 @@ public class ReceiveThread implements Runnable{
         return true;
     }
 
+
+    /**
+     * 保存接收到的音频
+     * @throws IOException
+     */
+    public String saveReceiveAudio(byte[] bytes) throws IOException {
+        String audioPath = FileUtils.getAudioPath(mUser.getIp(), Constant.TYPE_ITEM_RECEIVE_AUDIO);
+        String path = audioPath + System.currentTimeMillis() + ".mp3";
+        File file = new File(path);
+        if(!file.exists()){
+            file.createNewFile();
+        }
+        try(
+                FileOutputStream fileOutputStream = new FileOutputStream(file);
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
+        ){
+            bufferedOutputStream.write(bytes);
+        }
+        return path;
+    }
 }

@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
 
+import com.example.p2p.bean.User;
 import com.example.p2p.config.Constant;
 import com.example.utils.FileUtil;
 
@@ -61,33 +62,20 @@ public class FileUtils {
      * 保存用户图片
      * @param bitmap 图片
      */
-    public static void saveUserBitmap(Bitmap bitmap){
-        makeDirs(Constant.FILE_PATH_USER_IMAGE);
-        File file = new File(Constant.FILE_USER_IMAGE);
+    public static String saveUserBitmap(Bitmap bitmap){
+        makeDirs(Constant.FILE_PATH_USER);
+        String imagePath = Constant.FILE_PATH_USER + "userImage.png";
+        File file = new File(imagePath);
         saveBitmap(bitmap, file);
+        return imagePath;
     }
 
     /**
-     * 获得用户图片
+     * 返回用户图片
      */
     public static Bitmap getUserBitmap(){
-        return BitmapFactory.decodeFile(Constant.FILE_USER_IMAGE);
-    }
-
-    /**
-     * 获得用户图片流
-     */
-    public static byte[] getImageBytes(String imagePath){
-        byte[] imageBytes = new byte[0];
-        try(InputStream in = new FileInputStream(imagePath)){
-            imageBytes = new byte[in.available()];
-            in.read(imageBytes);
-            return imageBytes;
-        } catch (IOException e) {
-            e.printStackTrace();
-            LogUtils.e(TAG, "获取头像图片失败， e = " + e.getMessage());
-        }
-        return imageBytes;
+        String imagePath = Constant.FILE_PATH_USER + "userImage.png";
+        return BitmapFactory.decodeFile(imagePath);
     }
 
     /**
@@ -106,13 +94,36 @@ public class FileUtils {
     }
 
     /**
-     * 获得保存的在线用户图片
-     * @param userName 用户名
-     * @return 在线用户图片
+     * 获得相应用户存放音频的地方
+     * @param ip 用户ip
+     * @param type item类型
+     * @return 存放音频文件夹路径
      */
-    public static Bitmap getOnlineUserBitmap(String userName){
-        String fileName = Constant.FILE_PATH_ONLINE_USER + userName + File.separator + "image" + File.separator + "onLineUserImage.png";
-        return BitmapFactory.decodeFile(fileName);
+    public static String getAudioPath(String ip, int type){
+        String audioPath;
+        if(type == Constant.TYPE_ITEM_RECEIVE_AUDIO){
+            audioPath =  Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "receiveAudio" + File.separator;
+        }else {
+            audioPath =  Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "sendAudio" + File.separator;
+        }
+        makeDirs(audioPath);
+        return audioPath;
+    }
+
+    /**
+     * 获得用户图片流
+     */
+    public static byte[] getImageBytes(String imagePath){
+        byte[] imageBytes = new byte[0];
+        try(InputStream in = new FileInputStream(imagePath)){
+            imageBytes = new byte[in.available()];
+            in.read(imageBytes);
+            return imageBytes;
+        } catch (IOException e) {
+            e.printStackTrace();
+            LogUtils.e(TAG, "获取头像图片失败， e = " + e.getMessage());
+        }
+        return imageBytes;
     }
 
     private static void saveBitmap(Bitmap bitmap, File file) {
@@ -139,4 +150,5 @@ public class FileUtils {
             e.printStackTrace();
         }
     }
+
 }

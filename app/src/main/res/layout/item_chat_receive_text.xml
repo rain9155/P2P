@@ -11,6 +11,7 @@
         android:id="@+id/iv_face"
         android:layout_width="@dimen/dp_35"
         android:layout_height="@dimen/dp_35"
+        android:scaleType="fitXY"
         app:layout_constraintTop_toTopOf="@+id/rl_message"
         app:layout_constraintLeft_toLeftOf="parent"
         tools:src="@drawable/ic_user_image"/>
