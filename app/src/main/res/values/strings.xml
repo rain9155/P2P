@@ -10,6 +10,7 @@
     <string name="main_tvEmpty">没有用户在线</string>
     <string name="main_connecting_success">连接成功</string>
     <string name="main_connecting_fail">连接失败</string>
+    <string name="main_exit">再按一次退出聊天</string>
 
     <string name="chat_tvAudio_press">按住 说话</string>
     <string name="chat_tvAudio_undo">松开 结束</string>

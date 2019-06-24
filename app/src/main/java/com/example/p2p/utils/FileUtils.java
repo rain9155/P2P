@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
 
+import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.User;
 import com.example.p2p.config.Constant;
 import com.example.utils.FileUtil;
@@ -99,9 +100,9 @@ public class FileUtils {
      * @param type item类型
      * @return 存放音频文件夹路径
      */
-    public static String getAudioPath(String ip, int type){
+    public static String getAudioPath(String ip, ItemType type){
         String audioPath;
-        if(type == Constant.TYPE_ITEM_RECEIVE_AUDIO){
+        if(type == ItemType.RECEIVE_AUDIO){
             audioPath =  Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "receiveAudio" + File.separator;
         }else {
             audioPath =  Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "sendAudio" + File.separator;

@@ -120,7 +120,7 @@ public class MediaPlayerManager {
             mMediaPlayer.prepare();
         } catch (IOException e) {
             e.printStackTrace();
-            LogUtils.e(TAG, "设置音频文件或准备错误，path = " + path);
+            LogUtils.e(TAG, "设置音频文件或准备错误，imagePath = " + path);
         }
     }
 }

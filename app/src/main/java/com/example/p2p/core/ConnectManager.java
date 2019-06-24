@@ -6,12 +6,14 @@ import android.os.Message;
 import android.util.Log;
 
 import com.example.p2p.bean.Audio;
+import com.example.p2p.bean.Image;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
+import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 
 import java.io.DataOutputStream;
@@ -35,13 +37,13 @@ import java.util.concurrent.Executors;
 public class ConnectManager {
 
     private static final String TAG = ConnectManager.class.getSimpleName();
-    private static ConnectManager sInstance;
+    private static final int PORT = 9155;
+    private static final int MAX_SEND_DATA = 10000;
     private static final int TYPE_CONNECTION_SUCCESS = 0x000;
     private static final int TYPE_CONNECTION_FAIL = 0x001;
     private static final int TYPE_SEND_SUCCESS = 0x002;
     private static final int TYPE_SEND_FAIL = 0x003;
-    private static final int TYPE_RECONNECTION_SUCCESS = 0x004;
-    private static final int TYPE_RECONNECTION_FAIL = 0x005;
+    private static ConnectManager sInstance;
 
     private ServerSocket mServerSocket;
     private Map<String, Socket> mClients;//保存每个Socket连接到ip地址的映射
@@ -49,7 +51,6 @@ public class ConnectManager {
     private volatile IConnectCallback mConnectCallback;
     private volatile ISendMessgeCallback mSendMessgeCallback;
     private ExecutorService mExecutor;
-    private int mPort = 9155;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
@@ -66,9 +67,6 @@ public class ConnectManager {
                     break;
                 case TYPE_SEND_FAIL:
                     mSendMessgeCallback.onSendFail((Mes<?>) msg.obj);
-                    break;
-                case TYPE_RECONNECTION_SUCCESS:
-
                     break;
                 default:
                     break;
@@ -102,8 +100,8 @@ public class ConnectManager {
         new Thread(() -> {
             try {
                 //创建ServerSocket监听，并绑定端口号
-                mServerSocket = new ServerSocket(mPort);
-                LogUtils.d(TAG, "开启服务端监听，端口号 = " + mPort);
+                mServerSocket = new ServerSocket(PORT);
+                LogUtils.d(TAG, "开启服务端监听，端口号 = " + PORT);
             } catch (IOException e) {
                 e.printStackTrace();
                 LogUtils.e(TAG, "绑定端口号失败，e = " + e.getMessage());
@@ -156,7 +154,7 @@ public class ConnectManager {
         mExecutor.execute(() -> {
             try {
                 Socket socket = new Socket();
-                SocketAddress socketAddress = new InetSocketAddress(targetIp, mPort);
+                SocketAddress socketAddress = new InetSocketAddress(targetIp, PORT);
                 socket.connect(socketAddress, 5000);
                 Log.d(TAG, "连接targetIp = " + targetIp + "成功");
                 if(mConnectCallback != null){
@@ -183,6 +181,9 @@ public class ConnectManager {
     public void sendMessage(String targetIp, Mes<?> message){
         if(!isContains(targetIp)){
             LogUtils.d(TAG, "客户端连接已经断开");
+            if(mSendMessgeCallback != null){
+                mHandler.obtainMessage(TYPE_SEND_FAIL, message).sendToTarget();
+            }
             return;
         }
         final Socket socket = mClients.get(targetIp);
@@ -201,7 +202,8 @@ public class ConnectManager {
                     mHandler.obtainMessage(TYPE_SEND_FAIL, message).sendToTarget();
                 }
             }
-        });    }
+        });
+    }
 
     /**
      * 从客户端集合中移除一个连接
@@ -280,9 +282,6 @@ public class ConnectManager {
         MesType type = message.mesType;
         try {
             switch (type){
-                case USER:
-                    User user = (User) message.data;
-                    break;
                 case TEXT:
                     String text = (String)message.data;
                     os.writeInt(type.ordinal());
@@ -293,13 +292,30 @@ public class ConnectManager {
                     Audio audio = (Audio) message.data;
                     os.writeInt(type.ordinal());
                     os.writeInt(audio.duartion);
-                    byte[] bytes;
-                    try(InputStream in = new FileInputStream(audio.path)){
-                        bytes = new byte[in.available()];
-                        in.read(bytes);
+                    byte[] audioBytes;
+                    try(InputStream in = new FileInputStream(audio.audioPath)){
+                        audioBytes = new byte[in.available()];
+                        in.read(audioBytes);
                     }
-                    os.writeInt(bytes.length);
-                    os.write(bytes);
+                    os.writeInt(audioBytes.length);
+                    os.write(audioBytes);
+                    break;
+                case IMAGE:
+                    Image image = (Image) message.data;
+                     byte[] imageBytes = FileUtils.getImageBytes(image.imagePath);
+                     int len  = imageBytes.length;
+                     image.len = len;
+                     os.writeInt(type.ordinal());
+                     os.writeInt(len);
+                     int start = 0;
+                     int end = 0;
+                     while (end < len){
+                         end += MAX_SEND_DATA;
+                         if(end >= len) end = len;
+                         os.write(imageBytes, start, end - start);
+                         LogUtils.d(TAG, "传送图片数据中，offet = " + (end - start) + ", 图片长度， len = " + len);
+                         start = end;
+                     }
                     break;
                 default:
                     break;

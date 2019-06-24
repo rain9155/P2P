@@ -63,10 +63,15 @@ public class LoginActivity extends AppCompatActivity {
         CommonUtils.darkMode(this, true);
 
         User restoreUser = (User) FileUtil.restoreObject(LoginActivity.this, Constant.FILE_NAME_USER);
-//        if (restoreUser != null) {
+        if (restoreUser != null) {
+            mUserBitmap = BitmapFactory.decodeFile(restoreUser.getImagePath());
+            mImagePath = restoreUser.getImagePath();
+            ivIcon.setImageBitmap(mUserBitmap);
+            edInput.setText(restoreUser.getName());
+            btnLogin.setEnabled(true);
 //            goMainActivity(restoreUser);
 //            return;
-//        }
+        }
 
         GotoWifiSettingsDialog gotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         gotoWifiSettingsDialog.setDialogCallback(new IDialogCallback() {
@@ -137,7 +142,7 @@ public class LoginActivity extends AppCompatActivity {
                 CropImage.ActivityResult result = CropImage.getActivityResult(data);
                 Uri resultUri = result.getUri();
                 try (InputStream in = this.getContentResolver().openInputStream(resultUri)){
-                   mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.1f,  0.1f);
+                   mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.2f,  0.2f);
                    mImagePath = FileUtils.saveUserBitmap(mUserBitmap);
                    ivIcon.setImageBitmap(mUserBitmap);
                 }catch (IOException e) {
@@ -166,7 +171,7 @@ public class LoginActivity extends AppCompatActivity {
         restoreUser.setImageBytesLen(imageBytes.length);
         restoreUser.setImagePath(null);
         OnlineUserManager.getInstance().login(restoreUser, imageBytes);
-//        MainActivity.startActivity(this);
-//        finish();
+        MainActivity.startActivity(this);
+        finish();
     }
 }

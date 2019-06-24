@@ -8,15 +8,16 @@ import androidx.annotation.NonNull;
  */
 public class Image {
 
-    public String path;
+    public String imagePath;
+    public int len;
 
     public Image(String path) {
-        this.path = path;
+        this.imagePath = path;
     }
 
     @NonNull
     @Override
     public String toString() {
-        return "Image[path = " + path + "]";
+        return "Image[imagePath = " + imagePath + ", len = " + len + "]";
     }
 }

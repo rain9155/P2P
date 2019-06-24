@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -20,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -34,10 +36,11 @@ import com.example.p2p.adapter.VpEmojiAdapter;
 import com.example.p2p.base.BaseActivity;
 import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Emoji;
+import com.example.p2p.bean.Image;
+import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
-import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.IRecordedCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.config.Constant;
@@ -45,6 +48,7 @@ import com.example.p2p.core.ConnectManager;
 import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.db.EmojiDao;
 import com.example.p2p.utils.FileUtils;
+import com.example.p2p.utils.ImageUtils;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.SimpleTextWatchListener;
 import com.example.p2p.widget.customView.AudioTextView;
@@ -114,6 +118,7 @@ public class ChatActivity extends BaseActivity {
     AudioTextView tvAudio;
 
     private final String TAG = this.getClass().getSimpleName();
+    private final static int REQUEST_CODE_IMAGE = 0x000;
     private ViewGroup mContentView;
     private boolean isKeyboardShowing;
     private int screenHeight;
@@ -149,9 +154,19 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         mMessageList.clear();
-        FileUtil.deleteDir(new File(FileUtils.getAudioPath(mTargetUser.getIp(), Constant.TYPE_ITEM_RECEIVE_AUDIO)));
-        FileUtil.deleteDir(new File(FileUtils.getAudioPath(mUser.getIp(), Constant.TYPE_ITEM_SEND_AUDIO)));
+        FileUtil.deleteDir(new File(FileUtils.getAudioPath(mTargetUser.getIp(), ItemType.RECEIVE_AUDIO)));
+        FileUtil.deleteDir(new File(FileUtils.getAudioPath(mUser.getIp(), ItemType.SEND_AUDIO)));
         super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if(requestCode == REQUEST_CODE_IMAGE){
+            Uri uri = data.getData();
+            LogUtils.d(TAG, "图片类型，uri = " + uri);
+            String path = ImageUtils.getImagePathOnKitKat(this, data);
+            sendImage(path);
+        }
     }
 
     @Override
@@ -242,11 +257,10 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void initCallback() {
         //下拉刷新监听
-        srlChat.setOnRefreshListener(() -> {
-            new Handler().postDelayed(() -> {
-                srlChat.setRefreshing(false);
-            }, 2000);
-        });
+        srlChat.setOnRefreshListener(() ->
+                new Handler().postDelayed(() ->
+                srlChat.setRefreshing(false), 2000)
+        );
         //editText文本变化监听
         edEdit.addTextChangedListener(new SimpleTextWatchListener() {
             @Override
@@ -286,31 +300,22 @@ public class ChatActivity extends BaseActivity {
             }
         });
         //接收消息回调监听
-        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), new IReceiveMessageCallback() {
-
-            @Override
-            public void onReceiveSuccess(Mes<?> message) {
-                message.userIp = mTargetUser.getIp();
-                switch (message.mesType){
-                    case TEXT:
-                        message.id = Constant.TYPE_ITEM_RECEIVE_TEXT;
-                        break;
-                    case AUDIO:
-                        message.id = Constant.TYPE_ITEM_RECEIVE_AUDIO;
-                        break;
-                    default:
-                        LogUtils.d(TAG, "接受消息失败， message = " + message);
-                        break;
-                }
-                mMessageList.add(message);
-                mRvChatAdapter.notifyItemInserted(mMessageList.size());
-                rvChat.smoothScrollToPosition(mMessageList.size() - 1);
+        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), message -> {
+            message.userIp = mTargetUser.getIp();
+            switch (message.mesType){
+                case TEXT:
+                    message.id = ItemType.RECEIVE_TEXT;
+                    break;
+                case AUDIO:
+                    message.id = ItemType.RECEIVE_AUDIO;
+                    break;
+                default:
+                    LogUtils.d(TAG, "接受消息失败， message = " + message);
+                    return;
             }
-
-            @Override
-            public void onReceiveFail(Mes<?> message) {
-                LogUtils.d(TAG, "接受消息失败， message = " + message);
-            }
+            mMessageList.add(message);
+            mRvChatAdapter.notifyItemInserted(mMessageList.size());
+            rvChat.smoothScrollToPosition(mMessageList.size() - 1);
         });
         //发送消息回调监听
         ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
@@ -319,13 +324,17 @@ public class ChatActivity extends BaseActivity {
                 message.userIp = mUser.getIp();
                 switch (message.mesType){
                     case TEXT:
-                        message.id = Constant.TYPE_ITEM_SEND_TEXT;
+                        message.id = ItemType.SEND_TEXT;
                         break;
                     case AUDIO:
-                        message.id = Constant.TYPE_ITEM_SEND_AUDIO;
+                        message.id = ItemType.SEND_AUDIO;
+                        break;
+                    case IMAGE:
+                        message.id = ItemType.SEND_IMAGE;
                         break;
                     default:
-                        break;
+                        LogUtils.d(TAG, "发送消息失败");
+                        return;
                 }
                 mMessageList.add(message);
                 mRvChatAdapter.notifyItemInserted(mMessageList.size());
@@ -356,15 +365,15 @@ public class ChatActivity extends BaseActivity {
                 Audio audio = (Audio) message.data;
                 ImageView imageView = view.findViewById(R.id.iv_message);
                 Drawable drawable = imageView.getBackground();
-                int audioBg = message.id == Constant.TYPE_ITEM_SEND_AUDIO ? R.drawable.ic_audio_right_3 : R.drawable.ic_audio_left_3;
-                int audioBgAnim =  message.id == Constant.TYPE_ITEM_SEND_AUDIO ? R.drawable.anim_item_audio_right : R.drawable.anim_item_audio_left;
+                int audioBg = message.id == ItemType.SEND_AUDIO ? R.drawable.ic_audio_right_3 : R.drawable.ic_audio_left_3;
+                int audioBgAnim =  message.id == ItemType.SEND_AUDIO ? R.drawable.anim_item_audio_right : R.drawable.anim_item_audio_left;
                 if(drawable instanceof AnimationDrawable){
                     MediaPlayerManager.getInstance().stopPlayAudio();
                     imageView.setBackgroundResource(audioBg);
                 }else {
                     if(mLastPosition != -1 && position != mLastPosition){
                         Mes lastMessage = mMessageList.get(mLastPosition);
-                        int lastAudioBg = lastMessage.id == Constant.TYPE_ITEM_SEND_AUDIO ? R.drawable.ic_audio_right_3 : R.drawable.ic_audio_left_3;
+                        int lastAudioBg = lastMessage.id == ItemType.SEND_AUDIO ? R.drawable.ic_audio_right_3 : R.drawable.ic_audio_left_3;
                         LinearLayoutManager manager = (LinearLayoutManager) rvChat.getLayoutManager();
                         View lastView = manager.findViewByPosition(mLastPosition);
                         if(lastView != null){
@@ -374,14 +383,14 @@ public class ChatActivity extends BaseActivity {
                     imageView.setBackgroundResource(audioBgAnim);
                     AnimationDrawable audioAnimDrawable = (AnimationDrawable)imageView.getBackground();
                     audioAnimDrawable.start();
-                    MediaPlayerManager.getInstance().startPlayAudio(audio.path, mp -> imageView.setBackgroundResource(audioBg));
+                    MediaPlayerManager.getInstance().startPlayAudio(audio.audioPath, mp -> imageView.setBackgroundResource(audioBg));
                 }
             }
             mLastPosition = position;
         });
     }
 
-    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyborad})
+    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyborad, R.id.rl_album})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.iv_audio:
@@ -398,6 +407,11 @@ public class ChatActivity extends BaseActivity {
                 break;
             case R.id.btn_send:
                 sendText();
+                break;
+            case R.id.rl_album:
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                startActivityForResult(intent, REQUEST_CODE_IMAGE);
                 break;
             case R.id.iv_back:
                 finish();
@@ -422,7 +436,16 @@ public class ChatActivity extends BaseActivity {
      */
     private void sendAudio(String audioPath, int duration) {
         Audio audio = new Audio(duration, audioPath);
-        Mes<Audio> message = new Mes<Audio>(MesType.AUDIO, audio);
+        Mes<Audio> message = new Mes<>(MesType.AUDIO, audio);
+        ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message);
+    }
+
+    /**
+     * 发送图片消息
+     */
+    private void sendImage(String imagePath) {
+        Image image = new Image(imagePath);
+        Mes<Image> message = new Mes<>(MesType.IMAGE, image);
         ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message);
     }
 
@@ -463,6 +486,10 @@ public class ChatActivity extends BaseActivity {
         int visibility = clMore.isShown() ? View.GONE : View.VISIBLE;
         if (!clMore.isShown() && !isKeyboardShowing) {//如果键盘没有显示，且更多布局也没有显示，只显示更多布局
             clMore.setVisibility(visibility);
+            tvAudio.setVisibility(View.INVISIBLE);
+            edEdit.setVisibility(View.VISIBLE);
+            ivAudio.setVisibility(View.VISIBLE);
+            ivKeyborad.setVisibility(View.INVISIBLE);
             if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         } else if (clMore.isShown() && !isKeyboardShowing) {//如果键盘没有显示，但更多布局显示，隐藏更多布局，显示键盘
             clMore.setVisibility(visibility);
@@ -485,6 +512,11 @@ public class ChatActivity extends BaseActivity {
         int visibility = llEmoji.isShown() ? View.GONE : View.VISIBLE;
         if (!llEmoji.isShown() && !isKeyboardShowing) {
             llEmoji.setVisibility(visibility);
+            tvAudio.setVisibility(View.INVISIBLE);
+            edEdit.setVisibility(View.VISIBLE);
+            edEdit.requestFocus();
+            ivAudio.setVisibility(View.VISIBLE);
+            ivKeyborad.setVisibility(View.INVISIBLE);
             if (clMore.isShown()) clMore.setVisibility(View.GONE);
         } else if (llEmoji.isShown() && !isKeyboardShowing) {
             llEmoji.setVisibility(visibility);

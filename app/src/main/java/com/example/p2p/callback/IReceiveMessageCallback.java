@@ -8,5 +8,4 @@ import com.example.p2p.bean.Mes;
  */
 public interface IReceiveMessageCallback {
     void onReceiveSuccess(Mes<?> message);
-    void onReceiveFail(Mes<?> message);
 }

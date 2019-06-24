@@ -64,6 +64,7 @@ public class MainActivity extends BaseActivity {
     private List<User> mOnlineUsers;
     private WifiConnectionReceiver mNetWorkConnectionReceiver;
     private int mPosition;
+    private long mLastPressTime;
 
     @Override
     protected void onStart() {
@@ -84,6 +85,16 @@ public class MainActivity extends BaseActivity {
     protected void onDestroy() {
         OnlineUserManager.getInstance().exit();
         super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(System.currentTimeMillis() - mLastPressTime < 2000){
+            super.onBackPressed();
+        }else {
+            mLastPressTime = System.currentTimeMillis();
+            ToastUtil.showToast(this, getString(R.string.main_exit));
+        }
     }
 
     @Override
@@ -192,7 +203,6 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onExit(User user) {
-                ConnectManager.getInstance().removeConnect(user.getIp());
                 int index = mOnlineUsers.indexOf(user);
                 mOnlineUsers.remove(user);
                 mRvMainAdapter.notifyItemRemoved(index);

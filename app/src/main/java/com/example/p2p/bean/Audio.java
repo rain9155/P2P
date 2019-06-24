@@ -9,16 +9,16 @@ import androidx.annotation.NonNull;
 public class Audio {
 
     public int duartion;
-    public String path;
+    public String audioPath;
 
     public Audio(int duartion, String path) {
         this.duartion = duartion;
-        this.path = path;
+        this.audioPath = path;
     }
 
     @NonNull
     @Override
     public String toString() {
-        return "Audio[duartion = " + duartion +  ", path = " + path + "]";
+        return "Audio[duartion = " + duartion +  ", imagePath = " + audioPath + "]";
     }
 }

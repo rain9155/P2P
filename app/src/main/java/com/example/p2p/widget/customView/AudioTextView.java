@@ -19,6 +19,7 @@ import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.content.ContextCompat;
 
 import com.example.p2p.R;
+import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IRecordedCallback;
 import com.example.p2p.config.Constant;
@@ -158,9 +159,9 @@ public class AudioTextView extends AppCompatTextView {
         //设置音频的采样率
         mMediaRecorder.setAudioSamplingRate(10000);
         //设置音频文件的输出路径
-        String audioPath = FileUtils.getAudioPath(mTargetUser.getIp(), Constant.TYPE_ITEM_SEND_AUDIO);
+        String audioPath = FileUtils.getAudioPath(mTargetUser.getIp(), ItemType.SEND_AUDIO);
         mFileName = audioPath + System.currentTimeMillis() + ".mp3";
-        File file = new File(mFileName);
+        new File(mFileName);
         mMediaRecorder.setOutputFile(mFileName);
         LogUtils.d(TAG, "初始化录音");
     }
@@ -221,7 +222,7 @@ public class AudioTextView extends AppCompatTextView {
                 }
                 return;
             }
-            LogUtils.d(TAG, "音频文件位置，path = " + mFileName + ", 音频时长，duration = " + duration + "秒");
+            LogUtils.d(TAG, "音频文件位置，imagePath = " + mFileName + ", 音频时长，duration = " + duration + "秒");
             if(mRecordedCallback != null){
                 mRecordedCallback.onFinish(mFileName, duration);
             }

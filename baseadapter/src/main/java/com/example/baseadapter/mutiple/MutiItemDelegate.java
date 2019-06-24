@@ -10,7 +10,7 @@ import com.example.baseadapter.BaseViewHolder;
  * 每个item的Delegate
  * Created by 陈健宇 at 2019/5/30
  */
-public abstract class MutiItemDelegate<T>{
+public interface  MutiItemDelegate<T>{
 
 
     /**
@@ -19,9 +19,9 @@ public abstract class MutiItemDelegate<T>{
      * @param position item在数据源中的索引
      * @return true表示item要使用该position位置处的ViewType
      */
-    protected abstract boolean isForViewType(T items, int position);
+    boolean isForViewType(T items, int position);
 
-    protected abstract BaseViewHolder onCreateViewHolder(ViewGroup parent);
+    BaseViewHolder onCreateViewHolder(ViewGroup parent);
 
-    protected abstract void onBindView(BaseViewHolder holder, T items, int position);
+    void onBindView(BaseViewHolder holder, T items, int position);
 }

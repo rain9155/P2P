@@ -10,29 +10,25 @@ import com.example.p2p.R;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.config.Constant;
-import com.example.p2p.utils.FileUtils;
 
 /**
- * 发送消息的item
- * Created by 陈健宇 at 2019/6/10
+ * 接受图片的item
+ * Created by 陈健宇 at 2019/6/24
  */
-public class TextSendDelegte implements MutiItemDelegate<Mes> {
-
-
+public class ImageReceiveDelegte implements MutiItemDelegate<Mes> {
     @Override
     public boolean isForViewType(Mes items, int position) {
-        return items.id == ItemType.SEND_TEXT;
+        return items.id == ItemType.RECEIVE_IMAGE;
     }
 
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_send_text, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_receive_image, parent, false);
         return new BaseViewHolder(view);
     }
 
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
-        holder.setText(R.id.tv_message, (String) items.data)
-                .setImageBitmap(R.id.iv_face, FileUtils.getUserBitmap());
+
     }
 }

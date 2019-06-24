@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/dp_10">
+
+    <ImageView
+        android:id="@+id/iv_face"
+        android:layout_width="@dimen/dp_35"
+        android:layout_height="@dimen/dp_35"
+        android:scaleType="fitXY"
+        app:layout_constraintTop_toTopOf="@+id/rl_message"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:src="@drawable/ic_user_image"/>
+
+    <RelativeLayout
+        android:id="@+id/rl_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/dp_10"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/iv_face"
+        tools:ignore="UnusedAttribute">
+
+        <ImageView
+            android:id="@+id/iv_message"
+            android:layout_width="@dimen/dp_150"
+            android:layout_height="@dimen/dp_150"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_user_image"/>
+
+        <LinearLayout
+            android:id="@+id/ll_sending"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical">
+
+            <ProgressBar
+                android:id="@+id/pb_sending"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:interpolator="@android:interpolator/linear"
+                android:indeterminateTintMode="src_atop"
+                android:indeterminateBehavior="cycle"
+                android:indeterminateTint="@color/colorWhite"/>
+
+            <TextView
+                android:id="@+id/tv_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/colorWhite"
+                android:gravity="center"
+                android:text="100%"
+                tools:text="100%"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

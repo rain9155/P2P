@@ -6,6 +6,7 @@ import android.os.Message;
 import android.util.Log;
 
 import com.example.p2p.bean.Audio;
+import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
@@ -17,6 +18,7 @@ import com.example.utils.FileUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -37,12 +39,13 @@ public class ReceiveThread implements Runnable{
 
     private static final String TAG = ReceiveThread.class.getSimpleName();
     private static final int TYPE_RECEVICE_SUCCESS = 0x000;
-    private static final int TYPE_RECEVICE_FAIL = 0x001;
 
     private Socket mSocket;
     private User mUser;
     private List<String> mMessageList;
     private volatile IReceiveMessageCallback mReceiveMessageCallback;
+    private ByteArrayOutputStream mBytesOs;
+    private int mBytesLen = -1;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
@@ -50,9 +53,6 @@ public class ReceiveThread implements Runnable{
             switch (msg.what){
                 case TYPE_RECEVICE_SUCCESS:
                     mReceiveMessageCallback.onReceiveSuccess((Mes<?>) msg.obj);
-                    break;
-                case TYPE_RECEVICE_FAIL:
-                    mReceiveMessageCallback.onReceiveFail((Mes<?>) msg.obj);
                     break;
                 default:
                     break;
@@ -64,6 +64,7 @@ public class ReceiveThread implements Runnable{
         this.mSocket = socket;
         this.mUser = user;
         this.mMessageList = new CopyOnWriteArrayList<>();
+        mBytesOs = new ByteArrayOutputStream();
     }
 
     @Override
@@ -74,16 +75,20 @@ public class ReceiveThread implements Runnable{
                 InputStream in = mSocket.getInputStream();
                 mes = receiveMessageByType(in);
                 LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
-                if(hasReceviceCallback(mUser.getIp())){
-                    mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
-                }
+                if(hasReceviceCallback(mUser.getIp())) mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
             } catch (IOException e) {
                 e.printStackTrace();
                 LogUtils.e(TAG, "获取客户端输入流失败, 连接断开，e = " + e.getMessage());
+                //两端的Socker连接都要关闭
+                try {
+                    mSocket.close();
+                    mBytesOs.close();
+                    break;
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
                 ConnectManager.getInstance().removeConnect(mUser.getIp());
                 ConnectManager.getInstance().removeReceiveCallback(mUser.getIp());
-                if(hasReceviceCallback(mUser.getIp()))
-                    mHandler.obtainMessage(TYPE_RECEVICE_FAIL, mes).sendToTarget();
                 break;
             }
         }
@@ -92,36 +97,41 @@ public class ReceiveThread implements Runnable{
     /**
      * 根据消息类型接受消息
      */
-    private Mes<?> receiveMessageByType(InputStream inputStream) {
+    private Mes<?> receiveMessageByType(InputStream inputStream) throws IOException {
         DataInputStream in = new DataInputStream(inputStream);
-        Mes mes = new Mes(MesType.ERROR);
-        int type = -1;
-        try {
-            type = in.readInt();
-            switch(type){
-                case 0:
-                    String text = in.readUTF();
-                    mes = new Mes<>(MesType.TEXT, mUser.getIp(), text);
-                    break;
-                case 1:
-                    int duration = in.readInt();
-                    int len = in.readInt();
-                    byte[] bytes = new byte[len];
-                    in.readFully(bytes);
-                    String audioPath = saveReceiveAudio(bytes);
-                    Audio audio = new Audio(duration, audioPath);
-                    mes = new Mes<>(MesType.AUDIO, mUser.getIp(), audio);
-                    break;
-                default:
-                    break;
-            }
-            LogUtils.d(TAG, "读取消息成功， type = " + type);
-        } catch (IOException e) {
-            e.printStackTrace();
-            if(hasReceviceCallback(mUser.getIp())){
-                mReceiveMessageCallback.onReceiveFail(mes);
-            }
-            Log.e(TAG, "读取消息失败，类型type = " + type + ", e = " + e.getMessage());
+        Mes mes = null;
+        int type = in.readInt();
+        switch(type){
+            case 0:
+                String text = in.readUTF();
+                mes = new Mes<>(MesType.TEXT, mUser.getIp(), text);
+                break;
+            case 1:
+                int duration = in.readInt();
+                int audioLen = in.readInt();
+                byte[] audioBytes = new byte[audioLen];
+                in.readFully(audioBytes);
+                String audioPath = saveReceiveAudio(audioBytes);
+                Audio audio = new Audio(duration, audioPath);
+                mes = new Mes<>(MesType.AUDIO, mUser.getIp(), audio);
+                break;
+            case 2:
+                if(mBytesLen == -1){
+                    mBytesLen = in.readInt();
+                }else {
+                    byte[] imageTempBytes = new byte[in.available()];
+                    in.readFully(imageTempBytes);
+                    mBytesOs.write(imageTempBytes, 0, imageTempBytes.length);
+                    byte[] imageBytes = mBytesOs.toByteArray();
+                    LogUtils.d(TAG, "图片接收中，目前长度 = " + imageBytes.length + ", 图片长度， len = " + mBytesOs);
+                    if(imageBytes.length == mBytesLen){
+                         reset();
+                    }
+                }
+                break;
+            default:
+                mes = new Mes(MesType.ERROR);
+                break;
         }
         return mes;
     }
@@ -161,7 +171,7 @@ public class ReceiveThread implements Runnable{
      * @throws IOException
      */
     public String saveReceiveAudio(byte[] bytes) throws IOException {
-        String audioPath = FileUtils.getAudioPath(mUser.getIp(), Constant.TYPE_ITEM_RECEIVE_AUDIO);
+        String audioPath = FileUtils.getAudioPath(mUser.getIp(), ItemType.RECEIVE_AUDIO);
         String path = audioPath + System.currentTimeMillis() + ".mp3";
         File file = new File(path);
         if(!file.exists()){
@@ -174,5 +184,10 @@ public class ReceiveThread implements Runnable{
             bufferedOutputStream.write(bytes);
         }
         return path;
+    }
+
+    private void reset() {
+        mBytesOs.reset();
+        mBytesLen = -1;
     }
 }

@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
  */
 public class Mes<T>{
 
-    public int id;
+    public ItemType id;
     public MesType mesType;
     public String userIp;
     public T data;

@@ -17,9 +17,4 @@ public class Constant {
     public static final String FILE_PATH_USER = FileUtils.getFilePath(App.getContext(), "user/");
     public static final String FILE_PATH_ONLINE_USER = FileUtils.getFilePath(App.getContext(), "onlineUser/");
 
-    public static final int TYPE_ITEM_SEND_TEXT = 0x000;
-    public static final int TYPE_ITEM_RECEIVE_TEXT = 0x001;
-    public static final int TYPE_ITEM_SEND_AUDIO = 0x002;
-    public static final int TYPE_ITEM_RECEIVE_AUDIO = 0x003;
-
 }
