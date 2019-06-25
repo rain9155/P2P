@@ -44,7 +44,7 @@ public class Emoji {
     @Override
     public String toString() {
         return "Emoji[" +
-                "id=" + id +
+                "itemType=" + id +
                 ", unicodeInt=" + unicodeInt +
                 ']';
     }

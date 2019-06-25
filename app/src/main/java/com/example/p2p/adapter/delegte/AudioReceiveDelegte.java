@@ -13,9 +13,7 @@ import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.User;
-import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
-import com.example.p2p.utils.FileUtils;
 
 /**
  * 接收音频的item
@@ -23,11 +21,11 @@ import com.example.p2p.utils.FileUtils;
  */
 public class AudioReceiveDelegte implements MutiItemDelegate<Mes> {
 
-
+    private Bitmap mUserImage;
 
     @Override
     public boolean isForViewType(Mes items, int position) {
-        return items.id == ItemType.RECEIVE_AUDIO;
+        return items.itemType == ItemType.RECEIVE_AUDIO;
     }
 
     @Override
@@ -39,10 +37,11 @@ public class AudioReceiveDelegte implements MutiItemDelegate<Mes> {
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
         Audio audio = (Audio) items.data;
-        User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
-        Bitmap bitmap = BitmapFactory.decodeFile(user.getImagePath());
+        if(mUserImage == null){
+            User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
+            mUserImage = BitmapFactory.decodeFile(user.getImagePath());
+        }
         holder.setText(R.id.tv_duration, audio.duartion + "'")
-                .setImageBitmap(R.id.iv_face, bitmap);
-
+                .setImageBitmap(R.id.iv_face, mUserImage);
     }
 }

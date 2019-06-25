@@ -1,5 +1,6 @@
 package com.example.p2p.adapter.delegte;
 
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +10,6 @@ import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.config.Constant;
 import com.example.p2p.utils.FileUtils;
 
 /**
@@ -18,10 +18,15 @@ import com.example.p2p.utils.FileUtils;
  */
 public class TextSendDelegte implements MutiItemDelegate<Mes> {
 
+    private Bitmap mUserImage;
+
+    public TextSendDelegte() {
+        mUserImage =  FileUtils.getUserBitmap();
+    }
 
     @Override
     public boolean isForViewType(Mes items, int position) {
-        return items.id == ItemType.SEND_TEXT;
+        return items.itemType == ItemType.SEND_TEXT;
     }
 
     @Override
@@ -33,6 +38,6 @@ public class TextSendDelegte implements MutiItemDelegate<Mes> {
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
         holder.setText(R.id.tv_message, (String) items.data)
-                .setImageBitmap(R.id.iv_face, FileUtils.getUserBitmap());
+                .setImageBitmap(R.id.iv_face, mUserImage);
     }
 }

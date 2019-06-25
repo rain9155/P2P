@@ -9,8 +9,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by 陈健宇 at 2019/6/20
@@ -30,8 +37,40 @@ public class ImageUtils {
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
+    /**
+     * 根据图片路径创建图片Uri
+     * @param path 图片的真实路径
+     * @param name  图片名字
+     * @return 图片Uri
+     */
+    public static Uri getImageUri(Context context, String path, String name) {
+        Uri imageUrl;
+        File fileOutPutImage = new File(path, name);
+        if(!fileOutPutImage.exists()){
+            try {
+                fileOutPutImage.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if(Build.VERSION.SDK_INT >= 24){
+            //使用FileProvider内容提供器将封装过的Uri共享给外部
+            imageUrl = FileProvider.getUriForFile(context, "com.example.p2p.fileprovider", fileOutPutImage);
+        }else {
+            //将File对象转换为Uri对象，表示这张图片的本地真实路径
+            imageUrl = Uri.fromFile(new File(path));
+        }
+        return imageUrl;
+    }
+
+
+    /**
+     * 根据uri获得图片的真实路径
+     * @param data 通过intent.getData获得Uri
+     * @return 图片的真实路径
+     */
     @TargetApi(19)
-    public static String getImagePathOnKitKat(Context context, Intent data) {
+    public static String getImagePathOnKitKat(Context context, @NonNull Intent data) {
         String path = null;
         Uri uri = data.getData();
         if(DocumentsContract.isDocumentUri(context, uri)){

@@ -2,9 +2,12 @@ package com.example.p2p.adapter.delegte;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.example.baseadapter.BaseViewHolder;
 import com.example.baseadapter.mutiple.MutiItemDelegate;
@@ -12,9 +15,10 @@ import com.example.p2p.R;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.config.Constant;
 import com.example.p2p.utils.FileUtils;
-import com.example.p2p.utils.LogUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 发送图片的item
@@ -22,9 +26,17 @@ import com.example.p2p.utils.LogUtils;
  */
 public class ImageSendDelegte implements MutiItemDelegate<Mes> {
 
+    private Bitmap mUserImage;
+    private Map<String, Bitmap> mMessageImages;//缓存一下，不然滑动卡顿
+
+    public ImageSendDelegte() {
+        mMessageImages = new HashMap<>();
+        mUserImage = FileUtils.getUserBitmap();
+    }
+
     @Override
     public boolean isForViewType(Mes items, int position) {
-        return items.id == ItemType.SEND_IMAGE;
+        return items.itemType == ItemType.SEND_IMAGE;
     }
 
     @Override
@@ -36,8 +48,19 @@ public class ImageSendDelegte implements MutiItemDelegate<Mes> {
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
         Image image = (Image) items.data;
-        Bitmap bitmap = BitmapFactory.decodeFile(image.imagePath);
-        holder.setImageBitmap(R.id.iv_message, bitmap)
-                .setImageBitmap(R.id.iv_face, FileUtils.getUserBitmap());
+        if(!mMessageImages.containsKey(image.imagePath)){
+            mMessageImages.put(image.imagePath,  BitmapFactory.decodeFile(image.imagePath));
+        }
+        holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imagePath))
+                .setImageBitmap(R.id.iv_face, mUserImage);
+        ImageView imageView = holder.getView(R.id.iv_message);
+        if(image.progress < 100){
+            imageView.getDrawable().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
+            holder.setText(R.id.tv_progress, image.progress + "");
+        }else {
+            holder.setText(R.id.tv_progress, image.progress + "");
+            imageView.clearColorFilter();
+            holder.setVisibility(R.id.ll_sending, View.GONE);
+        }
     }
 }

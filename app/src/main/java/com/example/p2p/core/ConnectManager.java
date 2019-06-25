@@ -7,10 +7,12 @@ import android.util.Log;
 
 import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Image;
+import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IConnectCallback;
+import com.example.p2p.callback.IProgressCallback;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.utils.FileUtils;
@@ -21,10 +23,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.text.NumberFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -176,9 +180,19 @@ public class ConnectManager {
 
     /**
      * 发送消息给给定ip的客户端
-     * @param targetIp 客户端的ip
      */
     public void sendMessage(String targetIp, Mes<?> message){
+        sendMessage(targetIp, message, null);
+    }
+
+    /**
+     * 发送消息给给定ip的客户端
+     * @param targetIp 客户端的ip
+     * @param mes 消息
+     * @param callback 进度回调
+     */
+    public void sendMessage(String targetIp, Mes<?> mes, IProgressCallback callback){
+        Mes<?> message = mes.clone();
         if(!isContains(targetIp)){
             LogUtils.d(TAG, "客户端连接已经断开");
             if(mSendMessgeCallback != null){
@@ -190,12 +204,12 @@ public class ConnectManager {
         mExecutor.execute(() -> {
             try {
                 OutputStream os = socket.getOutputStream();
-                sendMessageByType(os, message);
+                sendMessageByType(os, message, callback);
                 Log.d(TAG, "发送消息成功， message = " + message);
                 if(mSendMessgeCallback != null){
                     mHandler.obtainMessage(TYPE_SEND_SUCCESS, message).sendToTarget();
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 Log.d(TAG, "发送消息失败， e = " + e.getMessage());
                 if(mSendMessgeCallback != null){
@@ -277,52 +291,50 @@ public class ConnectManager {
     /**
      * 根据消息类型发送消息
      */
-    private void sendMessageByType(OutputStream outputStream, Mes<?> message) {
+    private void sendMessageByType(OutputStream outputStream, Mes<?> message, IProgressCallback callback) throws IOException, InterruptedException {
         DataOutputStream os = new DataOutputStream(outputStream);
         MesType type = message.mesType;
-        try {
-            switch (type){
-                case TEXT:
-                    String text = (String)message.data;
-                    os.writeInt(type.ordinal());
-                    os.writeUTF(text);
-                    Log.d(TAG, "发送文本消息成功， message = " + text);
-                    break;
-                case AUDIO:
-                    Audio audio = (Audio) message.data;
-                    os.writeInt(type.ordinal());
-                    os.writeInt(audio.duartion);
-                    byte[] audioBytes;
-                    try(InputStream in = new FileInputStream(audio.audioPath)){
-                        audioBytes = new byte[in.available()];
-                        in.read(audioBytes);
+        switch (type){
+            case TEXT:
+                String text = (String)message.data;
+                os.writeInt(type.ordinal());
+                os.writeUTF(text);
+                Log.d(TAG, "发送文本消息成功， message = " + text);
+                break;
+            case AUDIO:
+                Audio audio = (Audio) message.data;
+                os.writeInt(type.ordinal());
+                os.writeInt(audio.duartion);
+                byte[] audioBytes = FileUtils.getFileBytes(audio.audioPath);
+                os.writeInt(audioBytes.length);
+                os.write(audioBytes);
+                break;
+            case IMAGE:
+                Image image = (Image) message.data;
+                byte[] imageBytes = FileUtils.getFileBytes(image.imagePath);
+                int imageLen  = imageBytes.length;
+                os.writeInt(type.ordinal());
+                os.writeInt(imageLen);
+                int start = 0;
+                int end = 0;
+                while (end < imageLen){
+                    end += MAX_SEND_DATA;
+                    if(end >= imageLen) end = imageLen;
+                    os.write(imageBytes, start, end - start);
+                    Thread.sleep(10);
+                    LogUtils.d(TAG, "传送图片数据中，offet = " + (end - start) + ", 图片长度， len = " + imageLen);
+                    start = end;
+                    if(callback != null){
+                        double num = start / (imageLen * 1.0);
+                        int progress = (int) (num * 100);
+                        mHandler.post(() -> callback.onProgress(progress));
                     }
-                    os.writeInt(audioBytes.length);
-                    os.write(audioBytes);
-                    break;
-                case IMAGE:
-                    Image image = (Image) message.data;
-                     byte[] imageBytes = FileUtils.getImageBytes(image.imagePath);
-                     int len  = imageBytes.length;
-                     image.len = len;
-                     os.writeInt(type.ordinal());
-                     os.writeInt(len);
-                     int start = 0;
-                     int end = 0;
-                     while (end < len){
-                         end += MAX_SEND_DATA;
-                         if(end >= len) end = len;
-                         os.write(imageBytes, start, end - start);
-                         LogUtils.d(TAG, "传送图片数据中，offet = " + (end - start) + ", 图片长度， len = " + len);
-                         start = end;
-                     }
-                    break;
-                default:
-                    break;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.e(TAG, "发送消息失败，类型type = " + type + ", e = " + e.getMessage());
+                }
+                image.len = imageLen;
+                image.progress = 100;
+                break;
+            default:
+                break;
         }
     }
 }

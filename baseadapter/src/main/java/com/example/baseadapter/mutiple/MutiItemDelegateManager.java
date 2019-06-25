@@ -73,7 +73,7 @@ public class MutiItemDelegateManager<T>{
                 return mDelegates.keyAt(i);
             }
         }
-        throw new NullPointerException("No MutiItemDelegate added that matches position=" + position + " in data source");
+        throw new NullPointerException("No MutiItemDelegate added that matches position = " + position + " in data source");
     }
 
 

@@ -73,6 +73,12 @@ public class BaseViewHolder extends RecyclerView.ViewHolder {
         return this;
     }
 
+    public BaseViewHolder setVisibility(int id, int Visibility){
+        View view = getView(id);
+        view.setVisibility(Visibility);
+        return this;
+    }
+
     public BaseViewHolder setChildClickListener(int id){
         View view = getView(id);
         if(view == null) return this;

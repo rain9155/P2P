@@ -8,29 +8,30 @@ import androidx.annotation.NonNull;
  */
 public class Mes<T>{
 
-    public ItemType id;
+    public ItemType itemType;
     public MesType mesType;
     public String userIp;
     public T data;
 
-    public Mes(MesType type){
-        this(type, "", null);
+    public Mes(MesType mesType){
+        this(ItemType.ERROR, mesType, "0.0.0.0", null);
     }
 
-    public Mes(MesType type, T data){
-        this(type, "", data);
-    }
-
-    public Mes(MesType type, String userIp, T data) {
-        this.mesType = type;
+    public Mes(ItemType itemType, MesType mesType, String userIp, T data) {
+        this.itemType = itemType;
+        this.mesType = mesType;
         this.userIp = userIp;
         this.data = data;
+    }
+
+    public Mes<T> clone(){
+        return new Mes<T>(itemType, mesType, userIp, data);
     }
 
     @NonNull
     @Override
     public String toString() {
-        return "Mes[id = " + id
+        return "Mes[itemType = " + itemType
                 + ", type = " + mesType
                 + ", userIp = " + userIp
                 +  ", data = " + data

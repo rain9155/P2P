@@ -112,19 +112,59 @@ public class FileUtils {
     }
 
     /**
-     * 获得用户图片流
+     * 获得相应用户存放图片的地方
+     * @param ip 用户ip
+     * @param type item类型
+     * @return 存放图片文件夹路径
      */
-    public static byte[] getImageBytes(String imagePath){
-        byte[] imageBytes = new byte[0];
-        try(InputStream in = new FileInputStream(imagePath)){
-            imageBytes = new byte[in.available()];
-            in.read(imageBytes);
-            return imageBytes;
+    public static String getImagePath(String ip, ItemType type){
+        String imagePath = "";
+        if(type == ItemType.RECEIVE_IMAGE){
+            imagePath = Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "receiveImage" + File.separator;
+        }else {
+            imagePath = Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "sendImage" + File.separator;
+        }
+        makeDirs(imagePath);
+        return imagePath;
+    }
+
+    /**
+     * 根据路径获得字节流
+     * @return 字节流
+     */
+    public static byte[] getFileBytes(String path){
+        byte[] bytes = new byte[0];
+        try(InputStream in = new FileInputStream(path)){
+            bytes = new byte[in.available()];
+            in.read(bytes);
+            return bytes;
         } catch (IOException e) {
             e.printStackTrace();
-            LogUtils.e(TAG, "获取头像图片失败， e = " + e.getMessage());
+            LogUtils.e(TAG, "获取字节流失败， e = " + e.getMessage());
         }
-        return imageBytes;
+        return bytes;
+    }
+
+    /**
+     * 根据路径存放字节流
+     * @return false表示失败，反之成功
+     */
+    public static boolean saveFileBytes(byte[] bytes, String path){
+        File file = new File(path);
+        try(
+                FileOutputStream fileOutputStream = new FileOutputStream(file);
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
+        ){
+            if(!file.exists()){
+                file.createNewFile();
+            }
+            bufferedOutputStream.write(bytes);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            LogUtils.e(TAG, "保存字节流失败");
+        }
+        return false;
     }
 
     private static void saveBitmap(Bitmap bitmap, File file) {

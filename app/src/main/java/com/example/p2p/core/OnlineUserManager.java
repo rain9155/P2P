@@ -6,7 +6,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
-import com.example.p2p.app.App;
 import com.example.p2p.bean.Data;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.ISendAddressCallback;
@@ -29,10 +28,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -194,7 +191,7 @@ public class OnlineUserManager {
     public void reply(String targetIp){
         Data data = new Data(2);
         User user = data.getUser();
-        byte[] imageBytes = FileUtils.getImageBytes(user.getImagePath());
+        byte[] imageBytes = FileUtils.getFileBytes(user.getImagePath());
         user.setImageBytesLen(imageBytes.length);
         user.setImagePath(null);
         String datas = JsonUtils.toJson(data);

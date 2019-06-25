@@ -10,9 +10,15 @@ public class Image {
 
     public String imagePath;
     public int len;
+    public int progress;
 
     public Image(String path) {
         this.imagePath = path;
+    }
+
+    public Image(String path, int len) {
+        this.imagePath = path;
+        this.len = len;
     }
 
     @NonNull

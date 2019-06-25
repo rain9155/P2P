@@ -3,30 +3,24 @@ package com.example.p2p.core;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
 
 import com.example.p2p.bean.Audio;
+import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IReceiveMessageCallback;
-import com.example.p2p.config.Constant;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
-import com.example.utils.FileUtil;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +38,6 @@ public class ReceiveThread implements Runnable{
     private User mUser;
     private List<String> mMessageList;
     private volatile IReceiveMessageCallback mReceiveMessageCallback;
-    private ByteArrayOutputStream mBytesOs;
-    private int mBytesLen = -1;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
@@ -64,7 +56,6 @@ public class ReceiveThread implements Runnable{
         this.mSocket = socket;
         this.mUser = user;
         this.mMessageList = new CopyOnWriteArrayList<>();
-        mBytesOs = new ByteArrayOutputStream();
     }
 
     @Override
@@ -76,13 +67,12 @@ public class ReceiveThread implements Runnable{
                 mes = receiveMessageByType(in);
                 LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
                 if(hasReceviceCallback(mUser.getIp())) mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "获取客户端输入流失败, 连接断开，e = " + e.getMessage());
+                LogUtils.e(TAG, "获取客户端消息失败，e = " + e.getMessage());
                 //两端的Socker连接都要关闭
                 try {
                     mSocket.close();
-                    mBytesOs.close();
                     break;
                 } catch (IOException e1) {
                     e1.printStackTrace();
@@ -99,12 +89,12 @@ public class ReceiveThread implements Runnable{
      */
     private Mes<?> receiveMessageByType(InputStream inputStream) throws IOException {
         DataInputStream in = new DataInputStream(inputStream);
-        Mes mes = null;
+        Mes mes = new Mes(MesType.ERROR);
         int type = in.readInt();
         switch(type){
             case 0:
                 String text = in.readUTF();
-                mes = new Mes<>(MesType.TEXT, mUser.getIp(), text);
+                mes = new Mes<String>(ItemType.RECEIVE_TEXT, MesType.TEXT, mUser.getIp(), text);
                 break;
             case 1:
                 int duration = in.readInt();
@@ -113,24 +103,26 @@ public class ReceiveThread implements Runnable{
                 in.readFully(audioBytes);
                 String audioPath = saveReceiveAudio(audioBytes);
                 Audio audio = new Audio(duration, audioPath);
-                mes = new Mes<>(MesType.AUDIO, mUser.getIp(), audio);
+                mes = new Mes<Audio>(ItemType.RECEIVE_AUDIO, MesType.AUDIO, mUser.getIp(), audio);
                 break;
             case 2:
-                if(mBytesLen == -1){
-                    mBytesLen = in.readInt();
-                }else {
+                int imageLen = in.readInt();
+                LogUtils.d(TAG, "接收图片长度， len = " + imageLen);
+                ByteArrayOutputStream imageOs = new ByteArrayOutputStream();
+                byte[] imageBytes = imageOs.toByteArray();
+                while (imageBytes.length != imageLen){
                     byte[] imageTempBytes = new byte[in.available()];
                     in.readFully(imageTempBytes);
-                    mBytesOs.write(imageTempBytes, 0, imageTempBytes.length);
-                    byte[] imageBytes = mBytesOs.toByteArray();
-                    LogUtils.d(TAG, "图片接收中，目前长度 = " + imageBytes.length + ", 图片长度， len = " + mBytesOs);
-                    if(imageBytes.length == mBytesLen){
-                         reset();
-                    }
+                    imageOs.write(imageTempBytes, 0, imageTempBytes.length);
+                    imageBytes = imageOs.toByteArray();
+                    LogUtils.d(TAG, "图片接收中，目前长度 = " + imageBytes.length);
                 }
+                imageOs.close();
+                String imagePath = saveReceiveImage(imageBytes);
+                Image image = new Image(imagePath, imageLen);
+                mes = new Mes<Image>(ItemType.RECEIVE_IMAGE, MesType.IMAGE, mUser.getIp(), image);
                 break;
             default:
-                mes = new Mes(MesType.ERROR);
                 break;
         }
         return mes;
@@ -168,26 +160,21 @@ public class ReceiveThread implements Runnable{
 
     /**
      * 保存接收到的音频
-     * @throws IOException
      */
-    public String saveReceiveAudio(byte[] bytes) throws IOException {
+    public String saveReceiveAudio(byte[] audioBytes) throws IOException {
         String audioPath = FileUtils.getAudioPath(mUser.getIp(), ItemType.RECEIVE_AUDIO);
         String path = audioPath + System.currentTimeMillis() + ".mp3";
-        File file = new File(path);
-        if(!file.exists()){
-            file.createNewFile();
-        }
-        try(
-                FileOutputStream fileOutputStream = new FileOutputStream(file);
-                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
-        ){
-            bufferedOutputStream.write(bytes);
-        }
+        if(!FileUtils.saveFileBytes(audioBytes, path)) throw new IOException();
         return path;
     }
 
-    private void reset() {
-        mBytesOs.reset();
-        mBytesLen = -1;
+    /**
+     * 保存接收到的图片
+     */
+    private String saveReceiveImage(byte[] imageBytes) throws IOException {
+        String imagePath = FileUtils.getImagePath(mUser.getIp(), ItemType.RECEIVE_IMAGE);
+        String path = imagePath + System.currentTimeMillis() + ".png";
+        if(!FileUtils.saveFileBytes(imageBytes, path)) throw new IOException();
+        return path;
     }
 }

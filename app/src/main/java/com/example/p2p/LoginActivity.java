@@ -167,7 +167,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goMainActivity(User restoreUser) {
-        byte[] imageBytes = FileUtils.getImageBytes(restoreUser.getImagePath());
+        byte[] imageBytes = FileUtils.getFileBytes(restoreUser.getImagePath());
         restoreUser.setImageBytesLen(imageBytes.length);
         restoreUser.setImagePath(null);
         OnlineUserManager.getInstance().login(restoreUser, imageBytes);

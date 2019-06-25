@@ -12,18 +12,19 @@ import com.example.p2p.R;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.User;
-import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
-import com.example.p2p.utils.FileUtils;
 
 /**
  * 接受消息的item
  * Created by 陈健宇 at 2019/6/10
  */
 public class TextReceiveDelegte implements MutiItemDelegate<Mes>{
+
+    private Bitmap mUserImage;
+
     @Override
     public boolean isForViewType(Mes items, int position) {
-        return items.id == ItemType.RECEIVE_TEXT;
+        return items.itemType == ItemType.RECEIVE_TEXT;
     }
 
     @Override
@@ -34,9 +35,11 @@ public class TextReceiveDelegte implements MutiItemDelegate<Mes>{
 
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
-        User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
-        Bitmap bitmap = BitmapFactory.decodeFile(user.getImagePath());
+        if(mUserImage == null){
+            User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
+            mUserImage = BitmapFactory.decodeFile(user.getImagePath());
+        }
         holder.setText(R.id.tv_message, (String) items.data)
-                .setImageBitmap(R.id.iv_face, bitmap);
+                .setImageBitmap(R.id.iv_face, mUserImage);
     }
 }
