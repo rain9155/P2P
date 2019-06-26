@@ -1,4 +1,4 @@
-package com.example.p2p.base;
+package com.example.p2p.base.fragment;
 
 import android.app.Dialog;
 import android.graphics.Color;

@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import com.example.p2p.bean.Audio;
+import com.example.p2p.bean.File;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
@@ -13,16 +14,11 @@ import com.example.p2p.bean.User;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
-
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -107,42 +103,25 @@ public class ReceiveThread implements Runnable{
                 break;
             case 2:
                 int imageLen = in.readInt();
-                LogUtils.d(TAG, "接收图片长度， len = " + imageLen);
-                ByteArrayOutputStream imageOs = new ByteArrayOutputStream();
-                byte[] imageBytes = imageOs.toByteArray();
-                while (imageBytes.length != imageLen){
-                    byte[] imageTempBytes = new byte[in.available()];
-                    in.readFully(imageTempBytes);
-                    imageOs.write(imageTempBytes, 0, imageTempBytes.length);
-                    imageBytes = imageOs.toByteArray();
-                    LogUtils.d(TAG, "图片接收中，目前长度 = " + imageBytes.length);
-                }
-                imageOs.close();
+                byte[] imageBytes = receiveBytes(in, imageLen);
                 String imagePath = saveReceiveImage(imageBytes);
                 Image image = new Image(imagePath, imageLen);
                 mes = new Mes<Image>(ItemType.RECEIVE_IMAGE, MesType.IMAGE, mUser.getIp(), image);
+                break;
+            case 3:
+                int flieLen = in.readInt();
+                String flieType = in.readUTF();
+                String fileSize = in.readUTF();
+                String fileName = in.readUTF();
+                byte[] fileBytes = receiveBytes(in, flieLen);
+                String filePath = saveReceiveFile(fileBytes, fileName, flieType);
+                File file = new File(filePath, fileName, flieLen, fileSize, flieType);
+                mes = new Mes<File>(ItemType.RECEIVE_FILE, MesType.FILE, mUser.getIp(), file);
                 break;
             default:
                 break;
         }
         return mes;
-    }
-
-    /**
-     * 获得暂存的信息列表
-     */
-    public List<String> getMessageList() {
-        if (mMessageList == null) {
-            return new ArrayList<>();
-        }
-        return mMessageList;
-    }
-
-    /**
-     * 清空信息列表
-     */
-    public void clearMessageList() {
-        mMessageList.clear();
     }
 
     /**
@@ -176,5 +155,32 @@ public class ReceiveThread implements Runnable{
         String path = imagePath + System.currentTimeMillis() + ".png";
         if(!FileUtils.saveFileBytes(imageBytes, path)) throw new IOException();
         return path;
+    }
+
+    /**
+     * 保存接收到的文件
+     */
+    private String saveReceiveFile(byte[] fileBytes, String fileName, String fileType) throws IOException {
+        String filePath = FileUtils.getFilePath(mUser.getIp(), ItemType.RECEIVE_FILE);
+        String path = filePath + fileName + "." + fileType;
+        if(!FileUtils.saveFileBytes(fileBytes, path)) throw new IOException();
+        return path;
+    }
+
+    /**
+     * 接收字节流
+     */
+    private byte[] receiveBytes(DataInputStream in, int len) throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        byte[] bytes = os.toByteArray();
+        while (bytes.length != len){
+            byte[] tempBytes = new byte[in.available()];
+            in.readFully(tempBytes);
+            os.write(tempBytes, 0, tempBytes.length);
+            bytes = os.toByteArray();
+            LogUtils.d(TAG, "接收中，目前长度 = " + bytes.length);
+        }
+        os.close();
+        return bytes;
     }
 }

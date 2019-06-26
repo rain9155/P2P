@@ -3,26 +3,33 @@ package com.example.p2p.utils;
 import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
+import com.example.p2p.R;
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.stream.IntStream;
 
 /**
  * Created by 陈健宇 at 2019/6/20
  */
 public class ImageUtils {
+
+    private static final String TAG = ImageUtils.class.getSimpleName();
 
     /**
      * 压缩一张图片
@@ -35,6 +42,27 @@ public class ImageUtils {
         Matrix matrix = new Matrix();
         matrix.setScale(sWidth, sHeight);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    /**
+     * 根据Uri获取图片
+     * @param imageUri 图片uri
+     * @return bitmap图片
+     */
+    public static Bitmap getImageByUri(Context context, Uri imageUri){
+        try(
+                InputStream inputStream = context.getContentResolver().openInputStream(imageUri)
+            ){
+
+            return BitmapFactory.decodeStream(inputStream);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            LogUtils.e(TAG, "解析图片失败, e = " + e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+            LogUtils.e(TAG, "解析图片输入流失败, e = " + e.getMessage());
+        }
+        return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_user_image);
     }
 
     /**
@@ -58,56 +86,9 @@ public class ImageUtils {
             imageUrl = FileProvider.getUriForFile(context, "com.example.p2p.fileprovider", fileOutPutImage);
         }else {
             //将File对象转换为Uri对象，表示这张图片的本地真实路径
-            imageUrl = Uri.fromFile(new File(path));
+            imageUrl = Uri.fromFile(fileOutPutImage);
         }
         return imageUrl;
-    }
-
-
-    /**
-     * 根据uri获得图片的真实路径
-     * @param data 通过intent.getData获得Uri
-     * @return 图片的真实路径
-     */
-    @TargetApi(19)
-    public static String getImagePathOnKitKat(Context context, @NonNull Intent data) {
-        String path = null;
-        Uri uri = data.getData();
-        if(DocumentsContract.isDocumentUri(context, uri)){
-            //如果是document类型的Uri，则通过document id处理
-            String docId = DocumentsContract.getDocumentId(uri);
-            if("com.android.providers.media.documents".equals(uri.getAuthority())){
-                String id = docId.split(":")[1];//解出数字格式的id
-                String selection = MediaStore.Images.Media._ID + "=" +id;
-                path = getImagePath(context, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection);
-            }else if("com.android.providers.downloads.documents".equals(uri.getAuthority())){
-                Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.valueOf(docId));
-                path = getImagePath(context, contentUri, null);
-            }
-        }else if ("content".equalsIgnoreCase(uri.getScheme())){
-            //如果是普通类型的uri，则普通方式处理
-            path = getImagePath(context, uri, null);
-        }else if ("file".equalsIgnoreCase(uri.getScheme())){
-            //如果是file类型，直接获取路径
-            path = uri.getPath();
-        }
-        return path;
-    }
-
-    /**
-     * 通过Uri和selection来获取真实的图片路径
-     */
-    private static String getImagePath(Context context, Uri uri, String selection) {
-        String path = null;
-        //通过Uri和selection来获取真实的图片路径
-        Cursor cursor = context.getContentResolver().query(uri, null, selection, null, null);
-        if (cursor != null){
-            if(cursor.moveToFirst()){
-                path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
-            }
-            cursor.close();
-        }
-        return path;
     }
 
 }

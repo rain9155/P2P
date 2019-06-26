@@ -23,6 +23,8 @@ public class App extends Application {
         ConnectManager.getInstance().initListener();
     }
 
+
+
     public static Context getContext(){
         return mContext;
     }

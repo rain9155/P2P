@@ -1,28 +1,20 @@
-package com.example.p2p.adapter.delegte;
+package com.example.p2p.adapter.delegate;
 
-import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.baseadapter.BaseViewHolder;
-import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
+import com.example.p2p.base.delegate.BaseSendMutiItemDelegate;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.utils.FileUtils;
 
 /**
  * 发送消息的item
  * Created by 陈健宇 at 2019/6/10
  */
-public class TextSendDelegte implements MutiItemDelegate<Mes> {
-
-    private Bitmap mUserImage;
-
-    public TextSendDelegte() {
-        mUserImage =  FileUtils.getUserBitmap();
-    }
+public class TextSendDelegate extends BaseSendMutiItemDelegate {
 
     @Override
     public boolean isForViewType(Mes items, int position) {
@@ -37,7 +29,7 @@ public class TextSendDelegte implements MutiItemDelegate<Mes> {
 
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
-        holder.setText(R.id.tv_message, (String) items.data)
-                .setImageBitmap(R.id.iv_face, mUserImage);
+        super.onBindView(holder, items, position);
+        holder.setText(R.id.tv_message, (String) items.data);
     }
 }

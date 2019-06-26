@@ -1,6 +1,5 @@
 package com.example.p2p.widget.dialog;
 
-import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.p2p.R;
-import com.example.p2p.base.BaseDialogFragment;
+import com.example.p2p.base.fragment.BaseDialogFragment;
 
 /**
  * 等待连接dialog

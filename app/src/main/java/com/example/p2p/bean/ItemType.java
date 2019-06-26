@@ -11,5 +11,7 @@ public enum ItemType {
     RECEIVE_AUDIO,
     SEND_IMAGE,
     RECEIVE_IMAGE,
+    SEND_FILE,
+    RECEIVE_FILE,
     ERROR
 }

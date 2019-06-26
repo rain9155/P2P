@@ -1,4 +1,4 @@
-package com.example.p2p.adapter.delegte;
+package com.example.p2p.adapter.delegate;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -7,13 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.baseadapter.BaseViewHolder;
-import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
+import com.example.p2p.base.delegate.BaseReceiveMutiItemDelegate;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.bean.User;
-import com.example.p2p.core.OnlineUserManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,12 +20,11 @@ import java.util.Map;
  * 接受图片的item
  * Created by 陈健宇 at 2019/6/24
  */
-public class ImageReceiveDelegte implements MutiItemDelegate<Mes> {
+public class ImageReceiveDelegate extends BaseReceiveMutiItemDelegate {
 
-    private Bitmap mUserImage;
     private Map<String, Bitmap> mMessageImages;
 
-    public ImageReceiveDelegte() {
+    public ImageReceiveDelegate() {
         mMessageImages = new HashMap<>();
     }
 
@@ -44,15 +41,11 @@ public class ImageReceiveDelegte implements MutiItemDelegate<Mes> {
 
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
+        super.onBindView(holder, items, position);
         Image image = (Image) items.data;
-        if(mUserImage == null){
-            User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
-            mUserImage = BitmapFactory.decodeFile(user.getImagePath());
-        }
         if(!mMessageImages.containsKey(image.imagePath)){
             mMessageImages.put(image.imagePath,  BitmapFactory.decodeFile(image.imagePath));
         }
-        holder.setImageBitmap(R.id.iv_face, mUserImage)
-                .setImageBitmap(R.id.iv_message, mMessageImages.get(image.imagePath));
+        holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imagePath));
     }
 }

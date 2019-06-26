@@ -10,5 +10,6 @@ public enum MesType {
     TEXT, //文字
     AUDIO, //音频
     IMAGE, //图片
+    FILE,//文件
     ERROR, //错误
 }

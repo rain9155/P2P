@@ -1,4 +1,4 @@
-package com.example.p2p.base;
+package com.example.p2p.base.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 

@@ -1,13 +1,20 @@
 package com.example.p2p.utils;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 
+import com.example.p2p.config.MimeType;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,34 +24,196 @@ import java.util.List;
  */
 public class IntentUtils {
 
-    public static List<Intent> getGalleryIntents(@NonNull PackageManager packageManager, String action, boolean includeDocuments) {
-        List<Intent> intents = new ArrayList<>();
-        Intent galleryIntent =
-                action == Intent.ACTION_GET_CONTENT
-                        ? new Intent(action)
-                        : new Intent(action, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        galleryIntent.setType("image/*");
-        List<ResolveInfo> listGallery = packageManager.queryIntentActivities(galleryIntent, 0);
-        for (ResolveInfo res : listGallery) {
-            Intent intent = new Intent(galleryIntent);
-            intent.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
-            intent.setPackage(res.activityInfo.packageName);
-            intents.add(intent);
-        }
 
-        // remove documents intent
-        if (!includeDocuments) {
-            for (Intent intent : intents) {
-                if (intent
-                        .getComponent()
-                        .getClassName()
-                        .equals("com.android.documentsui.DocumentsActivity")) {
-                    intents.remove(intent);
-                    break;
-                }
-            }
-        }
-        return intents;
+    /**
+     * 获得一个选择照片的Intent
+     */
+    public static Intent getChooseImageIntent(){
+        Intent galleryintent = new Intent(Intent.ACTION_GET_CONTENT);
+        galleryintent.setType(MimeType.IMAGE);
+        galleryintent.addCategory(Intent.CATEGORY_OPENABLE);
+        return galleryintent;
     }
 
+    /**
+     * 获得一个选择文件的Intent
+     */
+    public static Intent getChooseFileIntent(){
+        Intent fileIntent = new Intent(Intent.ACTION_GET_CONTENT);
+//        String[] mineTypes = {
+//                MimeType.DOC, MimeType.DOCX, MimeType.PDF, MimeType.PPT,
+//                MimeType.PPTX, MimeType.XLS, MimeType.XLSX, MimeType.APK,
+//                MimeType.TEXT, MimeType.Z, MimeType.ZIP, MimeType.TAR,
+//                MimeType.TGZ
+//        };
+//        fileIntent.putExtra(Intent.EXTRA_MIME_TYPES, mineTypes);
+//        fileIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);//多选
+        fileIntent.setType(MimeType.ALL);
+        fileIntent.addCategory(Intent.CATEGORY_OPENABLE);
+        return fileIntent;
+    }
+
+    /**
+     * 获取一个用于打开任何文件的intent
+     */
+    public static Intent getAllIntent(Context context, String path) {
+        Intent intent = new Intent();
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setAction(Intent.ACTION_VIEW);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.ALL);
+        return intent;
+
+    }
+
+    /**
+     * 获取一个用于打开APK文件的intent
+     */
+    public static Intent getApkFileIntent(Context context, String path) {
+        Intent intent = new Intent();
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setAction(Intent.ACTION_VIEW);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.APK);
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开VIDEO文件的intent
+     */
+    public static Intent getVideoFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.putExtra("oneshot", 0);
+        intent.putExtra("configchange", 0);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.VIDEO);
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开AUDIO文件的intent
+     */
+    public static Intent getAudioFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.putExtra("oneshot", 0);
+        intent.putExtra("configchange", 0);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.AUDIO);
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开Html文件的intent
+     */
+    public static Intent getHtmlFileIntent(String param) {
+        Uri uri = Uri.parse(param).buildUpon().encodedAuthority("com.android.htmlfileprovider").scheme("content").encodedPath(param).build();
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.setDataAndType(uri, "text/html");
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开图片文件的intent
+     */
+    public static Intent getImageFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addCategory("android.intent.category.DEFAULT");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, "image/*");
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开PPT文件的intent
+     */
+    public static Intent getPPtFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addCategory("android.intent.category.DEFAULT");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        String[] mineTypes = {MimeType.PPT, MimeType.PPTX};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mineTypes);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.PPTX);
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开Excel文件的intent
+     */
+    public static Intent getExcelFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addCategory("android.intent.category.DEFAULT");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        String[] mineTypes = {MimeType.XLS, MimeType.XLSX};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mineTypes);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.XLSX);
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开Word文件的intent
+     */
+    public static Intent getWordFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addCategory("android.intent.category.DEFAULT");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        String[] mineTypes = {MimeType.DOC, MimeType.DOCX};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mineTypes);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.DOCX);
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开txt文本文件的intent
+     */
+    public static Intent getTxtFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addCategory("android.intent.category.DEFAULT");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.TXT);
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开Zip文件的intent
+     */
+    public static Intent getZipFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addCategory("android.intent.category.DEFAULT");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.ZIP);
+        return intent;
+    }
+
+    /**
+     * 获取一个用于打开PDF文件的intent
+     */
+    public static Intent getPdfFileIntent(Context context, String path) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addCategory("android.intent.category.DEFAULT");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Uri uri = getUri(context, path);
+        intent.setDataAndType(uri, MimeType.PDF);
+        return intent;
+    }
+
+    private static Uri getUri(Context context, String path) {
+        File file = new File(path);
+        Uri imageUrl;
+        if(Build.VERSION.SDK_INT >= 24){
+            //使用FileProvider内容提供器将封装过的Uri共享给外部
+            imageUrl = FileProvider.getUriForFile(context, "com.example.p2p.fileprovider", file);
+        }else {
+            //将File对象转换为Uri对象，表示本地真实路径
+            imageUrl = Uri.fromFile(file);
+        }
+        return imageUrl;
+    }
 }

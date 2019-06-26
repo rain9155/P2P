@@ -1,21 +1,21 @@
-package com.example.p2p.adapter.delegte;
+package com.example.p2p.adapter.delegate;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.example.baseadapter.BaseViewHolder;
-import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
+import com.example.p2p.base.delegate.BaseSendMutiItemDelegate;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.utils.FileUtils;
+import com.example.p2p.utils.ImageUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,14 +24,12 @@ import java.util.Map;
  * 发送图片的item
  * Created by 陈健宇 at 2019/6/24
  */
-public class ImageSendDelegte implements MutiItemDelegate<Mes> {
+public class ImageSendDelegate extends BaseSendMutiItemDelegate {
 
-    private Bitmap mUserImage;
-    private Map<String, Bitmap> mMessageImages;//缓存一下，不然滑动卡顿
+    private Map<Uri, Bitmap> mMessageImages;//缓存一下，不然滑动卡顿
 
-    public ImageSendDelegte() {
+    public ImageSendDelegate() {
         mMessageImages = new HashMap<>();
-        mUserImage = FileUtils.getUserBitmap();
     }
 
     @Override
@@ -47,12 +45,12 @@ public class ImageSendDelegte implements MutiItemDelegate<Mes> {
 
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
+        super.onBindView(holder, items, position);
         Image image = (Image) items.data;
-        if(!mMessageImages.containsKey(image.imagePath)){
-            mMessageImages.put(image.imagePath,  BitmapFactory.decodeFile(image.imagePath));
+        if(!mMessageImages.containsKey(image.imageUri)){
+            mMessageImages.put(image.imageUri, ImageUtils.getImageByUri(holder.getItemView().getContext(), image.imageUri));
         }
-        holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imagePath))
-                .setImageBitmap(R.id.iv_face, mUserImage);
+        holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imageUri));
         ImageView imageView = holder.getView(R.id.iv_message);
         if(image.progress < 100){
             imageView.getDrawable().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);

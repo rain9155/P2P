@@ -34,9 +34,10 @@ import androidx.viewpager.widget.ViewPager;
 import com.example.p2p.adapter.RvChatAdapter;
 import com.example.p2p.adapter.RvEmojiAdapter;
 import com.example.p2p.adapter.VpEmojiAdapter;
-import com.example.p2p.base.BaseActivity;
+import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Emoji;
+import com.example.p2p.bean.File;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
@@ -50,6 +51,7 @@ import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.db.EmojiDao;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.ImageUtils;
+import com.example.p2p.utils.IntentUtils;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.SimpleTextWatchListener;
 import com.example.p2p.widget.customView.AudioTextView;
@@ -64,10 +66,13 @@ import com.example.utils.DisplayUtil;
 import com.example.utils.FileUtil;
 import com.example.utils.KeyBoardUtil;
 import com.example.utils.ToastUtil;
+import com.nbsp.materialfilepicker.MaterialFilePicker;
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.OnClick;
@@ -122,6 +127,7 @@ public class ChatActivity extends BaseActivity {
     private final String TAG = this.getClass().getSimpleName();
     private final static int REQUEST_CODE_GET_IMAGE= 0x000;
     private final static int REQUEST_CODE_TAKE_IMAGE = 0x001;
+    private final static int REQUEST_CODE_GET_FILE = 0x002;
     private ViewGroup mContentView;
     private boolean isKeyboardShowing;
     private int screenHeight;
@@ -132,7 +138,7 @@ public class ChatActivity extends BaseActivity {
     private RvChatAdapter mRvChatAdapter;
     private List<Mes> mMessageList;
     private int mLastPosition = -1;
-    private String mTakedImagePath;
+    private Uri mTakedImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,6 +163,7 @@ public class ChatActivity extends BaseActivity {
     
     @Override
     protected void onDestroy() {
+        ConnectManager.getInstance().release();
         mMessageList.clear();
         super.onDestroy();
     }
@@ -164,8 +171,9 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if(resultCode != Activity.RESULT_OK) return;
-        if(requestCode == REQUEST_CODE_GET_IMAGE) sendImage(ImageUtils.getImagePathOnKitKat(this, data));
-        if(requestCode == REQUEST_CODE_TAKE_IMAGE) sendImage(mTakedImagePath);
+        if(requestCode == REQUEST_CODE_GET_IMAGE) sendImage(data.getData());
+        if(requestCode == REQUEST_CODE_TAKE_IMAGE) sendImage(mTakedImageUri);
+        if(requestCode == REQUEST_CODE_GET_FILE) sendFile(data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH));
     }
 
     @Override
@@ -299,14 +307,12 @@ public class ChatActivity extends BaseActivity {
             }
         });
         //接收消息回调监听
-        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), message -> {
-            addMessage(message);
-        });
+        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), message -> addMessage(message));
         //发送消息回调监听
         ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
             @Override
             public void onSendSuccess(Mes<?> message) {
-                if(message.mesType == MesType.IMAGE){
+                if(message.mesType == MesType.IMAGE || message.mesType == MesType.FILE){
                     return;
                 }
                 addMessage(message);
@@ -357,11 +363,18 @@ public class ChatActivity extends BaseActivity {
                     MediaPlayerManager.getInstance().startPlayAudio(audio.audioPath, mp -> imageView.setBackgroundResource(audioBg));
                 }
             }
+            if(message.mesType == MesType.IMAGE){
+
+            }
+            if(message.mesType == MesType.FILE){
+                File file = (File) message.data;
+                FileUtils.openFile(ChatActivity.this, file.filePath);
+            }
             mLastPosition = position;
         });
     }
 
-    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyborad, R.id.rl_album, R.id.rl_camera})
+    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyborad, R.id.rl_album, R.id.rl_camera, R.id.rl_file})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.iv_audio:
@@ -388,9 +401,26 @@ public class ChatActivity extends BaseActivity {
             case R.id.iv_back:
                 finish();
                 break;
+            case R.id.rl_file:
+                chooseFile();
+                break;
             default:
                 break;
         }
+    }
+
+    /**
+     * 选择文件
+     */
+    private void chooseFile() {
+        String regex = ".*\\.(txt|ppt|doc|xls|pdf|apk|zip|pptx|docx|xlsx|mp3|mp4)$";
+        new MaterialFilePicker()
+                .withActivity(this)
+                .withRequestCode(REQUEST_CODE_GET_FILE)
+                .withHiddenFiles(false)
+                .withFilter(Pattern.compile(regex))
+                .withTitle(getString(R.string.chat_choose_file))
+                .start();
     }
 
     /**
@@ -404,10 +434,9 @@ public class ChatActivity extends BaseActivity {
                     public void onAccepted(Permission permission) {
                         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                         String imageFileName = System.currentTimeMillis() + ".png";
-                        Uri imageUri = ImageUtils.getImageUri(ChatActivity.this, FileUtils.getImagePath(mTargetUser.getIp(), ItemType.SEND_IMAGE), imageFileName);
-                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                        mTakedImageUri = ImageUtils.getImageUri(ChatActivity.this, FileUtils.getImagePath(mTargetUser.getIp(), ItemType.SEND_IMAGE), imageFileName);
+                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, mTakedImageUri);
                         startActivityForResult(cameraIntent, REQUEST_CODE_TAKE_IMAGE);
-                        mTakedImagePath = FileUtils.getImagePath(mTargetUser.getIp(), ItemType.SEND_IMAGE) + imageFileName;
                     }
 
                     @Override
@@ -422,9 +451,7 @@ public class ChatActivity extends BaseActivity {
      * 选择照片
      */
     private void chooseImage() {
-        Intent galleryintent = new Intent(Intent.ACTION_GET_CONTENT);
-        galleryintent.setType("image/*");
-        startActivityForResult(galleryintent, REQUEST_CODE_GET_IMAGE);
+        startActivityForResult(IntentUtils.getChooseImageIntent(), REQUEST_CODE_GET_IMAGE);
     }
 
     /**
@@ -449,15 +476,35 @@ public class ChatActivity extends BaseActivity {
     /**
      * 发送图片消息
      */
-    private void sendImage(String imagePath) {
-        Image image = new Image(imagePath);
+    private void sendImage(Uri imageUri) {
+        Image image = new Image(imageUri);
         Mes<Image> message = new Mes<>(ItemType.SEND_IMAGE, MesType.IMAGE, mUser.getIp(), image);
         addMessage(message);
-        int sendingImagePostion = mMessageList.size() - 1;
+        final int sendingImagePostion = mMessageList.indexOf(message);
         ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
+            if(mMessageList.isEmpty()) return;
             Image sendingImage = (Image) mMessageList.get(sendingImagePostion).data;
             sendingImage.progress = progress;
             mRvChatAdapter.notifyItemChanged(sendingImagePostion);
+        });
+    }
+
+    /**
+     * 发送文件
+     */
+    private void sendFile(String filePath) {
+        String fileType = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase(Locale.getDefault());
+        String size = FileUtils.getFileSize(filePath);
+        String name = filePath.substring(filePath.lastIndexOf(java.io.File.separator) + 1, filePath.lastIndexOf("."));
+        File file = new File(filePath, name, size, fileType);
+        Mes<File> message = new Mes<>(ItemType.SEND_FILE, MesType.FILE, mUser.getIp(), file);
+        addMessage(message);
+        final int sendingFilePosition = mMessageList.indexOf(message);
+        ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
+            if(mMessageList.isEmpty()) return;
+            File sendingFile = (File) mMessageList.get(sendingFilePosition).data;
+            sendingFile.progress = progress;
+            mRvChatAdapter.notifyItemChanged(sendingFilePosition);
         });
     }
 

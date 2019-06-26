@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.Handler;
 import android.util.AttributeSet;
@@ -58,7 +59,15 @@ public class AudioTextView extends AppCompatTextView {
         super(context, attrs);
         init();
         this.setOnLongClickListener(v -> {
-            VibrateUtils.Vibrate(getContext(), 100);
+            AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            final int mode = audioManager.getRingerMode();
+            if(mode == AudioManager.RINGER_MODE_SILENT){//静音
+                //nothing
+            }else if(mode == AudioManager.RINGER_MODE_VIBRATE){ //震动
+                VibrateUtils.Vibrate(getContext(), 100);
+            }else if(mode == AudioManager.RINGER_MODE_NORMAL){//响铃
+                VibrateUtils.Vibrate(getContext(), 100);
+            }
             mDialog.show();
             mAudioTextView.setText(getContext().getString(R.string.dialog_audio_undo));
             mAudioImage.setLevel(0);
