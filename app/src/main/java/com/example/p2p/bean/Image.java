@@ -11,21 +11,19 @@ import androidx.annotation.NonNull;
 public class Image {
 
     public String imagePath;
-    public Uri imageUri;
     public int len;
     public int progress;
 
-    public Image(Uri uri) {
-        this("", uri, 0, 0);
+    public Image(String path) {
+        this(path, 0, 0);
     }
 
     public Image(String path, int len) {
-        this(path, null, len, 0);
+        this(path, len, 0);
     }
 
-    public Image(String path, Uri uri, int len, int progress) {
+    public Image(String path, int len, int progress) {
         this.imagePath = path;
-        this.imageUri = uri;
         this.len = len;
         this.progress = progress;
     }
@@ -35,7 +33,6 @@ public class Image {
     public String toString() {
         return "Image[imagePath = " + imagePath
                 + ", len = " + len
-                + ", imageUri = " + imageUri
                 + "]";
     }
 }

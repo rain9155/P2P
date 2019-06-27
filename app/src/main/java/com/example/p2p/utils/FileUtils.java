@@ -13,12 +13,17 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.view.menu.BaseMenuPresenter;
 
+import com.example.p2p.R;
+import com.example.p2p.app.App;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.config.Constant;
+import com.example.p2p.config.FileType;
 import com.example.p2p.config.MimeType;
 import com.example.utils.FileUtil;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Locale;
 
 import static com.example.p2p.utils.IntentUtils.*;
@@ -105,6 +111,7 @@ public class FileUtils {
         return fileName;
     }
 
+
     /**
      * 获得相应用户存放音频的地方
      * @param ip 用户ip
@@ -162,7 +169,7 @@ public class FileUtils {
      */
     public static byte[] getFileBytes(String path){
         byte[] bytes = new byte[0];
-        try(InputStream in = new FileInputStream(path)){
+        try(InputStream in = new BufferedInputStream(new FileInputStream(path))){
             bytes = new byte[in.available()];
             in.read(bytes);
             return bytes;
@@ -173,7 +180,6 @@ public class FileUtils {
         return bytes;
     }
 
-
     /**
      * 根据路径存放字节流
      * @return false表示失败，反之成功
@@ -181,8 +187,8 @@ public class FileUtils {
     public static boolean saveFileBytes(byte[] bytes, String path){
         File file = new File(path);
         try(
-                FileOutputStream fileOutputStream = new FileOutputStream(file);
-                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
+                FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream, bytes.length)
         ){
             if(!file.exists()){
                 file.createNewFile();
@@ -208,7 +214,7 @@ public class FileUtils {
         } else if (end.equals("3gp") || end.equals("mp4")) {
             intent = getVideoFileIntent(context, filePath);
         } else if (end.equals("jpg") || end.equals("gif") || end.equals("png") || end.equals("jpeg") || end.equals("bmp")) {
-           // intent = getImageFileIntent(filePath);
+            intent = getImageFileIntent(context, filePath);
         } else if (end.equals("apk")) {
             intent = getApkFileIntent(context, filePath);
         } else if (end.equals("ppt") || end.equals("pptx")) {
@@ -235,31 +241,30 @@ public class FileUtils {
      */
     public static String getMimeType(String filePath){
         String end = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase(Locale.getDefault());
-        if (end.equals("m4a") || end.equals("mp3") || end.equals("mid") || end.equals("xmf") || end.equals("ogg") || end.equals("wav")) {
+        if (end.equals(FileType.M4A) || end.equals(FileType.MP3) || end.equals(FileType.MID) || end.equals(FileType.XMF) || end.equals(FileType.OGG) || end.equals(FileType.WAV)) {
             return MimeType.AUDIO;
-        } else if (end.equals("3gp") || end.equals("mp4")) {
+        } else if (end.equals(FileType.GP3) || end.equals(FileType.MP4) || end.equals(FileType.AVI) || end.equals(FileType.RMVB)) {
             return MimeType.VIDEO;
-        } else if (end.equals("jpg") || end.equals("gif") || end.equals("png") || end.equals("jpeg") || end.equals("bmp")) {
+        } else if (end.equals(FileType.JPG) || end.equals(FileType.GIF) || end.equals(FileType.PNG) || end.equals(FileType.JPEG) || end.equals(FileType.BMP)) {
             return MimeType.IMAGE;
-        } else if (end.equals("apk")) {
+        } else if (end.equals(FileType.APK)) {
             return MimeType.APK;
-        } else if (end.equals("ppt") || end.equals("pptx")) {
+        } else if (end.equals(FileType.PPT) || end.equals(FileType.PPTX)) {
             return MimeType.PPT;
-        } else if (end.equals("xls") || end.equals("xlsx")) {
+        } else if (end.equals(FileType.XLS) || end.equals(FileType.XLSX)) {
             return MimeType.XLS;
-        } else if (end.equals("doc") || end.equals("docx")) {
+        } else if (end.equals(FileType.DOC) || end.equals(FileType.DOCX)) {
             return MimeType.DOC;
-        } else if (end.equals("pdf")) {
+        } else if (end.equals(FileType.PDF)) {
             return MimeType.PDF;
-        }else if (end.equals("txt")) {
+        }else if (end.equals(FileType.TXT)) {
             return MimeType.TXT;
-        } else if(end.equals("zip")){
+        } else if(end.equals(FileType.ZIP) || end.equals(FileType.RAR)){
             return MimeType.ZIP;
         }else {
             return MimeType.UNKOWN;
         }
     }
-
 
     /**
      * 获得某个文件的大小

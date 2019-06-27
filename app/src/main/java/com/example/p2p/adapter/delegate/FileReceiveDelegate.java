@@ -10,6 +10,7 @@ import com.example.p2p.base.delegate.BaseReceiveMutiItemDelegate;
 import com.example.p2p.bean.File;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
+import com.example.p2p.utils.ImageUtils;
 
 /**
  * 文件接收item
@@ -34,37 +35,7 @@ public class FileReceiveDelegate extends BaseReceiveMutiItemDelegate {
         File file = (File) items.data;
         holder.setText(R.id.tv_message, file.fileName)
                 .setText(R.id.tv_size, file.fileSize)
-                .setImageResource(R.id.iv_file_icon, getImageId(file.fileType));
+                .setImageResource(R.id.iv_file_icon, ImageUtils.getImageId(file.fileType));
     }
 
-    private int getImageId(String fileType) {
-        int id;
-        switch (fileType){
-            case "pdf":
-                id = R.drawable.ic_pdf;
-                break;
-            case "ppt":
-            case "pptx":
-                id = R.drawable.ic_ppt;
-                break;
-            case "xls":
-            case "xlsx":
-                id = R.drawable.ic_excel;
-                break;
-            case "doc":
-            case "docx":
-                id = R.drawable.ic_word;
-                break;
-            case "txt":
-                id = R.drawable.ic_txt;
-                break;
-            case "zip":
-                id = R.drawable.ic_zip;
-                break;
-            default:
-                id = R.drawable.ic_unknow_file;
-                break;
-        }
-        return id;
-    }
 }

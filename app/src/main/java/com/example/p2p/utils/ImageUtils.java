@@ -16,12 +16,18 @@ import android.provider.MediaStore;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
+import com.example.p2p.BuildConfig;
 import com.example.p2p.R;
+import com.example.p2p.bean.ItemType;
+import com.example.p2p.config.FileType;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.stream.IntStream;
 
 /**
@@ -42,6 +48,34 @@ public class ImageUtils {
         Matrix matrix = new Matrix();
         matrix.setScale(sWidth, sHeight);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    /**
+     * 根据图片Uri保存图片
+     * @param imageUri 图片Uri
+     * @param ip 目标用户ip
+     * @return 保存图片的路径
+     */
+    public static String saveImageByUri(Context context, Uri imageUri, String ip){
+        String path = FileUtils.getImagePath(ip, ItemType.SEND_IMAGE);
+        String name = System.currentTimeMillis() + ".png";
+        File file = new File(path + name);
+        try(
+                InputStream in = context.getContentResolver().openInputStream(imageUri);
+                OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+        ) {
+            if(!file.exists()) file.createNewFile();
+            byte[] bytes = new byte[in.available()];
+            in.read(bytes);
+            os.write(bytes);
+            return file.getPath();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        LogUtils.e(TAG, "保存图片失败");
+        return "";
     }
 
     /**
@@ -72,7 +106,6 @@ public class ImageUtils {
      * @return 图片Uri
      */
     public static Uri getImageUri(Context context, String path, String name) {
-        Uri imageUrl;
         File fileOutPutImage = new File(path, name);
         if(!fileOutPutImage.exists()){
             try {
@@ -81,14 +114,44 @@ public class ImageUtils {
                 e.printStackTrace();
             }
         }
-        if(Build.VERSION.SDK_INT >= 24){
-            //使用FileProvider内容提供器将封装过的Uri共享给外部
-            imageUrl = FileProvider.getUriForFile(context, "com.example.p2p.fileprovider", fileOutPutImage);
-        }else {
-            //将File对象转换为Uri对象，表示这张图片的本地真实路径
-            imageUrl = Uri.fromFile(fileOutPutImage);
+        return FileProvider7.getUriForFile(context, fileOutPutImage);
+    }
+
+    /**
+     * 根据文件类型，获得相应的icon
+     * @param fileType 文件类型
+     * @return icon
+     */
+    public static int getImageId(String fileType) {
+        int id;
+        switch (fileType){
+            case FileType.PDF:
+                id = R.drawable.ic_pdf;
+                break;
+            case FileType.PPT:
+            case FileType.PPTX:
+                id = R.drawable.ic_ppt;
+                break;
+            case FileType.XLS:
+            case FileType.XLSX:
+                id = R.drawable.ic_excel;
+                break;
+            case FileType.DOC:
+            case FileType.DOCX:
+                id = R.drawable.ic_word;
+                break;
+            case FileType.TXT:
+                id = R.drawable.ic_txt;
+                break;
+            case FileType.ZIP:
+            case FileType.RAR:
+                id = R.drawable.ic_zip;
+                break;
+            default:
+                id = R.drawable.ic_unknow_file;
+                break;
         }
-        return imageUrl;
+        return id;
     }
 
 }

@@ -20,7 +20,9 @@ import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 
+import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,6 +30,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,7 +46,8 @@ public class ConnectManager {
 
     private static final String TAG = ConnectManager.class.getSimpleName();
     private static final int PORT = 9155;
-    private static final int MAX_SEND_DATA = 10000;
+    private static final int MAX_SEND_DATA = 10000;//大约10Kb
+    private static final int MAX_FILE_SEND_DATA = 45000000;//大约45Mb
     private static final int TYPE_CONNECTION_SUCCESS = 0x000;
     private static final int TYPE_CONNECTION_FAIL = 0x001;
     private static final int TYPE_SEND_SUCCESS = 0x002;
@@ -216,7 +220,7 @@ public class ConnectManager {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.d(TAG, "发送消息失败， e = " + e.getMessage());
+                Log.e(TAG, "发送消息失败， e = " + e.getMessage());
                 if(mSendMessgeCallback != null){
                     mHandler.obtainMessage(TYPE_SEND_FAIL, message).sendToTarget();
                 }
@@ -294,6 +298,13 @@ public class ConnectManager {
         return mReceiveCallbacks.get(targetIp);
     }
 
+    /**
+     * 执行一个任务
+     */
+    public void executeTast(Runnable tast){
+        mExecutor.execute(tast);
+    }
+
     public void setConnectCallback(IConnectCallback callback){
         this.mConnectCallback = callback;
     }
@@ -326,10 +337,7 @@ public class ConnectManager {
                 break;
             case IMAGE:
                 Image image = (Image) message.data;
-                Uri imageUri = image.imageUri;
-                InputStream inputStream = App.getContext().getContentResolver().openInputStream(imageUri);
-                byte[] imageBytes = new byte[inputStream.available()];
-                inputStream.read(imageBytes);
+                byte[] imageBytes = FileUtils.getFileBytes(image.imagePath);
                 int imageLen  = imageBytes.length;
                 os.writeInt(type.ordinal());
                 os.writeInt(imageLen);
@@ -340,14 +348,34 @@ public class ConnectManager {
             case FILE:
                 File file = (File) message.data;
                 String filePath = file.filePath;
-                byte[] fileBytes = FileUtils.getFileBytes(filePath);
-                int fileLen = fileBytes.length;
+                InputStream fileIn = new FileInputStream(new java.io.File(filePath));
+                int fileLen = fileIn.available();
+                fileIn.close();
                 os.writeInt(type.ordinal());
                 os.writeInt(fileLen);
                 os.writeUTF(file.fileType);
                 os.writeUTF(file.fileSize);
                 os.writeUTF(file.fileName);
-                sendBytes(targetIp, os, fileBytes, fileLen);
+                byte[] fileBytes;
+                LogUtils.d(TAG, "文件长度，len = " + fileLen);
+                if(fileLen < MAX_FILE_SEND_DATA){
+                    fileBytes = FileUtils.getFileBytes(filePath);
+                    sendBytes(targetIp, os, fileBytes, fileLen);
+                }else {//文件太大，分段发送
+                    int count = 0;
+                    while (count < fileLen){
+                        int maxSendFileLen = MAX_FILE_SEND_DATA;
+                        if(count + MAX_FILE_SEND_DATA >= fileLen){
+                            maxSendFileLen = fileLen - count;
+                        }
+                        byte[] tempBytes = new byte[maxSendFileLen];
+                        try(InputStream in = new BufferedInputStream(new FileInputStream(filePath))){
+                            in.read(tempBytes);
+                            sendBytes(targetIp, os, tempBytes, maxSendFileLen);
+                        }
+                        count += maxSendFileLen;
+                    }
+                }
                 file.len = fileLen;
                 file.progress = 100;
                 break;
@@ -356,19 +384,19 @@ public class ConnectManager {
         }
     }
 
-    private void sendBytes(String targetIp, DataOutputStream os, byte[] imageBytes, int imageLen) throws IOException, InterruptedException {
+    private void sendBytes(String targetIp, DataOutputStream os, byte[] bytes, int len) throws IOException {
         int start = 0;
         int end = 0;
-        while (end < imageLen){
+        while (end < len){
             if(isRelease) break;//退出聊天后不要传送数据
             end += MAX_SEND_DATA;
-            if(end >= imageLen) end = imageLen;
-            os.write(imageBytes, start, end - start);
-            LogUtils.d(TAG, "传送数据中，offet = " + (end - start) + ", 长度， len = " + imageLen);
+            if(end >= len) end = len;
+            os.write(bytes, start, end - start);
+            LogUtils.d(TAG, "传送数据中，offet = " + (end - start) + ", 长度， len = " + len);
             start = end;
             IProgressCallback callback = mProgressCallbacks.get(targetIp);
             if(callback != null){
-                double num = start / (imageLen * 1.0);
+                double num = start / (len * 1.0);
                 int progress = (int) (num * 100);
                 mHandler.post(() -> callback.onProgress(progress));
             }

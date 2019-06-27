@@ -14,10 +14,13 @@ import com.example.p2p.bean.User;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
+
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -28,6 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ReceiveThread implements Runnable{
 
     private static final String TAG = ReceiveThread.class.getSimpleName();
+    private static final int MAX_RECEIVE_DATA = 45000000;
     private static final int TYPE_RECEVICE_SUCCESS = 0x000;
 
     private Socket mSocket;
@@ -109,13 +113,29 @@ public class ReceiveThread implements Runnable{
                 mes = new Mes<Image>(ItemType.RECEIVE_IMAGE, MesType.IMAGE, mUser.getIp(), image);
                 break;
             case 3:
-                int flieLen = in.readInt();
+                int fileLen = in.readInt();
                 String flieType = in.readUTF();
                 String fileSize = in.readUTF();
                 String fileName = in.readUTF();
-                byte[] fileBytes = receiveBytes(in, flieLen);
-                String filePath = saveReceiveFile(fileBytes, fileName, flieType);
-                File file = new File(filePath, fileName, flieLen, fileSize, flieType);
+                byte[] fileBytes;
+                String filePath = "";
+                fileBytes = receiveBytes(in, fileLen);
+                filePath = saveReceiveFile(fileBytes, fileName, flieType);
+//                if(fileLen < MAX_RECEIVE_DATA){
+//
+//                }else {//文件太大，分段保存
+//                    int count = 0;
+//                    while (count < fileLen){
+//                        int maxReceiveLen = MAX_RECEIVE_DATA;
+//                        if(count + maxReceiveLen >= fileLen){
+//                            maxReceiveLen = fileLen - MAX_RECEIVE_DATA;
+//                        }
+//                        fileBytes = receiveBytes(in, maxReceiveLen);
+//                        filePath = saveReceiveFile(fileBytes, fileName, flieType);
+//                        count += maxReceiveLen;
+//                    }
+//                }
+                File file = new File(filePath, fileName, fileLen, fileSize, flieType);
                 mes = new Mes<File>(ItemType.RECEIVE_FILE, MesType.FILE, mUser.getIp(), file);
                 break;
             default:

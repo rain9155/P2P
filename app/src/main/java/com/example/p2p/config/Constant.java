@@ -1,5 +1,7 @@
 package com.example.p2p.config;
 
+import android.os.Environment;
+
 import com.example.p2p.app.App;
 import com.example.p2p.utils.FileUtils;
 
@@ -15,6 +17,6 @@ public class Constant {
 
     public static final String FILE_NAME_USER = "user";
     public static final String FILE_PATH_USER = FileUtils.getFilePath(App.getContext(), "user/");
-    public static final String FILE_PATH_ONLINE_USER = FileUtils.getFilePath(App.getContext(), "onlineUser/");
+    public static final String FILE_PATH_ONLINE_USER = Environment.getExternalStorageDirectory() + "/P2P/onlineUser/";
 
 }

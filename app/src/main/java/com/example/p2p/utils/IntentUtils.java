@@ -7,14 +7,17 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.os.StrictMode;
 import android.provider.MediaStore;
+import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
+import com.example.p2p.BuildConfig;
+import com.example.p2p.bean.File;
 import com.example.p2p.config.MimeType;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +26,6 @@ import java.util.List;
  * Created by 陈健宇 at 2019/6/24
  */
 public class IntentUtils {
-
 
     /**
      * 获得一个选择照片的Intent
@@ -121,6 +123,7 @@ public class IntentUtils {
         Intent intent = new Intent("android.intent.action.VIEW");
         intent.addCategory("android.intent.category.DEFAULT");
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         Uri uri = getUri(context, path);
         intent.setDataAndType(uri, "image/*");
         return intent;
@@ -205,15 +208,7 @@ public class IntentUtils {
     }
 
     private static Uri getUri(Context context, String path) {
-        File file = new File(path);
-        Uri imageUrl;
-        if(Build.VERSION.SDK_INT >= 24){
-            //使用FileProvider内容提供器将封装过的Uri共享给外部
-            imageUrl = FileProvider.getUriForFile(context, "com.example.p2p.fileprovider", file);
-        }else {
-            //将File对象转换为Uri对象，表示本地真实路径
-            imageUrl = Uri.fromFile(file);
-        }
-        return imageUrl;
+        java.io.File file = new java.io.File(path);
+        return FileProvider7.getUriForFile(context, file);
     }
 }

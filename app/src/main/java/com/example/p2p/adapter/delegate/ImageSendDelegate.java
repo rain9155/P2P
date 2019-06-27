@@ -1,6 +1,7 @@
 package com.example.p2p.adapter.delegate;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.net.Uri;
@@ -26,7 +27,7 @@ import java.util.Map;
  */
 public class ImageSendDelegate extends BaseSendMutiItemDelegate {
 
-    private Map<Uri, Bitmap> mMessageImages;//缓存一下，不然滑动卡顿
+    private Map<String, Bitmap> mMessageImages;//缓存一下，不然滑动卡顿
 
     public ImageSendDelegate() {
         mMessageImages = new HashMap<>();
@@ -47,10 +48,10 @@ public class ImageSendDelegate extends BaseSendMutiItemDelegate {
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
         super.onBindView(holder, items, position);
         Image image = (Image) items.data;
-        if(!mMessageImages.containsKey(image.imageUri)){
-            mMessageImages.put(image.imageUri, ImageUtils.getImageByUri(holder.getItemView().getContext(), image.imageUri));
+        if(!mMessageImages.containsKey(image.imagePath)){
+            mMessageImages.put(image.imagePath, BitmapFactory.decodeFile(image.imagePath));
         }
-        holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imageUri));
+        holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imagePath));
         ImageView imageView = holder.getView(R.id.iv_message);
         if(image.progress < 100){
             imageView.getDrawable().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);

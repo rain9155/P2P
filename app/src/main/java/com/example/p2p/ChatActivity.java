@@ -3,15 +3,22 @@ package com.example.p2p;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -58,10 +65,12 @@ import com.example.p2p.widget.customView.AudioTextView;
 import com.example.p2p.widget.customView.IndicatorView;
 import com.example.p2p.widget.customView.SendButton;
 import com.example.p2p.widget.customView.WrapViewPager;
+import com.example.p2p.widget.dialog.LocatingDialog;
 import com.example.permission.PermissionHelper;
 import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
 import com.example.permission.callback.IPermissionsCallback;
+import com.example.utils.CommonUtil;
 import com.example.utils.DisplayUtil;
 import com.example.utils.FileUtil;
 import com.example.utils.KeyBoardUtil;
@@ -69,6 +78,9 @@ import com.example.utils.ToastUtil;
 import com.nbsp.materialfilepicker.MaterialFilePicker;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -128,17 +140,18 @@ public class ChatActivity extends BaseActivity {
     private final static int REQUEST_CODE_GET_IMAGE= 0x000;
     private final static int REQUEST_CODE_TAKE_IMAGE = 0x001;
     private final static int REQUEST_CODE_GET_FILE = 0x002;
-    private ViewGroup mContentView;
     private boolean isKeyboardShowing;
     private int screenHeight;
+    private int mLastPosition = -1;
+    private Uri mTakedImageUri;
     private List<RvEmojiAdapter> mEmojiAdapters;
     private List<Emoji> mEmojiBeans;
     private User mTargetUser;
     private User mUser;
     private RvChatAdapter mRvChatAdapter;
     private List<Mes> mMessageList;
-    private int mLastPosition = -1;
-    private Uri mTakedImageUri;
+    private ViewGroup mContentView;
+    private LocatingDialog mLocatingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -165,6 +178,7 @@ public class ChatActivity extends BaseActivity {
     protected void onDestroy() {
         ConnectManager.getInstance().release();
         mMessageList.clear();
+        if(mLocatingDialog != null) mLocatingDialog = null;
         super.onDestroy();
     }
 
@@ -185,6 +199,7 @@ public class ChatActivity extends BaseActivity {
     protected void initView() {
         tvTitle.setText(mTargetUser.getName());
         ivScan.setVisibility(View.GONE);
+        mLocatingDialog = new LocatingDialog();
         PermissionHelper.getInstance().with(this).requestPermissions(
                 new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 new IPermissionsCallback() {
@@ -307,7 +322,7 @@ public class ChatActivity extends BaseActivity {
             }
         });
         //接收消息回调监听
-        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), message -> addMessage(message));
+        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), this::addMessage);
         //发送消息回调监听
         ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
             @Override
@@ -364,7 +379,8 @@ public class ChatActivity extends BaseActivity {
                 }
             }
             if(message.mesType == MesType.IMAGE){
-
+                Image image = (Image) message.data;
+                FileUtils.openFile(ChatActivity.this, image.imagePath);
             }
             if(message.mesType == MesType.FILE){
                 File file = (File) message.data;
@@ -374,7 +390,7 @@ public class ChatActivity extends BaseActivity {
         });
     }
 
-    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyborad, R.id.rl_album, R.id.rl_camera, R.id.rl_file})
+    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyborad, R.id.rl_album, R.id.rl_camera, R.id.rl_file, R.id.rl_location})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.iv_audio:
@@ -404,6 +420,9 @@ public class ChatActivity extends BaseActivity {
             case R.id.rl_file:
                 chooseFile();
                 break;
+            case R.id.rl_location:
+                sendLocation();
+                break;
             default:
                 break;
         }
@@ -413,7 +432,7 @@ public class ChatActivity extends BaseActivity {
      * 选择文件
      */
     private void chooseFile() {
-        String regex = ".*\\.(txt|ppt|doc|xls|pdf|apk|zip|pptx|docx|xlsx|mp3|mp4)$";
+        String regex = ".*\\.(txt|ppt|doc|xls|pdf|apk|zip|rar|pptx|docx|xlsx|mp3|mp4)$";
         new MaterialFilePicker()
                 .withActivity(this)
                 .withRequestCode(REQUEST_CODE_GET_FILE)
@@ -477,7 +496,8 @@ public class ChatActivity extends BaseActivity {
      * 发送图片消息
      */
     private void sendImage(Uri imageUri) {
-        Image image = new Image(imageUri);
+        String imagePath = ImageUtils.saveImageByUri(this, imageUri, mTargetUser.getIp());
+        Image image = new Image(imagePath);
         Mes<Image> message = new Mes<>(ItemType.SEND_IMAGE, MesType.IMAGE, mUser.getIp(), image);
         addMessage(message);
         final int sendingImagePostion = mMessageList.indexOf(message);
@@ -487,6 +507,90 @@ public class ChatActivity extends BaseActivity {
             sendingImage.progress = progress;
             mRvChatAdapter.notifyItemChanged(sendingImagePostion);
         });
+    }
+
+    /**
+     * 发送定位信息
+     */
+    private void sendLocation() {
+        Criteria criteria = new Criteria();//配置定位的一些配置信息
+        criteria.setPowerRequirement(Criteria.POWER_LOW);//低电耗
+        criteria.setBearingAccuracy(Criteria.ACCURACY_COARSE);//标准精度为粗糙
+        criteria.setAltitudeRequired(false);//不需要海拔
+        criteria.setBearingRequired(false);//不需要导向
+        criteria.setAccuracy(Criteria.ACCURACY_LOW);//精度为低
+        criteria.setCostAllowed(false);//不需要成本
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        String bestProvider = locationManager.getBestProvider(criteria, true);//得到最好的位置提供者，如GPS，netWork等
+        LogUtils.d(TAG, "provider = " + bestProvider);
+        PermissionHelper.getInstance().with(this).requestPermission(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                new IPermissionCallback() {
+                    @SuppressLint("MissingPermission")
+                    @Override
+                    public void onAccepted(Permission permission) {
+                        mLocatingDialog.show(getSupportFragmentManager());
+                        ConnectManager.getInstance().executeTast(() -> {
+                            Location location = null;//里面存放着定位的信息,经纬度,海拔等
+                            if(!TextUtils.isEmpty(bestProvider)){
+                                location = locationManager.getLastKnownLocation(bestProvider);
+                                LogUtils.d(TAG, "location = " + location);
+                            }else {//没有最好的定位方案则手动配置
+                                if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                                else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+                                    location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                                else if(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
+                                    location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+                            }
+                            LogUtils.d(TAG, "location = " + location);
+                            final Location finalLocation = location;
+                            runOnUiThread(() -> {
+                                if(null == finalLocation){
+                                    mLocatingDialog.dismiss();
+                                    ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_location_fail));
+                                    return;
+                                }
+                                Geocoder geocoder = new Geocoder(ChatActivity.this, Locale.getDefault());//地区编码,可以得到具体的地理位置
+                                try {
+                                    List<Address> addresses = geocoder.getFromLocation(finalLocation.getLatitude(), finalLocation.getLongitude(), 1);
+                                    if(CommonUtil.isEmptyList(addresses)){
+                                        mLocatingDialog.dismiss();
+                                        ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_location_fail));
+                                        return;
+                                    }
+                                    Address address = addresses.get(0);
+                                    String country = address.getCountryName();
+                                    String city = address.getLocality();
+                                    String citySub = address.getSubLocality();
+                                    String thoroughfare = address.getThoroughfare();
+                                    LogUtils.d(TAG, "country = " + country
+                                            + ", city = " + city
+                                            + ", citySub = " + citySub
+                                            + ", fare = " + thoroughfare);
+                                    StringBuilder builder = new StringBuilder(32);
+                                    builder.append("位置：").append(country).append(city);
+                                    if(!TextUtils.isEmpty(citySub)) builder.append(citySub);
+                                    if(!TextUtils.isEmpty(thoroughfare)) builder.append(thoroughfare);
+                                    ConnectManager.getInstance().sendMessage(
+                                            mTargetUser.getIp(),
+                                            new Mes<String>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), builder.toString()));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_location_fail));
+                                    LogUtils.e(TAG, "定位失败， e = " + e.getMessage());
+                                }
+                                mLocatingDialog.dismiss();
+                            });
+                        });
+                    }
+
+                    @Override
+                    public void onDenied(Permission permission) {
+                        ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_permission_rejected));
+                    }
+                }
+        );
     }
 
     /**
