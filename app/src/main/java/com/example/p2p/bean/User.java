@@ -14,17 +14,17 @@ public class User implements Serializable {
     private String mName;
     private String mIp;
     private String mImagePath;
-    private int mImageBytesLen;
+    private int mImageLen;
 
     public User(String name, String ip, String imagePath) {
        this(name, ip, imagePath, 0);
     }
 
-    public User(String name, String ip, String imagePath, int imageBytesLen) {
+    public User(String name, String ip, String imagePath, int imageLen) {
         this.mName = name;
         this.mIp = ip;
         this.mImagePath = imagePath;
-        this.mImageBytesLen = imageBytesLen;
+        this.mImageLen = imageLen;
     }
 
     public String getImagePath() {
@@ -35,12 +35,12 @@ public class User implements Serializable {
         mImagePath = imagePath;
     }
 
-    public int getImageBytesLen() {
-        return mImageBytesLen;
+    public int getImageLen() {
+        return mImageLen;
     }
 
-    public void setImageBytesLen(int imageBytesLen) {
-        mImageBytesLen = imageBytesLen;
+    public void setImageLen(int imageLen) {
+        mImageLen = imageLen;
     }
 
     public String getName() {
@@ -74,7 +74,7 @@ public class User implements Serializable {
         return "User[name = " + mName
                 + ", ip = " + mIp
                 + ", imagePath = " + mImagePath
-                + ", imageBytesLen = " + mImageBytesLen
+                + ", imageLen = " + mImageLen
                 + "]";
     }
 }

@@ -1,7 +1,5 @@
 package com.example.p2p.core;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -11,12 +9,10 @@ import com.example.p2p.bean.User;
 import com.example.p2p.callback.ISendAddressCallback;
 import com.example.p2p.callback.IUserCallback;
 import com.example.p2p.config.Constant;
-import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.IpUtils;
 import com.example.p2p.utils.JsonUtils;
 import com.example.p2p.utils.LogUtils;
 import com.example.utils.FileUtil;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -36,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
+
 /**
  * 使用UDP广播本地ip地址
  * Created by 陈健宇 at 2019/6/11
@@ -45,7 +42,7 @@ public class OnlineUserManager {
     private String TAG = OnlineUserManager.class.getSimpleName();
     private static OnlineUserManager sInstance;
     private static final int PORT = 9156;
-    private static final int MAX_RECEIVE_DATA = 10000;
+    private static final int MAX_RECEIVE_DATA = 50000;
     private static final int TYPE_JOIN_USER = 0x000;
     private static final int TYPE_EXIT_USER = 0x001;
     private static final int TYPE_JOIN_USERS = 0x002;
@@ -53,9 +50,9 @@ public class OnlineUserManager {
     private ExecutorService mExecutor;
     private DatagramSocket mDatagramSocket;
     private Map<String, User> mOnlineUsers;
-    private Map<String, ByteArrayOutputStream> mReceiveImagesBytes;
     private IUserCallback mUserCallback;
     private volatile boolean isRefresh = true;
+    private volatile boolean isSendingImage;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
@@ -79,7 +76,6 @@ public class OnlineUserManager {
     private OnlineUserManager(){
         mExecutor = Executors.newCachedThreadPool();
         mOnlineUsers = new ConcurrentHashMap<>();
-        mReceiveImagesBytes = new ConcurrentHashMap<>();
     }
 
     public static OnlineUserManager getInstance(){
@@ -116,7 +112,7 @@ public class OnlineUserManager {
                     //获得发送方的ip地址
                     String receiveIp = datagramPacket.getAddress().getHostAddress();
                     //解析数据
-                    Data datas = resolveData(data, receiveIp);
+                    Data datas = resolveData(data);
                     if(datas != null){
                         //用户数据
                         int code = datas.getCode();
@@ -126,11 +122,14 @@ public class OnlineUserManager {
                             //把它加入在线用户列表
                             if(!mOnlineUsers.containsKey(receiveIp)){
                                 mOnlineUsers.put(receiveIp, user);
-                                mReceiveImagesBytes.put(receiveIp, new ByteArrayOutputStream());
+                                //通知主活动用用户加入
+                                if(mUserCallback != null && !isRefresh){
+                                    mHandler.obtainMessage(TYPE_JOIN_USER, mOnlineUsers.get(receiveIp)).sendToTarget();
+                                }
                                 LogUtils.d(TAG, "一个用户加入，地址 = " + receiveIp);
                             }
                             //回复它
-                            //reply(receiveIp);
+                            if(!receiveIp.equals(IpUtils.getLocIpAddress())) reply(receiveIp);
                         }else if(code == 1){
                             //用户退出在线用户列表
                             User exitUser = mOnlineUsers.remove(receiveIp);
@@ -144,8 +143,7 @@ public class OnlineUserManager {
                             //得到所有在线用户列表
                             if(!mOnlineUsers.containsKey(receiveIp)) {
                                 mOnlineUsers.put(receiveIp, user);
-                                mReceiveImagesBytes.put(receiveIp, new ByteArrayOutputStream());
-                                LogUtils.d(TAG, "获得回复一个用户信息，地址 = " + receiveIp);
+                                LogUtils.d(TAG, "获得一个用户信息，地址 = " + receiveIp);
                             }
                         }
                     }
@@ -165,13 +163,11 @@ public class OnlineUserManager {
     /**
      * 广播本地ip地址给同一网段下的所有主机, 我要加入聊天
      */
-    public void login(User user, byte[] bytes){
+    public void login(User user){
         String broadcastAddress = getBroadcastAddress();
         String datas = JsonUtils.toJson(new Data(0, user));
-        sendAddress(broadcastAddress, datas, () -> {
-            LogUtils.d(TAG, "广播本地ip地址成功");
-            sendUserWithImage(bytes, broadcastAddress);
-        });
+        sendAddress(broadcastAddress, datas, null);
+        LogUtils.d(TAG, "广播本地ip地址成功");
     }
 
     /**
@@ -190,21 +186,16 @@ public class OnlineUserManager {
      */
     public void reply(String targetIp){
         Data data = new Data(2);
-        User user = data.getUser();
-        byte[] imageBytes = FileUtils.getFileBytes(user.getImagePath());
-        user.setImageBytesLen(imageBytes.length);
-        user.setImagePath(null);
         String datas = JsonUtils.toJson(data);
-        sendAddress(targetIp, datas, () -> {
-            LogUtils.d(TAG, "回复本地ip地址成功");
-            sendUserWithImage(imageBytes, targetIp);
-        });
+        sendAddress(targetIp, datas, null);
+        LogUtils.d(TAG, "回复本地ip地址成功");
     }
 
     /**
      * 发送图片数据
      */
     private void sendUserWithImage(byte[] bytes, String targetIp) {
+        isSendingImage = true;
         mExecutor.execute(() -> {
             DatagramSocket datagramSocket = null;
             try {
@@ -213,6 +204,7 @@ public class OnlineUserManager {
                 int end = 0;
                 int length = bytes.length;
                 while (end < length){
+                    if(!isSendingImage) break;//退出后停止发送
                     end += MAX_RECEIVE_DATA;
                     if(end >= length) end = length;
                     DatagramPacket datagramPacket = new DatagramPacket(bytes, start, end - start, InetAddress.getByName(targetIp), PORT);
@@ -229,7 +221,7 @@ public class OnlineUserManager {
             } catch (IOException e) {
                 e.printStackTrace();
                 LogUtils.e(TAG, "发送一段图片数据失败， e = " + e.getMessage());
-            }  finally {
+            }finally {
                 if(datagramSocket != null) datagramSocket.close();
             }
         });
@@ -249,13 +241,15 @@ public class OnlineUserManager {
     public void getOnlineUsers() {
         isRefresh = true;
         mExecutor.execute(() -> {
+            int count = 0;
             while (true){
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                 }catch (InterruptedException e){
                     e.printStackTrace();
                 }
-                if(mReceiveImagesBytes.isEmpty())  break;
+                if(count >= 3)  break;
+                count++;
             }
             if(mUserCallback != null){
                 List<User> list = new ArrayList<>();
@@ -292,8 +286,8 @@ public class OnlineUserManager {
                         DatagramPacket datagramPacket = new DatagramPacket(data, 0, data.length, InetAddress.getByName(targetIp), PORT);
                         //调用send方法发送数据报
                         datagramSocket.send(datagramPacket);
-                        Thread.sleep(1000);
                         LogUtils.d(TAG, "发送一个广播成功");
+                        Thread.sleep(1000);
                         return true;
                     } catch (SocketException e) {
                         e.printStackTrace();
@@ -330,7 +324,7 @@ public class OnlineUserManager {
     /**
      * 解析字节流
      */
-    private Data resolveData(byte[] data, String receiveIp) throws IOException {
+    private Data resolveData(byte[] data) throws IOException {
         String receiveDatas = "";
         try(
             InputStream in = new ByteArrayInputStream(data);
@@ -342,34 +336,8 @@ public class OnlineUserManager {
             }
             receiveDatas = new String(os.toByteArray());
         }
-        try {
-            Data datas = JsonUtils.toObject(receiveDatas, Data.class);
-            if(datas == null) throw new IllegalArgumentException();
-            return datas;
-        }catch (Exception e){
-            //图片数据
-            int totalLen = mOnlineUsers.get(receiveIp).getImageBytesLen();
-            ByteArrayOutputStream receiveBytesOs = mReceiveImagesBytes.get(receiveIp);
-            byte[] receivedBytes = receiveBytesOs.toByteArray();
-            if(receivedBytes.length + data.length >= totalLen){
-                int len = totalLen - receivedBytes.length;
-                receiveBytesOs.write(data, 0, len);
-                receivedBytes = receiveBytesOs.toByteArray();
-                Bitmap bitmap = BitmapFactory.decodeByteArray(receivedBytes, 0, receivedBytes.length);
-                mOnlineUsers.get(receiveIp).setImagePath(FileUtils.saveOnlineUserBitmap(bitmap, receiveIp));
-                receiveBytesOs = mReceiveImagesBytes.remove(receiveIp);
-                receiveBytesOs.close();
-                LogUtils.e(TAG, "收到一个图片，receiveIp = " + receiveIp + ", 长度，len = " + receiveBytesOs.toByteArray().length);
-                //通知主活动用用户加入
-                if(mUserCallback != null && !isRefresh){
-                    mHandler.obtainMessage(TYPE_JOIN_USER, mOnlineUsers.get(receiveIp)).sendToTarget();
-                }
-            }else {
-                receiveBytesOs.write(data, 0, data.length);
-                LogUtils.d(TAG, "收到图片数据，目前长度 = " + receiveBytesOs.toByteArray().length + "来源用户，地址 = " + receiveIp);
-            }
-            return null;
-        }
+        Data datas = JsonUtils.toObject(receiveDatas, Data.class);
+        return datas;
     }
 
     public void setUserCallback(IUserCallback callback){

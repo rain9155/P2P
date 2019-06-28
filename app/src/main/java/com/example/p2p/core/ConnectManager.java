@@ -1,14 +1,12 @@
 package com.example.p2p.core;
 
-import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
-import com.example.p2p.app.App;
 import com.example.p2p.bean.Audio;
-import com.example.p2p.bean.File;
+import com.example.p2p.bean.Document;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
@@ -17,6 +15,7 @@ import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IProgressCallback;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
+import com.example.p2p.callback.IUserImageReceiveCallback;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 
@@ -30,11 +29,11 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -46,20 +45,19 @@ public class ConnectManager {
 
     private static final String TAG = ConnectManager.class.getSimpleName();
     private static final int PORT = 9155;
-    private static final int MAX_SEND_DATA = 10000;//大约10Kb
+    private static final int MAX_SEND_DATA = 30000;//大约30Kb
     private static final int MAX_FILE_SEND_DATA = 45000000;//大约45Mb
-    private static final int TYPE_CONNECTION_SUCCESS = 0x000;
-    private static final int TYPE_CONNECTION_FAIL = 0x001;
     private static final int TYPE_SEND_SUCCESS = 0x002;
     private static final int TYPE_SEND_FAIL = 0x003;
     private static ConnectManager sInstance;
 
     private ServerSocket mServerSocket;
     private Map<String, Socket> mClients;//保存每个Socket连接到ip地址的映射
-    private Map<String, IReceiveMessageCallback> mReceiveCallbacks;//保存每个消息接受回调到ip地址的映射
+    private Map<String, IReceiveMessageCallback> mChatReceiveCallbacks;//保存每个消息接受回调到ip地址的映射
+    private Map<String, IUserImageReceiveCallback> mUserImageReceiveCallbacks;
     private Map<String, IProgressCallback> mProgressCallbacks;
+    private Map<String, List<Mes>> mSaveMessages;
     private ExecutorService mExecutor;
-    private volatile IConnectCallback mConnectCallback;
     private volatile ISendMessgeCallback mSendMessgeCallback;
     private volatile boolean isRelease;
 
@@ -67,12 +65,6 @@ public class ConnectManager {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what){
-                case TYPE_CONNECTION_SUCCESS:
-                    mConnectCallback.onConnectSuccess((String) msg.obj);
-                    break;
-                case TYPE_CONNECTION_FAIL:
-                    mConnectCallback.onConnectFail((String) msg.obj);
-                    break;
                 case TYPE_SEND_SUCCESS:
                     mSendMessgeCallback.onSendSuccess((Mes<?>) msg.obj);
                     break;
@@ -87,9 +79,11 @@ public class ConnectManager {
 
     private ConnectManager(){
         mClients = new ConcurrentHashMap<>();
-        mReceiveCallbacks = new ConcurrentHashMap<>();
+        mChatReceiveCallbacks = new ConcurrentHashMap<>();
         mProgressCallbacks = new ConcurrentHashMap<>();
+        mUserImageReceiveCallbacks = new ConcurrentHashMap<>();
         mExecutor = Executors.newCachedThreadPool();
+        mSaveMessages = new HashMap<>();
     }
 
     public static ConnectManager getInstance(){
@@ -155,11 +149,11 @@ public class ConnectManager {
      * @param targetIp 客户端ip
      * @return true表示成功建立连接
      */
-    public void connect(String targetIp){
+    public void connect(String targetIp, IConnectCallback callback){
         if(isContains(targetIp)){
             LogUtils.d(TAG, "客户端连接已经存在");
-            if(mConnectCallback != null){
-                mConnectCallback.onConnectSuccess(targetIp);
+            if(callback != null){
+                callback.onConnectSuccess(targetIp);
             }
             return;
         }
@@ -169,8 +163,8 @@ public class ConnectManager {
                 SocketAddress socketAddress = new InetSocketAddress(targetIp, PORT);
                 socket.connect(socketAddress, 5000);
                 Log.d(TAG, "连接targetIp = " + targetIp + "成功");
-                if(mConnectCallback != null){
-                    mHandler.obtainMessage(TYPE_CONNECTION_SUCCESS, targetIp).sendToTarget();
+                if(callback != null){
+                    mHandler.post(() -> callback.onConnectSuccess(targetIp));
                 }
                 User user = OnlineUserManager.getInstance().getOnlineUser(targetIp);
                 ReceiveThread receiveThread = new ReceiveThread(socket, user);
@@ -179,8 +173,8 @@ public class ConnectManager {
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.d(TAG, "连接targetIp = " + targetIp + "失败，e = " + e.getMessage());
-                if(mConnectCallback != null){
-                    mHandler.obtainMessage(TYPE_CONNECTION_FAIL, targetIp).sendToTarget();
+                if(callback != null){
+                    mHandler.post(() -> callback.onConnectFail(targetIp));
                 }
             }
         });
@@ -249,7 +243,7 @@ public class ConnectManager {
      * @param ipAddress 客户端的ip地址
      */
     public void removeReceiveCallback(String ipAddress){
-        mReceiveCallbacks.remove(ipAddress);
+        mChatReceiveCallbacks.remove(ipAddress);
     }
 
     /**
@@ -257,7 +251,7 @@ public class ConnectManager {
      */
     public void release(){
         isRelease = true;
-        mReceiveCallbacks.clear();
+        mChatReceiveCallbacks.clear();
         mProgressCallbacks.clear();
         if(mSendMessgeCallback != null) mSendMessgeCallback = null;
     }
@@ -283,19 +277,53 @@ public class ConnectManager {
     }
 
     /**
+     * 添加一个消息
+     */
+    public void addMessage(String targetIp, Mes<?> mes){
+        List<Mes> list = mSaveMessages.get(targetIp);
+        if(list == null){
+            list = new ArrayList<>();
+            mSaveMessages.put(targetIp, list);
+        }
+        list.add(mes);
+    }
+
+    /**
+     * 获取暂存的消息
+     */
+    public List<Mes> getMessages(String targetIp){
+        List<Mes> list = mSaveMessages.get(targetIp);
+        if(list != null){
+            List<Mes> mesList = new ArrayList<>(list);
+            list.clear();
+            return mesList;
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
      * 给指定客户端ip添加一个接受消息的回调
      * @param targetIp 客户端ip
      * @param callback 接受消息的回调
      */
-    public void addReceiveMessageCallback(String targetIp, IReceiveMessageCallback callback){
-        mReceiveCallbacks.put(targetIp, callback);
+    public void addChatReceiveMessageCallback(String targetIp, IReceiveMessageCallback callback){
+        mChatReceiveCallbacks.put(targetIp, callback);
     }
 
     /**
      * 获得接受消息回调接口
      */
-    public IReceiveMessageCallback getReceiveCallback(String targetIp) {
-        return mReceiveCallbacks.get(targetIp);
+    public IReceiveMessageCallback getChatReceiveCallback(String targetIp) {
+        return mChatReceiveCallbacks.get(targetIp);
+    }
+
+    public void addUserImageReceiveCallback(String targetIp, IUserImageReceiveCallback callback){
+        mUserImageReceiveCallbacks.put(targetIp, callback);
+    }
+
+    public IUserImageReceiveCallback getUserImageReceiveCallback(String targetIp){
+        return mUserImageReceiveCallbacks.get(targetIp);
     }
 
     /**
@@ -303,10 +331,6 @@ public class ConnectManager {
      */
     public void executeTast(Runnable tast){
         mExecutor.execute(tast);
-    }
-
-    public void setConnectCallback(IConnectCallback callback){
-        this.mConnectCallback = callback;
     }
 
     public void setSendMessgeCallback(ISendMessgeCallback callback){
@@ -346,7 +370,7 @@ public class ConnectManager {
                 image.progress = 100;
                 break;
             case FILE:
-                File file = (File) message.data;
+                Document file = (Document) message.data;
                 String filePath = file.filePath;
                 InputStream fileIn = new FileInputStream(new java.io.File(filePath));
                 int fileLen = fileIn.available();
@@ -363,17 +387,17 @@ public class ConnectManager {
                     sendBytes(targetIp, os, fileBytes, fileLen);
                 }else {//文件太大，分段发送
                     int count = 0;
-                    while (count < fileLen){
-                        int maxSendFileLen = MAX_FILE_SEND_DATA;
-                        if(count + MAX_FILE_SEND_DATA >= fileLen){
-                            maxSendFileLen = fileLen - count;
-                        }
-                        byte[] tempBytes = new byte[maxSendFileLen];
-                        try(InputStream in = new BufferedInputStream(new FileInputStream(filePath))){
+                    try(InputStream in = new BufferedInputStream(new FileInputStream(filePath))){
+                        while (count < fileLen){
+                            int maxSendFileLen = MAX_FILE_SEND_DATA;
+                            if(count + MAX_FILE_SEND_DATA >= fileLen){
+                                maxSendFileLen = fileLen - count;
+                            }
+                            byte[] tempBytes = new byte[maxSendFileLen];
                             in.read(tempBytes);
                             sendBytes(targetIp, os, tempBytes, maxSendFileLen);
+                            count += maxSendFileLen;
                         }
-                        count += maxSendFileLen;
                     }
                 }
                 file.len = fileLen;

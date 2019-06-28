@@ -43,8 +43,8 @@ import com.example.p2p.adapter.RvEmojiAdapter;
 import com.example.p2p.adapter.VpEmojiAdapter;
 import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Audio;
+import com.example.p2p.bean.Document;
 import com.example.p2p.bean.Emoji;
-import com.example.p2p.bean.File;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
@@ -78,9 +78,7 @@ import com.example.utils.ToastUtil;
 import com.nbsp.materialfilepicker.MaterialFilePicker;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -269,7 +267,7 @@ public class ChatActivity extends BaseActivity {
         vpEmoji.setAdapter(vpEmojiAdapter);
         idvEmoji.setIndicatorCount(views.size());
         //初始化聊天的Rv
-        mMessageList = new ArrayList<>();
+        mMessageList = ConnectManager.getInstance().getMessages(mTargetUser.getIp());
         mRvChatAdapter = new RvChatAdapter(mMessageList);
         rvChat.setLayoutManager(new LinearLayoutManager(this));
         rvChat.setAdapter(mRvChatAdapter);
@@ -322,12 +320,17 @@ public class ChatActivity extends BaseActivity {
             }
         });
         //接收消息回调监听
-        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), this::addMessage);
+        ConnectManager.getInstance().addChatReceiveMessageCallback(mTargetUser.getIp(), message -> {
+            if(message.mesType == MesType.ERROR){
+                return;
+            }
+            addMessage(message);
+        });
         //发送消息回调监听
         ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
             @Override
             public void onSendSuccess(Mes<?> message) {
-                if(message.mesType == MesType.IMAGE || message.mesType == MesType.FILE){
+                if(message.mesType == MesType.IMAGE || message.mesType == MesType.FILE || message.mesType == MesType.ERROR){
                     return;
                 }
                 addMessage(message);
@@ -383,7 +386,7 @@ public class ChatActivity extends BaseActivity {
                 FileUtils.openFile(ChatActivity.this, image.imagePath);
             }
             if(message.mesType == MesType.FILE){
-                File file = (File) message.data;
+                Document file = (Document) message.data;
                 FileUtils.openFile(ChatActivity.this, file.filePath);
             }
             mLastPosition = position;
@@ -600,13 +603,13 @@ public class ChatActivity extends BaseActivity {
         String fileType = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase(Locale.getDefault());
         String size = FileUtils.getFileSize(filePath);
         String name = filePath.substring(filePath.lastIndexOf(java.io.File.separator) + 1, filePath.lastIndexOf("."));
-        File file = new File(filePath, name, size, fileType);
-        Mes<File> message = new Mes<>(ItemType.SEND_FILE, MesType.FILE, mUser.getIp(), file);
+        Document file = new Document(filePath, name, size, fileType);
+        Mes<Document> message = new Mes<>(ItemType.SEND_FILE, MesType.FILE, mUser.getIp(), file);
         addMessage(message);
         final int sendingFilePosition = mMessageList.indexOf(message);
         ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
             if(mMessageList.isEmpty()) return;
-            File sendingFile = (File) mMessageList.get(sendingFilePosition).data;
+            Document sendingFile = (Document) mMessageList.get(sendingFilePosition).data;
             sendingFile.progress = progress;
             mRvChatAdapter.notifyItemChanged(sendingFilePosition);
         });

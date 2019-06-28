@@ -3,6 +3,7 @@ package com.example.p2p.app;
 import android.app.Application;
 import android.content.Context;
 
+import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.db.EmojiDao;
@@ -18,12 +19,8 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         mContext = this;
-        EmojiDao.getInstance();
-        OnlineUserManager.getInstance().initListener();
         ConnectManager.getInstance().initListener();
     }
-
-
 
     public static Context getContext(){
         return mContext;

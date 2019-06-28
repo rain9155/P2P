@@ -13,5 +13,6 @@ public enum ItemType {
     RECEIVE_IMAGE,
     SEND_FILE,
     RECEIVE_FILE,
+    OTHER,
     ERROR
 }

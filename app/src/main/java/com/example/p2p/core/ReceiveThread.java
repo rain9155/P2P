@@ -5,7 +5,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import com.example.p2p.bean.Audio;
-import com.example.p2p.bean.File;
+import com.example.p2p.bean.Document;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
@@ -15,15 +15,12 @@ import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by 陈健宇 at 2019/6/9
@@ -33,10 +30,10 @@ public class ReceiveThread implements Runnable{
     private static final String TAG = ReceiveThread.class.getSimpleName();
     private static final int MAX_RECEIVE_DATA = 45000000;
     private static final int TYPE_RECEVICE_SUCCESS = 0x000;
+    private static final int TYPE_SAVE_MESSAGES = 0x001;
 
     private Socket mSocket;
     private User mUser;
-    private List<String> mMessageList;
     private volatile IReceiveMessageCallback mReceiveMessageCallback;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
@@ -45,6 +42,9 @@ public class ReceiveThread implements Runnable{
             switch (msg.what){
                 case TYPE_RECEVICE_SUCCESS:
                     mReceiveMessageCallback.onReceiveSuccess((Mes<?>) msg.obj);
+                    break;
+                case TYPE_SAVE_MESSAGES:
+                    ConnectManager.getInstance().addMessage(mUser.getIp(), (Mes<?>) msg.obj);
                     break;
                 default:
                     break;
@@ -55,25 +55,27 @@ public class ReceiveThread implements Runnable{
     public ReceiveThread(Socket socket, User user) {
         this.mSocket = socket;
         this.mUser = user;
-        this.mMessageList = new CopyOnWriteArrayList<>();
     }
 
     @Override
     public void run() {
         while (true){
-            Mes mes = null;
+            Mes mes;
             try{
                 InputStream in = mSocket.getInputStream();
                 mes = receiveMessageByType(in);
                 LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
-                if(hasReceviceCallback(mUser.getIp())) mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
+                if(!hasReceviceCallback(mUser.getIp())){//暂存消息
+                    mHandler.obtainMessage(TYPE_SAVE_MESSAGES, mes).sendToTarget();
+                }else {
+                    mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 LogUtils.e(TAG, "获取客户端消息失败，e = " + e.getMessage());
                 //两端的Socker连接都要关闭
                 try {
                     mSocket.close();
-                    break;
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -114,29 +116,33 @@ public class ReceiveThread implements Runnable{
                 break;
             case 3:
                 int fileLen = in.readInt();
-                String flieType = in.readUTF();
+                String fileType = in.readUTF();
                 String fileSize = in.readUTF();
                 String fileName = in.readUTF();
+                String path = FileUtils.getFilePath(mUser.getIp(), ItemType.RECEIVE_FILE) + fileName + "." + fileType;
+                File file = new File(path);
+                if(file.exists()){//重复文件删除
+                    file.delete();
+                }
                 byte[] fileBytes;
                 String filePath = "";
-                fileBytes = receiveBytes(in, fileLen);
-                filePath = saveReceiveFile(fileBytes, fileName, flieType);
-//                if(fileLen < MAX_RECEIVE_DATA){
-//
-//                }else {//文件太大，分段保存
-//                    int count = 0;
-//                    while (count < fileLen){
-//                        int maxReceiveLen = MAX_RECEIVE_DATA;
-//                        if(count + maxReceiveLen >= fileLen){
-//                            maxReceiveLen = fileLen - MAX_RECEIVE_DATA;
-//                        }
-//                        fileBytes = receiveBytes(in, maxReceiveLen);
-//                        filePath = saveReceiveFile(fileBytes, fileName, flieType);
-//                        count += maxReceiveLen;
-//                    }
-//                }
-                File file = new File(filePath, fileName, fileLen, fileSize, flieType);
-                mes = new Mes<File>(ItemType.RECEIVE_FILE, MesType.FILE, mUser.getIp(), file);
+                if(fileLen < MAX_RECEIVE_DATA){
+                    fileBytes = receiveBytes(in, fileLen);
+                    filePath = saveReceiveFile(fileBytes, fileName, fileType);
+                }else {//文件太大，分段保存
+                    int count = 0;
+                    while (count < fileLen){
+                        int maxReceiveLen = MAX_RECEIVE_DATA;
+                        if(count + maxReceiveLen >= fileLen){
+                            maxReceiveLen = fileLen - count;
+                        }
+                        fileBytes = receiveBytes(in, maxReceiveLen);
+                        filePath = saveReceiveFile(fileBytes, fileName, fileType);
+                        count += fileBytes.length;//,因为两端的接收速率不一样, 所以fileBytes的长度可能会比maxReceiveLen大一点
+                    }
+                }
+                Document document = new Document(filePath, fileName, fileLen, fileSize, fileType);
+                mes = new Mes<Document>(ItemType.RECEIVE_FILE, MesType.FILE, mUser.getIp(), document);
                 break;
             default:
                 break;
@@ -150,7 +156,7 @@ public class ReceiveThread implements Runnable{
      * @return true表示有，false表示没有
      */
     public boolean hasReceviceCallback(String targetIp){
-        IReceiveMessageCallback receiveMessageCallback = ConnectManager.getInstance().getReceiveCallback(targetIp);
+        IReceiveMessageCallback receiveMessageCallback = ConnectManager.getInstance().getChatReceiveCallback(targetIp);
         if(receiveMessageCallback == null) return false;
         mReceiveMessageCallback = receiveMessageCallback;
         return true;
@@ -163,7 +169,7 @@ public class ReceiveThread implements Runnable{
     public String saveReceiveAudio(byte[] audioBytes) throws IOException {
         String audioPath = FileUtils.getAudioPath(mUser.getIp(), ItemType.RECEIVE_AUDIO);
         String path = audioPath + System.currentTimeMillis() + ".mp3";
-        if(!FileUtils.saveFileBytes(audioBytes, path)) throw new IOException();
+        if(!FileUtils.saveFileBytes(audioBytes, path, false)) throw new IOException();
         return path;
     }
 
@@ -173,7 +179,7 @@ public class ReceiveThread implements Runnable{
     private String saveReceiveImage(byte[] imageBytes) throws IOException {
         String imagePath = FileUtils.getImagePath(mUser.getIp(), ItemType.RECEIVE_IMAGE);
         String path = imagePath + System.currentTimeMillis() + ".png";
-        if(!FileUtils.saveFileBytes(imageBytes, path)) throw new IOException();
+        if(!FileUtils.saveFileBytes(imageBytes, path, false)) throw new IOException();
         return path;
     }
 
@@ -183,7 +189,7 @@ public class ReceiveThread implements Runnable{
     private String saveReceiveFile(byte[] fileBytes, String fileName, String fileType) throws IOException {
         String filePath = FileUtils.getFilePath(mUser.getIp(), ItemType.RECEIVE_FILE);
         String path = filePath + fileName + "." + fileType;
-        if(!FileUtils.saveFileBytes(fileBytes, path)) throw new IOException();
+        if(!FileUtils.saveFileBytes(fileBytes, path, true)) throw new IOException();
         return path;
     }
 
@@ -193,7 +199,7 @@ public class ReceiveThread implements Runnable{
     private byte[] receiveBytes(DataInputStream in, int len) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         byte[] bytes = os.toByteArray();
-        while (bytes.length != len){
+        while (bytes.length < len){
             byte[] tempBytes = new byte[in.available()];
             in.readFully(tempBytes);
             os.write(tempBytes, 0, tempBytes.length);

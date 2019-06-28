@@ -11,6 +11,7 @@ import com.example.p2p.R;
 import com.example.p2p.bean.User;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.utils.FileUtils;
+import com.example.p2p.utils.IpUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -28,8 +29,19 @@ public class RvUsersAdapter extends BaseAdapter<User> {
 
     @Override
     protected void onBindView(BaseViewHolder holder, User item) {
-        Bitmap bitmap = BitmapFactory.decodeFile(item.getImagePath());
-        holder.setText(R.id.tv_name, item.getName() + " - " + item.getIp())
+        String end;
+        Bitmap bitmap;
+        if(item.getIp().equals(IpUtils.getLocIpAddress())){
+            end = " - 自己";
+            bitmap = FileUtils.getUserBitmap();
+        }else {
+            end = "";
+            bitmap = BitmapFactory.decodeFile(item.getImagePath());
+            if(bitmap == null){
+                bitmap = BitmapFactory.decodeResource(holder.getItemView().getContext().getResources(), R.drawable.ic_default_user_2);
+            }
+        }
+        holder.setText(R.id.tv_name, item.getName() + end)
                 .setImageBitmap(R.id.iv_face, bitmap);
     }
 

@@ -92,7 +92,7 @@ public class FileUtils {
      * 返回用户图片
      */
     public static Bitmap getUserBitmap(){
-        String imagePath = Constant.FILE_PATH_USER + "userImage.png";
+        String imagePath = Constant.FILE_USER_IMAGE;
         return BitmapFactory.decodeFile(imagePath);
     }
 
@@ -184,11 +184,11 @@ public class FileUtils {
      * 根据路径存放字节流
      * @return false表示失败，反之成功
      */
-    public static boolean saveFileBytes(byte[] bytes, String path){
+    public static boolean saveFileBytes(byte[] bytes, String path, boolean append){
         File file = new File(path);
         try(
-                FileOutputStream fileOutputStream = new FileOutputStream(file, true);
-                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream, bytes.length)
+                FileOutputStream fileOutputStream = new FileOutputStream(file, append);
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
         ){
             if(!file.exists()){
                 file.createNewFile();

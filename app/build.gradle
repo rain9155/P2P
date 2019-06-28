@@ -20,6 +20,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    useLibrary 'org.apache.http.legacy'
 }
 
 dependencies {
@@ -34,11 +35,12 @@ dependencies {
     implementation 'com.jianyu:utils:v1.0'
     implementation 'com.jianyu:permissionhelper:1.0.0'
     implementation 'com.github.rain9155:Loading:1.0.0'
-    implementation 'com.google.code.gson:gson:2.8.1'
+
     implementation 'com.jakewharton:butterknife:10.1.0'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.1.0'
     implementation 'com.theartofdev.edmodo:android-image-cropper:2.8.0'
     implementation 'com.nbsp:library:1.8'
+    implementation 'com.google.code.gson:gson:2.8.5'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.0'

@@ -11,7 +11,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.example.baseadapter.BaseViewHolder;
 import com.example.p2p.R;
 import com.example.p2p.base.delegate.BaseSendMutiItemDelegate;
-import com.example.p2p.bean.File;
+import com.example.p2p.bean.Document;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.utils.ImageUtils;
@@ -36,7 +36,7 @@ public class FileSendDelegate extends BaseSendMutiItemDelegate {
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
         super.onBindView(holder, items, position);
-        File file = (File) items.data;
+        Document file = (Document) items.data;
         holder.setText(R.id.tv_message, file.fileName)
                 .setText(R.id.tv_size, file.fileSize)
                 .setImageResource(R.id.iv_file_icon, ImageUtils.getImageId(file.fileType));

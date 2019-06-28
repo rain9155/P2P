@@ -17,6 +17,7 @@ public class Constant {
 
     public static final String FILE_NAME_USER = "user";
     public static final String FILE_PATH_USER = FileUtils.getFilePath(App.getContext(), "user/");
+    public static final String FILE_USER_IMAGE = FILE_PATH_USER + "userImage.png";
     public static final String FILE_PATH_ONLINE_USER = Environment.getExternalStorageDirectory() + "/P2P/onlineUser/";
 
 }

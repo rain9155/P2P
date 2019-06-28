@@ -34,6 +34,7 @@ import com.example.utils.FileUtil;
 import com.example.utils.ToastUtil;
 import com.theartofdev.edmodo.cropper.CropImage;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -69,8 +70,6 @@ public class LoginActivity extends AppCompatActivity {
             ivIcon.setImageBitmap(mUserBitmap);
             edInput.setText(restoreUser.getName());
             btnLogin.setEnabled(true);
-//            goMainActivity(restoreUser);
-//            return;
         }
 
         GotoWifiSettingsDialog gotoWifiSettingsDialog = new GotoWifiSettingsDialog();
@@ -158,7 +157,8 @@ public class LoginActivity extends AppCompatActivity {
         String locIp = IpUtils.getLocIpAddress();
         String name = edInput.getText().toString().trim();
         if(mUserBitmap == null){
-            mUserBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_user_image);
+            mUserBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_default_user);
+            mUserBitmap = ImageUtils.compressBitmap(mUserBitmap, 0.2f, 0.2f);
             mImagePath = FileUtils.saveUserBitmap(mUserBitmap);
         }
         User user = new User(name, locIp, mImagePath);
@@ -167,10 +167,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goMainActivity(User restoreUser) {
-        byte[] imageBytes = FileUtils.getFileBytes(restoreUser.getImagePath());
-        restoreUser.setImageBytesLen(imageBytes.length);
-        restoreUser.setImagePath(null);
-        OnlineUserManager.getInstance().login(restoreUser, imageBytes);
+        OnlineUserManager.getInstance().login(restoreUser);
         MainActivity.startActivity(this);
         finish();
     }

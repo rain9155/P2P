@@ -1,25 +1,10 @@
 package com.example.p2p.utils;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.os.Build;
-import android.os.StrictMode;
-import android.provider.MediaStore;
-import android.provider.Settings;
 
-import androidx.annotation.NonNull;
-import androidx.core.content.FileProvider;
-
-import com.example.p2p.BuildConfig;
-import com.example.p2p.bean.File;
 import com.example.p2p.config.MimeType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 获取Intent工具类
@@ -112,7 +97,7 @@ public class IntentUtils {
     public static Intent getHtmlFileIntent(String param) {
         Uri uri = Uri.parse(param).buildUpon().encodedAuthority("com.android.htmlfileprovider").scheme("content").encodedPath(param).build();
         Intent intent = new Intent("android.intent.action.VIEW");
-        intent.setDataAndType(uri, "text/html");
+        intent.setDataAndType(uri, MimeType.HTML);
         return intent;
     }
 
@@ -125,7 +110,7 @@ public class IntentUtils {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         Uri uri = getUri(context, path);
-        intent.setDataAndType(uri, "image/*");
+        intent.setDataAndType(uri, MimeType.IMAGE);
         return intent;
     }
 
@@ -139,7 +124,7 @@ public class IntentUtils {
         String[] mineTypes = {MimeType.PPT, MimeType.PPTX};
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mineTypes);
         Uri uri = getUri(context, path);
-        intent.setDataAndType(uri, MimeType.PPTX);
+        intent.setDataAndType(uri, MimeType.PPT);
         return intent;
     }
 
@@ -153,7 +138,7 @@ public class IntentUtils {
         String[] mineTypes = {MimeType.XLS, MimeType.XLSX};
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mineTypes);
         Uri uri = getUri(context, path);
-        intent.setDataAndType(uri, MimeType.XLSX);
+        intent.setDataAndType(uri, MimeType.XLS);
         return intent;
     }
 
@@ -167,7 +152,7 @@ public class IntentUtils {
         String[] mineTypes = {MimeType.DOC, MimeType.DOCX};
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mineTypes);
         Uri uri = getUri(context, path);
-        intent.setDataAndType(uri, MimeType.DOCX);
+        intent.setDataAndType(uri, MimeType.DOC);
         return intent;
     }
 

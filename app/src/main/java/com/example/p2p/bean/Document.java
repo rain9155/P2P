@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
  * 文件数据类
  * Created by 陈健宇 at 2019/6/26
  */
-public class File {
+public class Document {
 
     public String filePath;
     public String fileName;
@@ -15,15 +15,15 @@ public class File {
     public int progress;
     public String fileType;
 
-    public File(String path, String name, String size, String type) {
+    public Document(String path, String name, String size, String type) {
         this(path, name, 0, size,  0, type);
     }
 
-    public File(String path, String name, int len, String size, String type) {
+    public Document(String path, String name, int len, String size, String type) {
         this(path, name, len, size,0, type);
     }
 
-    public File(String path, String name, int len, String size, int progress, String type) {
+    public Document(String path, String name, int len, String size, int progress, String type) {
         this.filePath = path;
         this.fileName = name;
         this.len = len;
@@ -35,7 +35,7 @@ public class File {
     @NonNull
     @Override
     public String toString() {
-        return "File[filePath = " + filePath
+        return "Document[filePath = " + filePath
                 + ", fileSize = " + fileSize
                 + ", len = " + len
                 + ", fileType = " + fileType

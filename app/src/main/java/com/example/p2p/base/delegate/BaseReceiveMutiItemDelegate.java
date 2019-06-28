@@ -22,6 +22,8 @@ public abstract class BaseReceiveMutiItemDelegate implements MutiItemDelegate<Me
         if(mUserImage == null){
             User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
             mUserImage = BitmapFactory.decodeFile(user.getImagePath());
+            if(mUserImage == null)
+                mUserImage = BitmapFactory.decodeResource(holder.getItemView().getContext().getResources(), R.drawable.ic_default_user_2);
         }
         holder.setImageBitmap(R.id.iv_face, mUserImage);
     }

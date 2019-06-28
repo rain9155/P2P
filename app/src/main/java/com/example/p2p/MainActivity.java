@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.ImageView;
@@ -21,16 +22,24 @@ import com.example.loading.Loading;
 import com.example.loading.StatusView;
 import com.example.p2p.adapter.RvUsersAdapter;
 import com.example.p2p.base.activity.BaseActivity;
+import com.example.p2p.bean.Image;
+import com.example.p2p.bean.ItemType;
+import com.example.p2p.bean.Mes;
+import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IUserCallback;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IDialogCallback;
+import com.example.p2p.callback.IUserImageReceiveCallback;
+import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
+import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.WifiUtils;
 import com.example.p2p.widget.dialog.ConnectingDialog;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
+import com.example.utils.FileUtil;
 import com.example.utils.ToastUtil;
 
 import java.util.ArrayList;
@@ -66,6 +75,12 @@ public class MainActivity extends BaseActivity {
     private long mLastPressTime;
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        OnlineUserManager.getInstance().initListener();
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
         mNetWorkConnectionReceiver = new WifiConnectionReceiver();
@@ -90,6 +105,7 @@ public class MainActivity extends BaseActivity {
     public void onBackPressed() {
         if(System.currentTimeMillis() - mLastPressTime < 2000){
             super.onBackPressed();
+            android.os.Process.killProcess(android.os.Process.myPid());
         }else {
             mLastPressTime = System.currentTimeMillis();
             ToastUtil.showToast(this, getString(R.string.main_exit));
@@ -136,8 +152,7 @@ public class MainActivity extends BaseActivity {
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         mConnectingDialog = new ConnectingDialog();
-        mStatusView.showLoading();
-        OnlineUserManager.getInstance().getOnlineUsers();
+        refreshOnlineUsers();
     }
 
     @Override
@@ -147,7 +162,21 @@ public class MainActivity extends BaseActivity {
             if(mOnlineUsers.isEmpty()) return;
             mPosition = position;
             mConnectingDialog.show(getSupportFragmentManager());
-            ConnectManager.getInstance().connect(mOnlineUsers.get(position).getIp());
+            //连接回调监听
+            ConnectManager.getInstance().connect(mOnlineUsers.get(position).getIp(), new IConnectCallback() {
+                @Override
+                public void onConnectSuccess(String targetIp) {
+                    mConnectingDialog.dismiss();
+                    ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_success));
+                    ChatActivity.startActiivty(MainActivity.this, mOnlineUsers.get(mPosition), REQUEST_SOCKET_STATE);
+                }
+
+                @Override
+                public void onConnectFail(String targetIp) {
+                    mConnectingDialog.dismiss();
+                    ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_fail));
+                }
+            });
         });
         mGotoWifiSettingsDialog.setDialogCallback(new IDialogCallback() {
             @Override
@@ -165,21 +194,6 @@ public class MainActivity extends BaseActivity {
                 mStatusView.showSuccess();
             }
         });
-        //连接回调监听
-        ConnectManager.getInstance().setConnectCallback(new IConnectCallback() {
-            @Override
-            public void onConnectSuccess(String targetIp) {
-                mConnectingDialog.dismiss();
-                ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_success));
-                ChatActivity.startActiivty(MainActivity.this, mOnlineUsers.get(mPosition), REQUEST_SOCKET_STATE);
-            }
-
-            @Override
-            public void onConnectFail(String targetIp) {
-                mConnectingDialog.dismiss();
-                ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_fail));
-            }
-        });
         //广播回调监听
         OnlineUserManager.getInstance().setUserCallback(new IUserCallback() {
             @Override
@@ -190,14 +204,31 @@ public class MainActivity extends BaseActivity {
                 }else {
                     mOnlineUsers.addAll(users);
                     mRvMainAdapter.notifyDataSetChanged();
+//                    for(User user : users){
+//                        ConnectManager.getInstance().connect(user.getIp(), new IConnectCallback() {
+//                            @Override
+//                            public void onConnectSuccess(String targetIp) {
+//                                Image image = new Image(Constant.FILE_USER_IMAGE);
+//                                Mes<Image> message = new Mes<>(ItemType.OTHER, MesType.IMAGE, user.getIp(), image);
+//                                ConnectManager.getInstance().sendMessage(user.getIp(), message);
+//                            }
+//
+//                            @Override
+//                            public void onConnectFail(String targetIp) {
+//                                LogUtils.e(TAG, "一个发送失败，user = " + user);
+//                            }
+//                        });
+//                    }
                     mStatusView.showSuccess();
                 }
             }
 
             @Override
             public void onJoin(User user){
+                if(mOnlineUsers.isEmpty()) mStatusView.showSuccess();
                 mOnlineUsers.add(user);
                 mRvMainAdapter.notifyItemInserted(mOnlineUsers.size());
+                mStatusView.showSuccess();
             }
 
             @Override
@@ -205,6 +236,7 @@ public class MainActivity extends BaseActivity {
                 int index = mOnlineUsers.indexOf(user);
                 mOnlineUsers.remove(user);
                 mRvMainAdapter.notifyItemRemoved(index);
+                if(mOnlineUsers.isEmpty()) mStatusView.showEmpty();
             }
         });
     }
@@ -226,6 +258,8 @@ public class MainActivity extends BaseActivity {
      */
     private void refreshOnlineUsers() {
         mStatusView.showLoading();
+        //测试
+        OnlineUserManager.getInstance().login((User) FileUtil.restoreObject(this, Constant.FILE_NAME_USER));
         OnlineUserManager.getInstance().getOnlineUsers();
     }
 
