@@ -127,8 +127,8 @@ public class ChatActivity extends BaseActivity {
     IndicatorView idvEmoji;
     @BindView(R.id.ll_emoji)
     LinearLayout llEmoji;
-    @BindView(R.id.iv_scan)
-    ImageView ivScan;
+    @BindView(R.id.iv_more)
+    ImageView ivMore;
     @BindView(R.id.iv_keyborad)
     ImageView ivKeyborad;
     @BindView(R.id.tv_audio)
@@ -196,7 +196,7 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void initView() {
         tvTitle.setText(mTargetUser.getName());
-        ivScan.setVisibility(View.GONE);
+        ivMore.setVisibility(View.GONE);
         mLocatingDialog = new LocatingDialog();
         PermissionHelper.getInstance().with(this).requestPermissions(
                 new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
@@ -320,7 +320,7 @@ public class ChatActivity extends BaseActivity {
             }
         });
         //接收消息回调监听
-        ConnectManager.getInstance().addChatReceiveMessageCallback(mTargetUser.getIp(), message -> {
+        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), message -> {
             if(message.mesType == MesType.ERROR){
                 return;
             }

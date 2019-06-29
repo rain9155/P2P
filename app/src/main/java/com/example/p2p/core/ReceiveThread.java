@@ -12,14 +12,18 @@ import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IReceiveMessageCallback;
+import com.example.p2p.callback.IImageReceiveCallback;
+import com.example.p2p.config.Constant;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 /**
@@ -31,10 +35,13 @@ public class ReceiveThread implements Runnable{
     private static final int MAX_RECEIVE_DATA = 45000000;
     private static final int TYPE_RECEVICE_SUCCESS = 0x000;
     private static final int TYPE_SAVE_MESSAGES = 0x001;
+    private static final int TYPE_RECEIVE_USER_IMAGE = 0x002;
 
     private Socket mSocket;
     private User mUser;
     private volatile IReceiveMessageCallback mReceiveMessageCallback;
+    private volatile IImageReceiveCallback mImageReceiveCallback;
+
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
@@ -45,6 +52,11 @@ public class ReceiveThread implements Runnable{
                     break;
                 case TYPE_SAVE_MESSAGES:
                     ConnectManager.getInstance().addMessage(mUser.getIp(), (Mes<?>) msg.obj);
+                    break;
+                case TYPE_RECEIVE_USER_IMAGE:
+                    Mes<?> mes = (Mes<?>) msg.obj;
+                    Image image = (Image) mes.data;
+                    mImageReceiveCallback.onReceive(image.imagePath);
                     break;
                 default:
                     break;
@@ -65,20 +77,25 @@ public class ReceiveThread implements Runnable{
                 InputStream in = mSocket.getInputStream();
                 mes = receiveMessageByType(in);
                 LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
-                if(!hasReceviceCallback(mUser.getIp())){//暂存消息
-                    mHandler.obtainMessage(TYPE_SAVE_MESSAGES, mes).sendToTarget();
+                if(mes.itemType == ItemType.OTHER){
+                    if(hasImageReceviceCallback(mUser.getIp())){
+                        mHandler.obtainMessage(TYPE_RECEIVE_USER_IMAGE, mes).sendToTarget();
+                    }
+                    DataOutputStream os = new DataOutputStream(mSocket.getOutputStream());
+                    os.writeInt(Constant.CLOSE_SOCKET);
                 }else {
-                    mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
+                    if(mes.mesType != MesType.ERROR){
+                        if(!hasReceviceCallback(mUser.getIp())){//暂存消息
+                            mHandler.obtainMessage(TYPE_SAVE_MESSAGES, mes).sendToTarget();
+                        }else {
+                            mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
+                        }
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 LogUtils.e(TAG, "获取客户端消息失败，e = " + e.getMessage());
                 //两端的Socker连接都要关闭
-                try {
-                    mSocket.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
                 ConnectManager.getInstance().removeConnect(mUser.getIp());
                 ConnectManager.getInstance().removeReceiveCallback(mUser.getIp());
                 break;
@@ -109,10 +126,11 @@ public class ReceiveThread implements Runnable{
                 break;
             case 2:
                 int imageLen = in.readInt();
+                int itemType = in.readInt();
                 byte[] imageBytes = receiveBytes(in, imageLen);
-                String imagePath = saveReceiveImage(imageBytes);
+                String imagePath = saveReceiveImage(imageBytes, itemType);
                 Image image = new Image(imagePath, imageLen);
-                mes = new Mes<Image>(ItemType.RECEIVE_IMAGE, MesType.IMAGE, mUser.getIp(), image);
+                mes = new Mes<Image>(itemType != ItemType.OTHER.ordinal() ? ItemType.RECEIVE_IMAGE : ItemType.OTHER, MesType.IMAGE, mUser.getIp(), image);
                 break;
             case 3:
                 int fileLen = in.readInt();
@@ -145,20 +163,34 @@ public class ReceiveThread implements Runnable{
                 mes = new Mes<Document>(ItemType.RECEIVE_FILE, MesType.FILE, mUser.getIp(), document);
                 break;
             default:
+                if(!hasReceviceCallback(mUser.getIp())) ConnectManager.getInstance().removeConnect(mUser.getIp());
+                ConnectManager.getInstance().removeImageReceiveCallback(mUser.getIp());
                 break;
         }
         return mes;
     }
 
     /**
-     * 判断是否有设置回调
+     * 判断是否有设置消息回调
      * @param targetIp 客户端ip
      * @return true表示有，false表示没有
      */
     public boolean hasReceviceCallback(String targetIp){
-        IReceiveMessageCallback receiveMessageCallback = ConnectManager.getInstance().getChatReceiveCallback(targetIp);
+        IReceiveMessageCallback receiveMessageCallback = ConnectManager.getInstance().getReceiveCallback(targetIp);
         if(receiveMessageCallback == null) return false;
         mReceiveMessageCallback = receiveMessageCallback;
+        return true;
+    }
+
+    /**
+     * 判断是否有设置图片消息回调
+     * @param targetIp 客户端ip
+     * @return true表示有，false表示没有
+     */
+    public boolean hasImageReceviceCallback(String targetIp){
+        IImageReceiveCallback imageReceiveCallback = ConnectManager.getInstance().getImageReceiveCallback(targetIp);
+        if(imageReceiveCallback == null) return false;
+        mImageReceiveCallback = imageReceiveCallback;
         return true;
     }
 
@@ -176,9 +208,16 @@ public class ReceiveThread implements Runnable{
     /**
      * 保存接收到的图片
      */
-    private String saveReceiveImage(byte[] imageBytes) throws IOException {
-        String imagePath = FileUtils.getImagePath(mUser.getIp(), ItemType.RECEIVE_IMAGE);
-        String path = imagePath + System.currentTimeMillis() + ".png";
+    private String saveReceiveImage(byte[] imageBytes, int itemType) throws IOException {
+        String path;
+        if(itemType == ItemType.RECEIVE_IMAGE.ordinal()){
+            String imagePath = FileUtils.getImagePath(mUser.getIp(), ItemType.RECEIVE_IMAGE);
+            path = imagePath + System.currentTimeMillis() + ".png";
+        }else {
+            String imagePath = Constant.FILE_PATH_ONLINE_USER + mUser.getIp() + File.separator + "image" + File.separator;
+            FileUtils.makeDirs(imagePath);
+            path = imagePath + "onLineUserImage.png";
+        }
         if(!FileUtils.saveFileBytes(imageBytes, path, false)) throw new IOException();
         return path;
     }

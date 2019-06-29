@@ -6,16 +6,13 @@ import android.os.Message;
 
 import com.example.p2p.bean.Data;
 import com.example.p2p.bean.User;
-import com.example.p2p.callback.ISendAddressCallback;
 import com.example.p2p.callback.IUserCallback;
-import com.example.p2p.config.Constant;
 import com.example.p2p.utils.IpUtils;
 import com.example.p2p.utils.JsonUtils;
 import com.example.p2p.utils.LogUtils;
-import com.example.utils.FileUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
@@ -27,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -133,8 +129,6 @@ public class OnlineUserManager {
                         }else if(code == 1){
                             //用户退出在线用户列表
                             User exitUser = mOnlineUsers.remove(receiveIp);
-                            FileUtil.deleteDir(new File(Constant.FILE_PATH_ONLINE_USER + receiveIp + File.separator));
-                            ConnectManager.getInstance().removeConnect(user.getIp());
                             if(mUserCallback != null && !isRefresh){
                                 mHandler.obtainMessage(TYPE_EXIT_USER, exitUser).sendToTarget();
                             }
@@ -166,7 +160,7 @@ public class OnlineUserManager {
     public void login(User user){
         String broadcastAddress = getBroadcastAddress();
         String datas = JsonUtils.toJson(new Data(0, user));
-        sendAddress(broadcastAddress, datas, null);
+        sendAddress(broadcastAddress, datas);
         LogUtils.d(TAG, "广播本地ip地址成功");
     }
 
@@ -176,7 +170,9 @@ public class OnlineUserManager {
     public void exit(){
         String datas = JsonUtils.toJson(new Data(1));
         String broadcastAddress = getBroadcastAddress();
-        sendAddress(broadcastAddress, datas, null);
+        sendAddress(broadcastAddress, datas);
+        mOnlineUsers.clear();
+        if(mDatagramSocket != null) mDatagramSocket.close();
         LogUtils.d(TAG, "广播退出");
     }
 
@@ -187,8 +183,81 @@ public class OnlineUserManager {
     public void reply(String targetIp){
         Data data = new Data(2);
         String datas = JsonUtils.toJson(data);
-        sendAddress(targetIp, datas, null);
+        sendAddress(targetIp, datas);
         LogUtils.d(TAG, "回复本地ip地址成功");
+    }
+
+    /**
+     * 获取广播地址
+     */
+    public String getBroadcastAddress() {
+        String locAddressPre = IpUtils.getLocIpAddressPrefix();
+        return locAddressPre + "255";
+    }
+
+    /**
+     * 等待返回在线用户列表
+     */
+    public void getOnlineUsers() {
+        isRefresh = true;
+        mExecutor.execute(() -> {
+            try {
+                Thread.sleep(3000);
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+            if(mUserCallback != null){
+                List<User> list = new ArrayList<>();
+                for(User user : mOnlineUsers.values()){
+                    list.add(user);
+                }
+                mHandler.obtainMessage(TYPE_JOIN_USERS, list).sendToTarget();
+            }
+            isRefresh = false;
+        });
+    }
+
+    /**
+     * 返回在线用户
+     */
+    public User getOnlineUser(String ip) {
+       return mOnlineUsers.get(ip);
+    }
+
+    /**
+     * 发送带code字段的UDP数据包
+     * @param targetIp 发送方的ip地址
+     * @param datas 用户信息
+     */
+    private void sendAddress(String targetIp, String datas){
+       final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
+                    DatagramSocket datagramSocket = null;
+                    try {
+                        //创建DatagramSocket类对象，此类表示用来发送和接收数据报包的套接字
+                        datagramSocket = new DatagramSocket();
+                        //创建要发送的数据，这里是code字段
+                        byte[] data = datas.getBytes();
+                        //构造DatagramPacket，DatagramPacket表示数据包，构造函数表示用来将长度为 length 偏移量为 offset 的包发送到指定主机上的指定端口号
+                        DatagramPacket datagramPacket = new DatagramPacket(data, 0, data.length, InetAddress.getByName(targetIp), PORT);
+                        //调用send方法发送数据报
+                        datagramSocket.send(datagramPacket);
+                        return true;
+                    } catch (SocketException e) {
+                        e.printStackTrace();
+                        LogUtils.e(TAG, "创建DatagramSocket失败， e = " + e.getMessage());
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                        LogUtils.e(TAG, "构造广播地址失败， e = " + e.getMessage());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        LogUtils.e(TAG, "发送广播失败， e = " + e.getMessage());
+                    }finally {
+                        //关闭资源
+                        if(datagramSocket != null) datagramSocket.close();
+                    }
+                    return false;
+        });
+        mExecutor.submit(futureTask);
     }
 
     /**
@@ -225,100 +294,6 @@ public class OnlineUserManager {
                 if(datagramSocket != null) datagramSocket.close();
             }
         });
-    }
-
-    /**
-     * 获取广播地址
-     */
-    public String getBroadcastAddress() {
-        String locAddressPre = IpUtils.getLocIpAddressPrefix();
-        return locAddressPre + "255";
-    }
-
-    /**
-     * 等待返回在线用户列表
-     */
-    public void getOnlineUsers() {
-        isRefresh = true;
-        mExecutor.execute(() -> {
-            int count = 0;
-            while (true){
-                try {
-                    Thread.sleep(1000);
-                }catch (InterruptedException e){
-                    e.printStackTrace();
-                }
-                if(count >= 3)  break;
-                count++;
-            }
-            if(mUserCallback != null){
-                List<User> list = new ArrayList<>();
-                for(User user : mOnlineUsers.values()){
-                    list.add(user);
-                }
-                mHandler.obtainMessage(TYPE_JOIN_USERS, list).sendToTarget();
-            }
-            isRefresh = false;
-        });
-    }
-
-    /**
-     * 返回在线用户
-     */
-    public User getOnlineUser(String ip) {
-       return mOnlineUsers.get(ip);
-    }
-
-    /**
-     * 发送带code字段的UDP数据包
-     * @param targetIp 发送方的ip地址
-     * @param datas 用户信息
-     */
-    private void sendAddress(String targetIp, String datas, ISendAddressCallback callback){
-       final FutureTask<Boolean> futureTask = new FutureTask<Boolean>(() -> {
-                    DatagramSocket datagramSocket = null;
-                    try {
-                        //创建DatagramSocket类对象，此类表示用来发送和接收数据报包的套接字
-                        datagramSocket = new DatagramSocket();
-                        //创建要发送的数据，这里是code字段
-                        byte[] data = datas.getBytes();
-                        //构造DatagramPacket，DatagramPacket表示数据包，构造函数表示用来将长度为 length 偏移量为 offset 的包发送到指定主机上的指定端口号
-                        DatagramPacket datagramPacket = new DatagramPacket(data, 0, data.length, InetAddress.getByName(targetIp), PORT);
-                        //调用send方法发送数据报
-                        datagramSocket.send(datagramPacket);
-                        LogUtils.d(TAG, "发送一个广播成功");
-                        Thread.sleep(1000);
-                        return true;
-                    } catch (SocketException e) {
-                        e.printStackTrace();
-                        LogUtils.e(TAG, "创建DatagramSocket失败， e = " + e.getMessage());
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                        LogUtils.e(TAG, "构造广播地址失败， e = " + e.getMessage());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        LogUtils.e(TAG, "发送广播失败， e = " + e.getMessage());
-                    }finally {
-                        //关闭资源
-                        if(datagramSocket != null) datagramSocket.close();
-                    }
-                    return false;
-        }){
-           @Override
-           protected void done() {
-               try {
-                   if(this.get()){
-                       if(callback != null)
-                           callback.onSuccess();
-                   }
-               } catch (ExecutionException e) {
-                   e.printStackTrace();
-               } catch (InterruptedException e) {
-                   e.printStackTrace();
-               }
-           }
-       };
-        mExecutor.submit(futureTask);
     }
 
     /**

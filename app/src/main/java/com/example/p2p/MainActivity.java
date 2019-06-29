@@ -30,18 +30,18 @@ import com.example.p2p.bean.User;
 import com.example.p2p.callback.IUserCallback;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IDialogCallback;
-import com.example.p2p.callback.IUserImageReceiveCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
-import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 import com.example.p2p.utils.WifiUtils;
+import com.example.p2p.widget.WindowPopup;
 import com.example.p2p.widget.dialog.ConnectingDialog;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
 import com.example.utils.FileUtil;
 import com.example.utils.ToastUtil;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,8 +58,8 @@ public class MainActivity extends BaseActivity {
     Toolbar toolBar;
     @BindView(R.id.iv_back)
     ImageView ivBack;
-    @BindView(R.id.iv_scan)
-    ImageView ivAdd;
+    @BindView(R.id.iv_more)
+    ImageView ivMore;
 
     private String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_SOCKET_STATE = 0x000;
@@ -71,11 +71,13 @@ public class MainActivity extends BaseActivity {
     private ConnectingDialog mConnectingDialog;
     private List<User> mOnlineUsers;
     private WifiConnectionReceiver mNetWorkConnectionReceiver;
+    private WindowPopup mWindowPopup;
     private int mPosition;
     private long mLastPressTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //初始化用户系统
         OnlineUserManager.getInstance().initListener();
         super.onCreate(savedInstanceState);
     }
@@ -97,7 +99,9 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        //退出时，销毁这边的连接
         OnlineUserManager.getInstance().exit();
+        ConnectManager.getInstance().destory();
         super.onDestroy();
     }
 
@@ -105,7 +109,6 @@ public class MainActivity extends BaseActivity {
     public void onBackPressed() {
         if(System.currentTimeMillis() - mLastPressTime < 2000){
             super.onBackPressed();
-            android.os.Process.killProcess(android.os.Process.myPid());
         }else {
             mLastPressTime = System.currentTimeMillis();
             ToastUtil.showToast(this, getString(R.string.main_exit));
@@ -152,6 +155,7 @@ public class MainActivity extends BaseActivity {
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         mConnectingDialog = new ConnectingDialog();
+        mWindowPopup = new WindowPopup(this, mStatusView);
         refreshOnlineUsers();
     }
 
@@ -204,21 +208,23 @@ public class MainActivity extends BaseActivity {
                 }else {
                     mOnlineUsers.addAll(users);
                     mRvMainAdapter.notifyDataSetChanged();
-//                    for(User user : users){
-//                        ConnectManager.getInstance().connect(user.getIp(), new IConnectCallback() {
-//                            @Override
-//                            public void onConnectSuccess(String targetIp) {
-//                                Image image = new Image(Constant.FILE_USER_IMAGE);
-//                                Mes<Image> message = new Mes<>(ItemType.OTHER, MesType.IMAGE, user.getIp(), image);
-//                                ConnectManager.getInstance().sendMessage(user.getIp(), message);
-//                            }
-//
-//                            @Override
-//                            public void onConnectFail(String targetIp) {
-//                                LogUtils.e(TAG, "一个发送失败，user = " + user);
-//                            }
-//                        });
-//                    }
+                    for(User user : users){
+                        final User sendUser = user;
+                        ConnectManager.getInstance().connect(sendUser.getIp(), new IConnectCallback() {
+                            @Override
+                            public void onConnectSuccess(String targetIp) {
+                                Image image = new Image(Constant.FILE_USER_IMAGE);
+                                Mes<Image> message = new Mes<>(ItemType.OTHER, MesType.IMAGE, sendUser.getIp(), image);
+                                ConnectManager.getInstance().sendMessage(sendUser.getIp(), message);
+                                LogUtils.d(TAG, "发送用户图片，name = " + sendUser.getName());
+                            }
+
+                            @Override
+                            public void onConnectFail(String targetIp) {
+                                LogUtils.e(TAG, "一个发送失败，user = " + sendUser);
+                            }
+                        });
+                    }
                     mStatusView.showSuccess();
                 }
             }
@@ -229,6 +235,19 @@ public class MainActivity extends BaseActivity {
                 mOnlineUsers.add(user);
                 mRvMainAdapter.notifyItemInserted(mOnlineUsers.size());
                 mStatusView.showSuccess();
+                final String userIp = user.getIp();
+                final String name = user.getName();
+                ConnectManager.getInstance().addImageReceiveCallback(userIp, imagePath -> {
+                    for(int i = 0; i < mOnlineUsers.size(); i++){
+                        if(mOnlineUsers.get(i).getIp().equals(userIp)){
+                            mOnlineUsers.get(i).setImagePath(imagePath);
+                            mRvMainAdapter.notifyItemChanged(i);
+                            LogUtils.d(TAG, "接收到用户图片，name = " + name + ", path = " + imagePath);
+                            break;
+                        }
+                    }
+                });
+                ToastUtil.showToast(MainActivity.this, user.getName() + "加入聊天");
             }
 
             @Override
@@ -236,17 +255,20 @@ public class MainActivity extends BaseActivity {
                 int index = mOnlineUsers.indexOf(user);
                 mOnlineUsers.remove(user);
                 mRvMainAdapter.notifyItemRemoved(index);
+                FileUtil.deleteDir(new File(Constant.FILE_PATH_ONLINE_USER + user.getIp() + File.separator));
+                ConnectManager.getInstance().removeConnect(user.getIp());
                 if(mOnlineUsers.isEmpty()) mStatusView.showEmpty();
+                ToastUtil.showToast(MainActivity.this,  user.getName() + "退出聊天");
             }
         });
     }
 
 
-    @OnClick({R.id.iv_scan})
+    @OnClick({R.id.iv_more})
     public void onViewClick(View view) {
         switch (view.getId()) {
-            case R.id.iv_scan:
-                refreshOnlineUsers();
+            case R.id.iv_more:
+                mWindowPopup.showAsDropDown(ivMore);
                 break;
             default:
                 break;

@@ -13,6 +13,8 @@
     <color name="colorDivide">#d9d9d9</color>
     <color name="colorIndicator">#6DB6B6B6</color>
     <color name="colorIndicatorSelected">#FF888888</color>
-    <color name="colorAudioBg">#85332D2D</color>
+    <color name="colorAudioBg">#85616161</color>
+    <color name="colorPopupSelected">#FF888888</color>
+    <color name="colorPopupBg">#616161</color>
     <color name="colorAudioCancel">#83D83E3E</color>
 </resources>

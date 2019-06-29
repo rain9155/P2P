@@ -4,6 +4,7 @@
     android:id="@+id/tool_bar"
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
+    app:contentInsetStart="@dimen/dp_0"
     xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/colorPrimary">
 
@@ -13,9 +14,11 @@
 
         <ImageView
             android:id="@+id/iv_back"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
+            android:layout_width="@dimen/dp_40"
+            android:layout_height="@dimen/dp_40"
             android:src="@drawable/ic_back"
+            android:padding="@dimen/dp_10"
+            android:background="@drawable/selector_bar_iv"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -27,7 +30,7 @@
             android:layout_height="wrap_content"
             android:textColor="@color/colorBlack"
             android:textSize="18sp"
-            app:layout_goneMarginStart="@dimen/dp_0"
+            app:layout_goneMarginStart="@dimen/dp_15"
             android:layout_marginStart="@dimen/dp_15"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toRightOf="@id/iv_back"
@@ -35,12 +38,13 @@
             tools:text="File Transfer" />
 
         <ImageView
-            android:id="@+id/iv_scan"
-            android:layout_width="@dimen/dp_25"
-            android:layout_height="@dimen/dp_25"
+            android:id="@+id/iv_more"
+            android:layout_width="@dimen/dp_46"
+            android:layout_height="@dimen/dp_46"
             android:src="@drawable/ic_add"
-            android:layout_marginEnd="20dp"
             android:tint="@color/colorBlack"
+            android:padding="@dimen/dp_10"
+            android:background="@drawable/selector_bar_iv"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintRight_toRightOf="parent"/>

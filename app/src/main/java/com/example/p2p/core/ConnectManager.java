@@ -15,7 +15,7 @@ import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IProgressCallback;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
-import com.example.p2p.callback.IUserImageReceiveCallback;
+import com.example.p2p.callback.IImageReceiveCallback;
 import com.example.p2p.utils.FileUtils;
 import com.example.p2p.utils.LogUtils;
 
@@ -53,10 +53,9 @@ public class ConnectManager {
 
     private ServerSocket mServerSocket;
     private Map<String, Socket> mClients;//保存每个Socket连接到ip地址的映射
-    private Map<String, IReceiveMessageCallback> mChatReceiveCallbacks;//保存每个消息接受回调到ip地址的映射
-    private Map<String, IUserImageReceiveCallback> mUserImageReceiveCallbacks;
-    private Map<String, IProgressCallback> mProgressCallbacks;
-    private Map<String, List<Mes>> mSaveMessages;
+    private Map<String, IReceiveMessageCallback> mReceiveCallbacks;//保存每个消息接受回调到ip地址的映射
+    private Map<String, IImageReceiveCallback> mImageReceiveCallbacks;//接收用户头像回调
+    private Map<String, List<Mes>> mSaveMessages;//暂存消息回调
     private ExecutorService mExecutor;
     private volatile ISendMessgeCallback mSendMessgeCallback;
     private volatile boolean isRelease;
@@ -79,9 +78,8 @@ public class ConnectManager {
 
     private ConnectManager(){
         mClients = new ConcurrentHashMap<>();
-        mChatReceiveCallbacks = new ConcurrentHashMap<>();
-        mProgressCallbacks = new ConcurrentHashMap<>();
-        mUserImageReceiveCallbacks = new ConcurrentHashMap<>();
+        mReceiveCallbacks = new ConcurrentHashMap<>();
+        mImageReceiveCallbacks = new ConcurrentHashMap<>();
         mExecutor = Executors.newCachedThreadPool();
         mSaveMessages = new HashMap<>();
     }
@@ -202,12 +200,11 @@ public class ConnectManager {
             }
             return;
         }
-        if(callback != null) mProgressCallbacks.put(targetIp, callback);
         final Socket socket = mClients.get(targetIp);
         mExecutor.execute(() -> {
             try {
                 OutputStream os = socket.getOutputStream();
-                sendMessageByType(targetIp, os, message);
+                sendMessageByType(os, message, callback);
                 Log.d(TAG, "发送消息成功， message = " + message);
                 if(mSendMessgeCallback != null){
                     mHandler.obtainMessage(TYPE_SEND_SUCCESS, message).sendToTarget();
@@ -231,6 +228,7 @@ public class ConnectManager {
         if(socket != null){
             try {
                 socket.close();
+                LogUtils.d(TAG, "一个用户退出聊天，socket = " + socket);
             } catch (IOException e) {
                 e.printStackTrace();
                 LogUtils.d(TAG, "关闭移除的Socket连接出现错误， e = " + e.getMessage());
@@ -239,21 +237,23 @@ public class ConnectManager {
     }
 
     /**
-     * 移除指定客户端ip的消息回调
-     * @param ipAddress 客户端的ip地址
-     */
-    public void removeReceiveCallback(String ipAddress){
-        mChatReceiveCallbacks.remove(ipAddress);
-    }
-
-    /**
      * 清理一些资源
      */
     public void release(){
         isRelease = true;
-        mChatReceiveCallbacks.clear();
-        mProgressCallbacks.clear();
+        mReceiveCallbacks.clear();
         if(mSendMessgeCallback != null) mSendMessgeCallback = null;
+    }
+
+    /**
+     * 销毁所有连接
+     */
+    public void destory(){
+        release();
+        mImageReceiveCallbacks.clear();
+        for(String ip : mClients.keySet()){
+            removeConnect(ip);
+        }
     }
 
     /**
@@ -307,23 +307,50 @@ public class ConnectManager {
      * @param targetIp 客户端ip
      * @param callback 接受消息的回调
      */
-    public void addChatReceiveMessageCallback(String targetIp, IReceiveMessageCallback callback){
-        mChatReceiveCallbacks.put(targetIp, callback);
+    public void addReceiveMessageCallback(String targetIp, IReceiveMessageCallback callback){
+        mReceiveCallbacks.put(targetIp, callback);
     }
 
     /**
      * 获得接受消息回调接口
+     * @param targetIp 指定ip
      */
-    public IReceiveMessageCallback getChatReceiveCallback(String targetIp) {
-        return mChatReceiveCallbacks.get(targetIp);
+    public IReceiveMessageCallback getReceiveCallback(String targetIp) {
+        return mReceiveCallbacks.get(targetIp);
     }
 
-    public void addUserImageReceiveCallback(String targetIp, IUserImageReceiveCallback callback){
-        mUserImageReceiveCallbacks.put(targetIp, callback);
+
+    /**
+     * 移除指定客户端ip的消息回调
+     * @param ipAddress 客户端的ip地址
+     */
+    public void removeReceiveCallback(String ipAddress){
+        mReceiveCallbacks.remove(ipAddress);
     }
 
-    public IUserImageReceiveCallback getUserImageReceiveCallback(String targetIp){
-        return mUserImageReceiveCallbacks.get(targetIp);
+    /**
+     * 给指定客户端ip添加一个接受图片消息的回调
+     * @param targetIp 客户端ip
+     * @param callback 接受图片消息的回调
+     */
+    public void addImageReceiveCallback(String targetIp, IImageReceiveCallback callback){
+        mImageReceiveCallbacks.put(targetIp, callback);
+    }
+
+    /**
+     * 获得接收图片消息的回调
+     * @param targetIp 指定ip
+     */
+    public IImageReceiveCallback getImageReceiveCallback(String targetIp){
+        return mImageReceiveCallbacks.get(targetIp);
+    }
+
+    /**
+     * 移除指定客户端ip的图片消息回调
+     * @param ipAddress 客户端的ip地址
+     */
+    public void removeImageReceiveCallback(String ipAddress){
+        mImageReceiveCallbacks.remove(ipAddress);
     }
 
     /**
@@ -341,7 +368,7 @@ public class ConnectManager {
     /**
      * 根据消息类型发送消息
      */
-    private void sendMessageByType(String targetIp, OutputStream outputStream, Mes<?> message) throws IOException, InterruptedException {
+    private void sendMessageByType(OutputStream outputStream, Mes<?> message, IProgressCallback callback) throws IOException {
         DataOutputStream os = new DataOutputStream(outputStream);
         MesType type = message.mesType;
         isRelease = false;
@@ -365,7 +392,8 @@ public class ConnectManager {
                 int imageLen  = imageBytes.length;
                 os.writeInt(type.ordinal());
                 os.writeInt(imageLen);
-                sendBytes(targetIp, os, imageBytes, imageLen);
+                os.writeInt(message.itemType.ordinal());
+                sendBytes(os, imageBytes, imageLen, imageLen, 0, callback);
                 image.len = imageLen;
                 image.progress = 100;
                 break;
@@ -384,7 +412,7 @@ public class ConnectManager {
                 LogUtils.d(TAG, "文件长度，len = " + fileLen);
                 if(fileLen < MAX_FILE_SEND_DATA){
                     fileBytes = FileUtils.getFileBytes(filePath);
-                    sendBytes(targetIp, os, fileBytes, fileLen);
+                    sendBytes(os, fileBytes, fileLen, fileLen, 0, callback);
                 }else {//文件太大，分段发送
                     int count = 0;
                     try(InputStream in = new BufferedInputStream(new FileInputStream(filePath))){
@@ -395,7 +423,7 @@ public class ConnectManager {
                             }
                             byte[] tempBytes = new byte[maxSendFileLen];
                             in.read(tempBytes);
-                            sendBytes(targetIp, os, tempBytes, maxSendFileLen);
+                            sendBytes(os, tempBytes, maxSendFileLen, fileLen, count, callback);
                             count += maxSendFileLen;
                         }
                     }
@@ -408,23 +436,20 @@ public class ConnectManager {
         }
     }
 
-    private void sendBytes(String targetIp, DataOutputStream os, byte[] bytes, int len) throws IOException {
+    private void sendBytes(DataOutputStream os, byte[] bytes, int maxSendLen, int fileLen, int preSendLen, IProgressCallback callback) throws IOException {
         int start = 0;
         int end = 0;
-        while (end < len){
-            if(isRelease) break;//退出聊天后不要传送数据
+        while (end < maxSendLen){
             end += MAX_SEND_DATA;
-            if(end >= len) end = len;
+            if(end >= maxSendLen) end = maxSendLen;
             os.write(bytes, start, end - start);
-            LogUtils.d(TAG, "传送数据中，offet = " + (end - start) + ", 长度， len = " + len);
+            LogUtils.d(TAG, "传送数据中，offet = " + (end - start) + ", 长度， len = " + maxSendLen);
             start = end;
-            IProgressCallback callback = mProgressCallbacks.get(targetIp);
             if(callback != null){
-                double num = start / (len * 1.0);
+                double num = (preSendLen + start) / (fileLen * 1.0);
                 int progress = (int) (num * 100);
                 mHandler.post(() -> callback.onProgress(progress));
             }
         }
-        mProgressCallbacks.remove(targetIp);
     }
 }

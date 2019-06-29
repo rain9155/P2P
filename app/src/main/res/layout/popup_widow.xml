@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent">
+
+   <ImageView
+       android:id="@+id/iv_arrow_up"
+       android:layout_width="@dimen/dp_20"
+       android:layout_height="@dimen/dp_10"
+       android:src="@drawable/ic_arrow_up"
+       app:layout_constraintHorizontal_bias="0.9"
+       app:layout_constraintRight_toRightOf="@+id/ll_window"
+       app:layout_constraintLeft_toLeftOf="parent"
+       app:layout_constraintTop_toTopOf="parent"/>
+
+    <LinearLayout
+        android:id="@+id/ll_window"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_popup_window"
+        android:orientation="vertical"
+        android:layout_marginEnd="@dimen/dp_5"
+        app:layout_constraintTop_toBottomOf="@id/iv_arrow_up"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/tv_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/sp_16"
+            android:gravity="center"
+            android:clickable="true"
+            android:background="@drawable/selector_popup_tv"
+            android:paddingTop="@dimen/dp_10"
+            android:paddingStart="@dimen/dp_30"
+            android:paddingEnd="@dimen/dp_30"
+            android:paddingBottom="@dimen/dp_10"
+            android:textColor="@color/colorWhite"
+            android:text="@string/popup_tvRefresh"/>
+
+
+        <TextView
+            android:id="@+id/tv_test"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/sp_16"
+            android:paddingTop="@dimen/dp_10"
+            android:gravity="center"
+            android:clickable="true"
+            android:background="@drawable/selector_popup_tv"
+            android:paddingStart="@dimen/dp_30"
+            android:paddingEnd="@dimen/dp_30"
+            android:paddingBottom="@dimen/dp_10"
+            android:textColor="@color/colorWhite"
+            android:text="@string/popup_tvTest"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

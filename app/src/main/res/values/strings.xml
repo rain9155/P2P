@@ -38,5 +38,7 @@
     <string name="dialog_audio_undo">手指上滑，取消发送</string>
     <string name="dialog_audio_cancel">松开手指，取消发送</string>
     <string name="dialog_audio_warnning">录音时间太短</string>
+    <string name="popup_tvRefresh">刷新列表</string>
+    <string name="popup_tvTest">关闭测试</string>
 
 </resources>
