@@ -54,7 +54,7 @@ public class ImageSendDelegate extends BaseSendMutiItemDelegate {
         holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imagePath));
         ImageView imageView = holder.getView(R.id.iv_message);
         if(image.progress < 100){
-            imageView.getDrawable().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
+            imageView.getDrawable().mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
             holder.setText(R.id.tv_progress, image.progress + "");
         }else {
             holder.setText(R.id.tv_progress, image.progress + "");

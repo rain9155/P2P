@@ -7,11 +7,13 @@
     android:layout_height="wrap_content"
     android:padding="@dimen/dp_10">
 
-    <ImageView
+    <com.example.p2p.widget.customView.ShapeImageView
         android:id="@+id/iv_face"
         android:layout_width="@dimen/dp_35"
         android:layout_height="@dimen/dp_35"
         android:scaleType="fitXY"
+        app:format="roundRect"
+        app:corners="@dimen/dp_5"
         app:layout_constraintTop_toTopOf="@+id/rl_message"
         app:layout_constraintLeft_toLeftOf="parent"
         tools:src="@drawable/ic_user_image"/>
@@ -21,7 +23,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="@dimen/dp_10"
-        android:background="@drawable/ic_receive_message"
+        android:background="@drawable/ic_bubble_right"
         android:layout_marginStart="@dimen/dp_5"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -33,6 +35,7 @@
             android:layout_height="wrap_content"
             android:textColor="@color/colorBlack"
             android:textSize="@dimen/sp_16"
+            android:paddingStart="@dimen/dp_5"
             android:maxWidth="@dimen/dp_200"
             tools:text="你好dfjdkfjdkfkdjfkdjfkjdkfjkdjfkdjfkjdkfjkdjfkdjfk"/>
 

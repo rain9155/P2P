@@ -7,6 +7,7 @@ import android.os.Message;
 import com.example.p2p.bean.Data;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IUserCallback;
+import com.example.p2p.config.Constant;
 import com.example.p2p.utils.IpUtils;
 import com.example.p2p.utils.JsonUtils;
 import com.example.p2p.utils.LogUtils;
@@ -48,7 +49,7 @@ public class OnlineUserManager {
     private Map<String, User> mOnlineUsers;
     private IUserCallback mUserCallback;
     private volatile boolean isRefresh = true;
-    private volatile boolean isSendingImage;
+    private volatile boolean isSendingImage = false;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
         @Override
@@ -125,14 +126,17 @@ public class OnlineUserManager {
                                 LogUtils.d(TAG, "一个用户加入，地址 = " + receiveIp);
                             }
                             //回复它
-                            if(!receiveIp.equals(IpUtils.getLocIpAddress())) reply(receiveIp);
+                            reply(receiveIp);
                         }else if(code == 1){
                             //用户退出在线用户列表
-                            User exitUser = mOnlineUsers.remove(receiveIp);
-                            if(mUserCallback != null && !isRefresh){
-                                mHandler.obtainMessage(TYPE_EXIT_USER, exitUser).sendToTarget();
+                            if(mOnlineUsers.containsKey(receiveIp)){
+                                User exitUser = mOnlineUsers.remove(receiveIp);
+                                if(mUserCallback != null && !isRefresh){
+                                    mHandler.obtainMessage(TYPE_EXIT_USER, exitUser).sendToTarget();
+                                }
+                                LogUtils.d(TAG, "一个用户退出，地址 = " + receiveIp);
                             }
-                            LogUtils.d(TAG, "一个用户退出，地址 = " + receiveIp);
+
                         }else {
                             //得到所有在线用户列表
                             if(!mOnlineUsers.containsKey(receiveIp)) {
@@ -202,7 +206,7 @@ public class OnlineUserManager {
         isRefresh = true;
         mExecutor.execute(() -> {
             try {
-                Thread.sleep(3000);
+                Thread.sleep(Constant.WAITING_TIME);
             }catch (InterruptedException e){
                 e.printStackTrace();
             }
@@ -222,6 +226,13 @@ public class OnlineUserManager {
      */
     public User getOnlineUser(String ip) {
        return mOnlineUsers.get(ip);
+    }
+
+    /**
+     * 是否正在刷新
+     */
+    public boolean isRefresh(){
+        return isRefresh;
     }
 
     /**
@@ -311,8 +322,13 @@ public class OnlineUserManager {
             }
             receiveDatas = new String(os.toByteArray());
         }
-        Data datas = JsonUtils.toObject(receiveDatas, Data.class);
-        return datas;
+        try {
+            Data datas = JsonUtils.toObject(receiveDatas, Data.class);
+            return datas;
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public void setUserCallback(IUserCallback callback){

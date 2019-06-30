@@ -141,7 +141,7 @@ public class LoginActivity extends AppCompatActivity {
                 CropImage.ActivityResult result = CropImage.getActivityResult(data);
                 Uri resultUri = result.getUri();
                 try (InputStream in = this.getContentResolver().openInputStream(resultUri)){
-                   mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.2f,  0.2f);
+                   mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.3f,  0.3f);
                    mImagePath = FileUtils.saveUserBitmap(mUserBitmap);
                    ivIcon.setImageBitmap(mUserBitmap);
                 }catch (IOException e) {
@@ -158,7 +158,7 @@ public class LoginActivity extends AppCompatActivity {
         String name = edInput.getText().toString().trim();
         if(mUserBitmap == null){
             mUserBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_default_user);
-            mUserBitmap = ImageUtils.compressBitmap(mUserBitmap, 0.2f, 0.2f);
+            mUserBitmap = ImageUtils.compressBitmap(mUserBitmap, 0.3f, 0.3f);
             mImagePath = FileUtils.saveUserBitmap(mUserBitmap);
         }
         User user = new User(name, locIp, mImagePath);
@@ -167,7 +167,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goMainActivity(User restoreUser) {
-        OnlineUserManager.getInstance().login(restoreUser);
+        //restoreUser.setImagePath(null);
+       // OnlineUserManager.getInstance().login(restoreUser);
         MainActivity.startActivity(this);
         finish();
     }

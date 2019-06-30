@@ -10,4 +10,14 @@
         <attr name="indicatorCount" format="integer"/>
     </declare-styleable>
 
+    <declare-styleable name="ShapeImageView">
+        <attr name="format" format="enum">
+            <enum name="circle" value="0"/>
+            <enum name="roundRect" value="1"/>
+        </attr>
+        <attr name="radius" format="dimension"/>
+        <attr name="corners" format="dimension"/>
+    </declare-styleable>
+
+
 </resources>

@@ -7,11 +7,13 @@
     android:layout_height="wrap_content"
     android:padding="@dimen/dp_10">
 
-    <ImageView
+    <com.example.p2p.widget.customView.ShapeImageView
         android:id="@+id/iv_face"
         android:layout_width="@dimen/dp_35"
         android:layout_height="@dimen/dp_35"
         android:scaleType="fitXY"
+        app:format="roundRect"
+        app:corners="@dimen/dp_5"
         app:layout_constraintTop_toTopOf="@+id/ll_message"
         app:layout_constraintLeft_toLeftOf="parent"
         tools:src="@drawable/ic_user_image"/>

@@ -209,6 +209,20 @@ public class MainActivity extends BaseActivity {
                     mOnlineUsers.addAll(users);
                     mRvMainAdapter.notifyDataSetChanged();
                     for(User user : users){
+                        final String userIp = user.getIp();
+                        final String name = user.getName();
+                        ConnectManager.getInstance().addImageReceiveCallback(userIp, imagePath -> {
+                            for(int i = 0; i < mOnlineUsers.size(); i++){
+                                if(mOnlineUsers.get(i).getIp().equals(userIp)){
+                                    mOnlineUsers.get(i).setImagePath(imagePath);
+                                    mRvMainAdapter.notifyItemChanged(i);
+                                    LogUtils.d(TAG, "接收到用户图片，name = " + name + ", path = " + imagePath);
+                                    break;
+                                }
+                            }
+                        });
+                    }
+                    for(User user : users){
                         final User sendUser = user;
                         ConnectManager.getInstance().connect(sendUser.getIp(), new IConnectCallback() {
                             @Override
@@ -225,6 +239,7 @@ public class MainActivity extends BaseActivity {
                             }
                         });
                     }
+
                     mStatusView.showSuccess();
                 }
             }
@@ -247,6 +262,20 @@ public class MainActivity extends BaseActivity {
                         }
                     }
                 });
+                new Handler().postDelayed(() -> ConnectManager.getInstance().connect(user.getIp(), new IConnectCallback() {
+                    @Override
+                    public void onConnectSuccess(String targetIp) {
+                        Image image = new Image(Constant.FILE_USER_IMAGE);
+                        Mes<Image> message = new Mes<>(ItemType.OTHER, MesType.IMAGE, userIp, image);
+                        ConnectManager.getInstance().sendMessage(userIp, message);
+                        LogUtils.d(TAG, "发送用户图片，name = " + name);
+                    }
+
+                    @Override
+                    public void onConnectFail(String targetIp) {
+                        LogUtils.e(TAG, "一个发送失败，user = " + name);
+                    }
+                }), Constant.WAITING_TIME + 1000);
                 ToastUtil.showToast(MainActivity.this, user.getName() + "加入聊天");
             }
 
@@ -280,8 +309,9 @@ public class MainActivity extends BaseActivity {
      */
     private void refreshOnlineUsers() {
         mStatusView.showLoading();
-        //测试
-        OnlineUserManager.getInstance().login((User) FileUtil.restoreObject(this, Constant.FILE_NAME_USER));
+        User user = (User) FileUtil.restoreObject(this, Constant.FILE_NAME_USER);
+        user.setImagePath(null);
+        OnlineUserManager.getInstance().login(user);
         OnlineUserManager.getInstance().getOnlineUsers();
     }
 

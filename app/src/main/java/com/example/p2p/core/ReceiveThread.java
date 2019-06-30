@@ -23,7 +23,6 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 
 /**
@@ -36,9 +35,10 @@ public class ReceiveThread implements Runnable{
     private static final int TYPE_RECEVICE_SUCCESS = 0x000;
     private static final int TYPE_SAVE_MESSAGES = 0x001;
     private static final int TYPE_RECEIVE_USER_IMAGE = 0x002;
+    public static final int CLOSE_SEND_SOCKET = 123;
 
-    private Socket mSocket;
-    private User mUser;
+    private String mClientIp;
+    private volatile Socket mSocket;
     private volatile IReceiveMessageCallback mReceiveMessageCallback;
     private volatile IImageReceiveCallback mImageReceiveCallback;
 
@@ -51,7 +51,7 @@ public class ReceiveThread implements Runnable{
                     mReceiveMessageCallback.onReceiveSuccess((Mes<?>) msg.obj);
                     break;
                 case TYPE_SAVE_MESSAGES:
-                    ConnectManager.getInstance().addMessage(mUser.getIp(), (Mes<?>) msg.obj);
+                    ConnectManager.getInstance().addMessage(mClientIp, (Mes<?>) msg.obj);
                     break;
                 case TYPE_RECEIVE_USER_IMAGE:
                     Mes<?> mes = (Mes<?>) msg.obj;
@@ -64,9 +64,9 @@ public class ReceiveThread implements Runnable{
         }
     };
 
-    public ReceiveThread(Socket socket, User user) {
+    public ReceiveThread(Socket socket) {
         this.mSocket = socket;
-        this.mUser = user;
+        this.mClientIp = socket.getInetAddress().getHostAddress();
     }
 
     @Override
@@ -78,26 +78,23 @@ public class ReceiveThread implements Runnable{
                 mes = receiveMessageByType(in);
                 LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
                 if(mes.itemType == ItemType.OTHER){
-                    if(hasImageReceviceCallback(mUser.getIp())){
+                    if(hasImageReceviceCallback(mClientIp)){
                         mHandler.obtainMessage(TYPE_RECEIVE_USER_IMAGE, mes).sendToTarget();
                     }
-                    DataOutputStream os = new DataOutputStream(mSocket.getOutputStream());
-                    os.writeInt(Constant.CLOSE_SOCKET);
                 }else {
-                    if(mes.mesType != MesType.ERROR){
-                        if(!hasReceviceCallback(mUser.getIp())){//暂存消息
-                            mHandler.obtainMessage(TYPE_SAVE_MESSAGES, mes).sendToTarget();
-                        }else {
-                            mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
-                        }
+                    if(mes.mesType == MesType.ERROR) continue;
+                    if(!hasReceviceCallback(mClientIp)){//暂存消息
+                        mHandler.obtainMessage(TYPE_SAVE_MESSAGES, mes).sendToTarget();
+                    }else {
+                        mHandler.obtainMessage(TYPE_RECEVICE_SUCCESS, mes).sendToTarget();
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 LogUtils.e(TAG, "获取客户端消息失败，e = " + e.getMessage());
                 //两端的Socker连接都要关闭
-                ConnectManager.getInstance().removeConnect(mUser.getIp());
-                ConnectManager.getInstance().removeReceiveCallback(mUser.getIp());
+                ConnectManager.getInstance().removeConnect(mClientIp);
+                ConnectManager.getInstance().removeReceiveCallback(mClientIp);
                 break;
             }
         }
@@ -113,7 +110,7 @@ public class ReceiveThread implements Runnable{
         switch(type){
             case 0:
                 String text = in.readUTF();
-                mes = new Mes<String>(ItemType.RECEIVE_TEXT, MesType.TEXT, mUser.getIp(), text);
+                mes = new Mes<String>(ItemType.RECEIVE_TEXT, MesType.TEXT, mClientIp, text);
                 break;
             case 1:
                 int duration = in.readInt();
@@ -122,7 +119,7 @@ public class ReceiveThread implements Runnable{
                 in.readFully(audioBytes);
                 String audioPath = saveReceiveAudio(audioBytes);
                 Audio audio = new Audio(duration, audioPath);
-                mes = new Mes<Audio>(ItemType.RECEIVE_AUDIO, MesType.AUDIO, mUser.getIp(), audio);
+                mes = new Mes<Audio>(ItemType.RECEIVE_AUDIO, MesType.AUDIO, mClientIp,  audio);
                 break;
             case 2:
                 int imageLen = in.readInt();
@@ -130,14 +127,14 @@ public class ReceiveThread implements Runnable{
                 byte[] imageBytes = receiveBytes(in, imageLen);
                 String imagePath = saveReceiveImage(imageBytes, itemType);
                 Image image = new Image(imagePath, imageLen);
-                mes = new Mes<Image>(itemType != ItemType.OTHER.ordinal() ? ItemType.RECEIVE_IMAGE : ItemType.OTHER, MesType.IMAGE, mUser.getIp(), image);
+                mes = new Mes<Image>(itemType != ItemType.OTHER.ordinal() ? ItemType.RECEIVE_IMAGE : ItemType.OTHER, MesType.IMAGE, mClientIp, image);
                 break;
             case 3:
                 int fileLen = in.readInt();
                 String fileType = in.readUTF();
                 String fileSize = in.readUTF();
                 String fileName = in.readUTF();
-                String path = FileUtils.getFilePath(mUser.getIp(), ItemType.RECEIVE_FILE) + fileName + "." + fileType;
+                String path = FileUtils.getFilePath(mClientIp, ItemType.RECEIVE_FILE) + fileName + "." + fileType;
                 File file = new File(path);
                 if(file.exists()){//重复文件删除
                     file.delete();
@@ -160,11 +157,9 @@ public class ReceiveThread implements Runnable{
                     }
                 }
                 Document document = new Document(filePath, fileName, fileLen, fileSize, fileType);
-                mes = new Mes<Document>(ItemType.RECEIVE_FILE, MesType.FILE, mUser.getIp(), document);
+                mes = new Mes<Document>(ItemType.RECEIVE_FILE, MesType.FILE, mClientIp, document);
                 break;
             default:
-                if(!hasReceviceCallback(mUser.getIp())) ConnectManager.getInstance().removeConnect(mUser.getIp());
-                ConnectManager.getInstance().removeImageReceiveCallback(mUser.getIp());
                 break;
         }
         return mes;
@@ -199,7 +194,7 @@ public class ReceiveThread implements Runnable{
      * 保存接收到的音频
      */
     public String saveReceiveAudio(byte[] audioBytes) throws IOException {
-        String audioPath = FileUtils.getAudioPath(mUser.getIp(), ItemType.RECEIVE_AUDIO);
+        String audioPath = FileUtils.getAudioPath(mClientIp, ItemType.RECEIVE_AUDIO);
         String path = audioPath + System.currentTimeMillis() + ".mp3";
         if(!FileUtils.saveFileBytes(audioBytes, path, false)) throw new IOException();
         return path;
@@ -211,10 +206,10 @@ public class ReceiveThread implements Runnable{
     private String saveReceiveImage(byte[] imageBytes, int itemType) throws IOException {
         String path;
         if(itemType == ItemType.RECEIVE_IMAGE.ordinal()){
-            String imagePath = FileUtils.getImagePath(mUser.getIp(), ItemType.RECEIVE_IMAGE);
+            String imagePath = FileUtils.getImagePath(mClientIp, ItemType.RECEIVE_IMAGE);
             path = imagePath + System.currentTimeMillis() + ".png";
         }else {
-            String imagePath = Constant.FILE_PATH_ONLINE_USER + mUser.getIp() + File.separator + "image" + File.separator;
+            String imagePath = Constant.FILE_PATH_ONLINE_USER + mClientIp + File.separator + "image" + File.separator;
             FileUtils.makeDirs(imagePath);
             path = imagePath + "onLineUserImage.png";
         }
@@ -226,7 +221,7 @@ public class ReceiveThread implements Runnable{
      * 保存接收到的文件
      */
     private String saveReceiveFile(byte[] fileBytes, String fileName, String fileType) throws IOException {
-        String filePath = FileUtils.getFilePath(mUser.getIp(), ItemType.RECEIVE_FILE);
+        String filePath = FileUtils.getFilePath(mClientIp, ItemType.RECEIVE_FILE);
         String path = filePath + fileName + "." + fileType;
         if(!FileUtils.saveFileBytes(fileBytes, path, true)) throw new IOException();
         return path;

@@ -118,8 +118,7 @@ public class ConnectManager {
                     if(isClose(ipAddress)){
                         LogUtils.d(TAG, "一个用户加入聊天，socket = " + socket);
                         //每个客户端连接用一个线程不断的读
-                        User user = OnlineUserManager.getInstance().getOnlineUser(ipAddress);
-                        ReceiveThread receiveThread = new ReceiveThread(socket, user);
+                        ReceiveThread receiveThread = new ReceiveThread(socket);
                         //缓存客户端的连接
                         mClients.put(ipAddress, socket);
                         LogUtils.d(TAG, "已连接的客户端数量：" + mClients.size());
@@ -164,8 +163,7 @@ public class ConnectManager {
                 if(callback != null){
                     mHandler.post(() -> callback.onConnectSuccess(targetIp));
                 }
-                User user = OnlineUserManager.getInstance().getOnlineUser(targetIp);
-                ReceiveThread receiveThread = new ReceiveThread(socket, user);
+                ReceiveThread receiveThread = new ReceiveThread(socket);
                 mClients.put(targetIp, socket);
                 mExecutor.execute(receiveThread);
             } catch (IOException e) {
@@ -187,19 +185,37 @@ public class ConnectManager {
 
     /**
      * 发送消息给给定ip的客户端
-     * @param targetIp 客户端的ip
-     * @param mes 消息
-     * @param callback 进度回调
      */
     public void sendMessage(String targetIp, Mes<?> mes, IProgressCallback callback){
         Mes<?> message = mes.clone();
         if(!isContains(targetIp)){
             LogUtils.d(TAG, "客户端连接已经断开");
-            if(mSendMessgeCallback != null){
-                mHandler.obtainMessage(TYPE_SEND_FAIL, message).sendToTarget();
-            }
+            //重连
+            connect(targetIp, new IConnectCallback() {
+                @Override
+                public void onConnectSuccess(String targetIp) {
+                    sendMessageChecked(targetIp, message, callback);
+                }
+
+                @Override
+                public void onConnectFail(String targetIp) {
+                    if(mSendMessgeCallback != null){
+                        mHandler.obtainMessage(TYPE_SEND_FAIL, message).sendToTarget();
+                    }
+                }
+            });
             return;
         }
+        sendMessageChecked(targetIp, message, callback);
+    }
+
+    /**
+     * 检查后发送消息
+     * @param targetIp 客户端的ip
+     * @param message 消息
+     * @param callback 进度回调
+     */
+    private void sendMessageChecked(String targetIp, Mes<?> message,  IProgressCallback callback) {
         final Socket socket = mClients.get(targetIp);
         mExecutor.execute(() -> {
             try {
@@ -409,7 +425,6 @@ public class ConnectManager {
                 os.writeUTF(file.fileSize);
                 os.writeUTF(file.fileName);
                 byte[] fileBytes;
-                LogUtils.d(TAG, "文件长度，len = " + fileLen);
                 if(fileLen < MAX_FILE_SEND_DATA){
                     fileBytes = FileUtils.getFileBytes(filePath);
                     sendBytes(os, fileBytes, fileLen, fileLen, 0, callback);

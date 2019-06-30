@@ -42,7 +42,7 @@ public class FileSendDelegate extends BaseSendMutiItemDelegate {
                 .setImageResource(R.id.iv_file_icon, ImageUtils.getImageId(file.fileType));
         ConstraintLayout layout = holder.getView(R.id.cl_message);
         if(file.progress < 100){
-            layout.getBackground().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
+            layout.getBackground().mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
             holder.setText(R.id.tv_progress, file.progress + "");
         }else {
             holder.setText(R.id.tv_progress, file.progress + "");

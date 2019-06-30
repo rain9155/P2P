@@ -6,11 +6,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="@dimen/dp_10">
 
-    <ImageView
+    <com.example.p2p.widget.customView.ShapeImageView
         android:id="@+id/iv_face"
         android:layout_width="@dimen/dp_35"
         android:layout_height="@dimen/dp_35"
         android:scaleType="fitXY"
+        app:format="roundRect"
+        app:corners="@dimen/dp_5"
         app:layout_constraintTop_toTopOf="@+id/cl_message"
         app:layout_constraintRight_toRightOf="parent"
         tools:src="@drawable/ic_user_image"/>
@@ -21,7 +23,9 @@
         android:layout_height="wrap_content"
         android:padding="@dimen/dp_10"
         android:layout_marginEnd="@dimen/dp_5"
-        android:background="@drawable/ic_send_message"
+        android:backgroundTint="@color/colorWhite"
+        android:background="@drawable/ic_bubble_left"
+        android:backgroundTintMode="screen"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toLeftOf="@id/iv_face"

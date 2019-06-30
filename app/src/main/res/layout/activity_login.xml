@@ -9,13 +9,15 @@
     android:paddingEnd="@dimen/dp_10"
     android:background="@color/colorPrimary">
 
-    <ImageView
+    <com.example.p2p.widget.customView.ShapeImageView
         android:id="@+id/iv_icon"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="@dimen/dp_100"
+        android:layout_height="@dimen/dp_100"
         android:scaleType="fitXY"
         android:src="@drawable/ic_default_user"
         android:layout_marginBottom="@dimen/dp_5"
+        app:format="roundRect"
+        app:corners="@dimen/dp_10"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/tv_title"/>

@@ -43,22 +43,6 @@
             android:textColor="@color/colorWhite"
             android:text="@string/popup_tvRefresh"/>
 
-
-        <TextView
-            android:id="@+id/tv_test"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/sp_16"
-            android:paddingTop="@dimen/dp_10"
-            android:gravity="center"
-            android:clickable="true"
-            android:background="@drawable/selector_popup_tv"
-            android:paddingStart="@dimen/dp_30"
-            android:paddingEnd="@dimen/dp_30"
-            android:paddingBottom="@dimen/dp_10"
-            android:textColor="@color/colorWhite"
-            android:text="@string/popup_tvTest"/>
-
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
