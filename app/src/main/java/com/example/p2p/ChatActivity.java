@@ -150,6 +150,7 @@ public class ChatActivity extends BaseActivity {
     private List<Mes> mMessageList;
     private ViewGroup mContentView;
     private LocatingDialog mLocatingDialog;
+    private boolean isSendingImage, isSendingFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -381,11 +382,11 @@ public class ChatActivity extends BaseActivity {
                     MediaPlayerManager.getInstance().startPlayAudio(audio.audioPath, mp -> imageView.setBackgroundResource(audioBg));
                 }
             }
-            if(message.mesType == MesType.IMAGE){
+            if(message.mesType == MesType.IMAGE && !isSendingImage){
                 Image image = (Image) message.data;
                 FileUtils.openFile(ChatActivity.this, image.imagePath);
             }
-            if(message.mesType == MesType.FILE){
+            if(message.mesType == MesType.FILE && !isSendingFile){
                 Document file = (Document) message.data;
                 FileUtils.openFile(ChatActivity.this, file.filePath);
             }
@@ -499,14 +500,20 @@ public class ChatActivity extends BaseActivity {
      * 发送图片消息
      */
     private void sendImage(Uri imageUri) {
+        isSendingImage = true;
         String imagePath = ImageUtils.saveImageByUri(this, imageUri, mTargetUser.getIp());
         Image image = new Image(imagePath);
         Mes<Image> message = new Mes<>(ItemType.SEND_IMAGE, MesType.IMAGE, mUser.getIp(), image);
         addMessage(message);
         final int sendingImagePostion = mMessageList.indexOf(message);
         ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
-            if(mMessageList.isEmpty()) return;
-            Image sendingImage = (Image) mMessageList.get(sendingImagePostion).data;
+            if(progress >= 100){
+                isSendingImage = false;
+            }
+            if(mMessageList.isEmpty()){
+                isSendingImage = false;
+                return;
+            }            Image sendingImage = (Image) mMessageList.get(sendingImagePostion).data;
             sendingImage.progress = progress;
             mRvChatAdapter.notifyItemChanged(sendingImagePostion);
         });
@@ -600,6 +607,7 @@ public class ChatActivity extends BaseActivity {
      * 发送文件
      */
     private void sendFile(String filePath) {
+        isSendingFile = true;
         String fileType = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase(Locale.getDefault());
         String size = FileUtils.getFileSize(filePath);
         String name = filePath.substring(filePath.lastIndexOf(java.io.File.separator) + 1, filePath.lastIndexOf("."));
@@ -608,7 +616,13 @@ public class ChatActivity extends BaseActivity {
         addMessage(message);
         final int sendingFilePosition = mMessageList.indexOf(message);
         ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
-            if(mMessageList.isEmpty()) return;
+            if(progress >= 100){
+                isSendingFile = false;
+            }
+            if(mMessageList.isEmpty()){
+                isSendingFile = false;
+                return;
+            }
             Document sendingFile = (Document) mMessageList.get(sendingFilePosition).data;
             sendingFile.progress = progress;
             mRvChatAdapter.notifyItemChanged(sendingFilePosition);

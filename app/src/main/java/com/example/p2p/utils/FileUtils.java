@@ -242,37 +242,6 @@ public class FileUtils {
     }
 
     /**
-     * 根据文件路径的后缀名获取文件类型
-     * @return MimeType
-     */
-    public static String getMimeType(String filePath){
-        String end = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase(Locale.getDefault());
-        if (end.equals(FileType.M4A) || end.equals(FileType.MP3) || end.equals(FileType.MID) || end.equals(FileType.XMF) || end.equals(FileType.OGG) || end.equals(FileType.WAV)) {
-            return MimeType.AUDIO;
-        } else if (end.equals(FileType.GP3) || end.equals(FileType.MP4) || end.equals(FileType.AVI) || end.equals(FileType.RMVB)) {
-            return MimeType.VIDEO;
-        } else if (end.equals(FileType.JPG) || end.equals(FileType.GIF) || end.equals(FileType.PNG) || end.equals(FileType.JPEG) || end.equals(FileType.BMP)) {
-            return MimeType.IMAGE;
-        } else if (end.equals(FileType.APK)) {
-            return MimeType.APK;
-        } else if (end.equals(FileType.PPT) || end.equals(FileType.PPTX)) {
-            return MimeType.PPT;
-        } else if (end.equals(FileType.XLS) || end.equals(FileType.XLSX)) {
-            return MimeType.XLS;
-        } else if (end.equals(FileType.DOC) || end.equals(FileType.DOCX)) {
-            return MimeType.DOC;
-        } else if (end.equals(FileType.PDF)) {
-            return MimeType.PDF;
-        }else if (end.equals(FileType.TXT)) {
-            return MimeType.TXT;
-        } else if(end.equals(FileType.ZIP) || end.equals(FileType.RAR)){
-            return MimeType.ZIP;
-        }else {
-            return MimeType.UNKOWN;
-        }
-    }
-
-    /**
      * 获得某个文件的大小
      * @param filePath 文件路径
      */

@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:padding="@dimen/dp_10"
         android:layout_marginEnd="@dimen/dp_5"
-        android:background="@drawable/ic_bubble_left"
+        android:background="@drawable/ic_bubble_right"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toLeftOf="@id/iv_face"

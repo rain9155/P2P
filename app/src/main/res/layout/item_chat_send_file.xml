@@ -23,9 +23,7 @@
         android:layout_height="wrap_content"
         android:padding="@dimen/dp_10"
         android:layout_marginEnd="@dimen/dp_5"
-        android:backgroundTint="@color/colorWhite"
-        android:background="@drawable/ic_bubble_left"
-        android:backgroundTintMode="screen"
+        android:background="@drawable/ic_bubble_right_white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toLeftOf="@id/iv_face"
@@ -66,40 +64,18 @@
             app:layout_constraintRight_toRightOf="parent"
             tools:src="@drawable/ic_zip"/>
 
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guide_line"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.5" />
-
-        <TextView
-            android:id="@+id/tv_progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/colorWhite"
-            android:gravity="center"
-            android:text="0"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintRight_toLeftOf="@+id/guide_line"/>
-
-        <TextView
-            android:id="@+id/tv_precent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/colorWhite"
-            android:gravity="center"
-            android:text="%"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/guide_line"/>
-
-        <androidx.constraintlayout.widget.Group
-            android:id="@+id/group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:constraint_referenced_ids="tv_progress, tv_precent"/>
+        <ProgressBar
+            android:id="@+id/progress"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/dp_6"
+            android:paddingStart="@dimen/dp_10"
+            android:progress="0"
+            android:progressTint="@color/colorGreen"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            app:layout_constraintTop_toBottomOf="@id/tv_message"
+            app:layout_constraintLeft_toRightOf="@id/tv_size"
+            app:layout_constraintRight_toRightOf="@id/tv_message"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -5,6 +5,7 @@ import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 
@@ -40,14 +41,12 @@ public class FileSendDelegate extends BaseSendMutiItemDelegate {
         holder.setText(R.id.tv_message, file.fileName)
                 .setText(R.id.tv_size, file.fileSize)
                 .setImageResource(R.id.iv_file_icon, ImageUtils.getImageId(file.fileType));
-        ConstraintLayout layout = holder.getView(R.id.cl_message);
+        ProgressBar progressBar = holder.getView(R.id.progress);
         if(file.progress < 100){
-            layout.getBackground().mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
-            holder.setText(R.id.tv_progress, file.progress + "");
+            progressBar.setProgress(file.progress);
         }else {
-            holder.setText(R.id.tv_progress, file.progress + "");
-            layout.getBackground().clearColorFilter();
-            holder.setVisibility(R.id.group, View.GONE);
+            progressBar.setProgress(file.progress);
+            holder.setVisibility(R.id.progress, View.GONE);
         }
     }
 }
