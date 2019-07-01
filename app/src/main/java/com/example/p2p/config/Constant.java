@@ -20,6 +20,6 @@ public class Constant {
     public static final String FILE_USER_IMAGE = FILE_PATH_USER + "userImage.png";
     public static final String FILE_PATH_ONLINE_USER = Environment.getExternalStorageDirectory() + "/P2P/onlineUser/";
 
-    public static final int WAITING_TIME = 2000;
+    public static final int WAITING_TIME = 3000;
 
 }

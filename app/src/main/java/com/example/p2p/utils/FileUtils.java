@@ -186,13 +186,19 @@ public class FileUtils {
      */
     public static boolean saveFileBytes(byte[] bytes, String path, boolean append){
         File file = new File(path);
+        if(!file.exists()){
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
         try(
                 FileOutputStream fileOutputStream = new FileOutputStream(file, append);
                 BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
         ){
-            if(!file.exists()){
-                file.createNewFile();
-            }
+
             bufferedOutputStream.write(bytes);
             return true;
         } catch (IOException e) {

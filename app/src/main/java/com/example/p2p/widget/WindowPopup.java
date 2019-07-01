@@ -3,20 +3,20 @@ package com.example.p2p.widget;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.example.loading.StatusView;
 import com.example.p2p.R;
 import com.example.p2p.bean.User;
+import com.example.p2p.callback.IRefreshCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.utils.FileUtil;
+
 
 
 /**
@@ -24,13 +24,11 @@ import com.example.utils.FileUtil;
  */
 public class WindowPopup extends PopupWindow {
 
-    TextView mTvRefresh;
+    private TextView mTvRefresh;
+    private IRefreshCallback mCallback;
 
-    private StatusView mStatusView;
-
-    public WindowPopup(Context context, StatusView statusView) {
+    public WindowPopup(Context context) {
         super(context);
-        this.mStatusView = statusView;
         View view = LayoutInflater.from(context).inflate(R.layout.popup_widow, null);
         mTvRefresh = view.findViewById(R.id.tv_refresh);
         this.setContentView(view);
@@ -39,11 +37,12 @@ public class WindowPopup extends PopupWindow {
         this.setFocusable(true);
         mTvRefresh.setOnClickListener(v -> {
             this.dismiss();
-            if(OnlineUserManager.getInstance().isRefresh()) return;
-            mStatusView.showLoading();
-            OnlineUserManager.getInstance().login((User) FileUtil.restoreObject(context, Constant.FILE_NAME_USER));
-            OnlineUserManager.getInstance().getOnlineUsers();
+            if(mCallback != null) mCallback.onRefresh();
         });
+    }
+
+    public void setRefreshCallback(IRefreshCallback callback){
+        this.mCallback = callback;
     }
 
 }

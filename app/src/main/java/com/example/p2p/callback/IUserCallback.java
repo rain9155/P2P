@@ -9,7 +9,6 @@ import java.util.List;
  * Created by 陈健宇 at 2019/6/11
  */
 public interface IUserCallback {
-    void onOnlineUsers(List<User> users);
     void onJoin(User user);
     void onExit(User user);
 }

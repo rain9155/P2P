@@ -199,7 +199,7 @@ public class ChatActivity extends BaseActivity {
         ivMore.setVisibility(View.GONE);
         mLocatingDialog = new LocatingDialog();
         PermissionHelper.getInstance().with(this).requestPermissions(
-                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                new String[]{Manifest.permission.RECORD_AUDIO},
                 new IPermissionsCallback() {
                     @Override
                     public void onAccepted(List<Permission> permissions) {

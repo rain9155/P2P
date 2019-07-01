@@ -1,5 +1,6 @@
 package com.example.p2p;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -38,6 +39,9 @@ import com.example.p2p.utils.WifiUtils;
 import com.example.p2p.widget.WindowPopup;
 import com.example.p2p.widget.dialog.ConnectingDialog;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
+import com.example.permission.PermissionHelper;
+import com.example.permission.bean.Permission;
+import com.example.permission.callback.IPermissionCallback;
 import com.example.utils.FileUtil;
 import com.example.utils.ToastUtil;
 
@@ -100,9 +104,13 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         //退出时，销毁这边的连接
+        exitLogin();
+        super.onDestroy();
+    }
+
+    private void exitLogin() {
         OnlineUserManager.getInstance().exit();
         ConnectManager.getInstance().destory();
-        super.onDestroy();
     }
 
     @Override
@@ -119,17 +127,17 @@ public class MainActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if(requestCode == REQUEST_WIFI_ENABLE){
             if(WifiUtils.isWifiConnected(MainActivity.this)){
-                refreshOnlineUsers();
+               refresh();
             }else {
                 //等待一下，如果用户返回过快，wifi可能正在连接中，但还连接上
                 new Handler().postDelayed(() -> {
                     if(WifiUtils.isWifiConnected(MainActivity.this)){
-                        refreshOnlineUsers();
+                        refresh();
                     }else {
                         if(mOnlineUsers.isEmpty())
                             mStatusView.showEmpty();
                     }
-                }, 3000);
+                }, Constant.WAITING_TIME);
             }
         }
     }
@@ -155,8 +163,22 @@ public class MainActivity extends BaseActivity {
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         mConnectingDialog = new ConnectingDialog();
-        mWindowPopup = new WindowPopup(this, mStatusView);
-        refreshOnlineUsers();
+        mWindowPopup = new WindowPopup(this);
+        PermissionHelper.getInstance().with(this).requestPermission(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                new IPermissionCallback() {
+                    @Override
+                    public void onAccepted(Permission permission) {
+                        refresh();
+                    }
+
+                    @Override
+                    public void onDenied(Permission permission) {
+                        ToastUtil.showToast(MainActivity.this, getString(R.string.toast_permission_rejected));
+                        finish();
+                    }
+                }
+        );
     }
 
     @Override
@@ -200,56 +222,12 @@ public class MainActivity extends BaseActivity {
         });
         //广播回调监听
         OnlineUserManager.getInstance().setUserCallback(new IUserCallback() {
-            @Override
-            public void onOnlineUsers(List<User> users) {
-                mOnlineUsers.clear();
-                if(users.isEmpty()){
-                    mStatusView.showEmpty();
-                }else {
-                    mOnlineUsers.addAll(users);
-                    mRvMainAdapter.notifyDataSetChanged();
-                    for(User user : users){
-                        final String userIp = user.getIp();
-                        final String name = user.getName();
-                        ConnectManager.getInstance().addImageReceiveCallback(userIp, imagePath -> {
-                            for(int i = 0; i < mOnlineUsers.size(); i++){
-                                if(mOnlineUsers.get(i).getIp().equals(userIp)){
-                                    mOnlineUsers.get(i).setImagePath(imagePath);
-                                    mRvMainAdapter.notifyItemChanged(i);
-                                    LogUtils.d(TAG, "接收到用户图片，name = " + name + ", path = " + imagePath);
-                                    break;
-                                }
-                            }
-                        });
-                    }
-                    for(User user : users){
-                        final User sendUser = user;
-                        ConnectManager.getInstance().connect(sendUser.getIp(), new IConnectCallback() {
-                            @Override
-                            public void onConnectSuccess(String targetIp) {
-                                Image image = new Image(Constant.FILE_USER_IMAGE);
-                                Mes<Image> message = new Mes<>(ItemType.OTHER, MesType.IMAGE, sendUser.getIp(), image);
-                                ConnectManager.getInstance().sendMessage(sendUser.getIp(), message);
-                                LogUtils.d(TAG, "发送用户图片，name = " + sendUser.getName());
-                            }
-
-                            @Override
-                            public void onConnectFail(String targetIp) {
-                                LogUtils.e(TAG, "一个发送失败，user = " + sendUser);
-                            }
-                        });
-                    }
-
-                    mStatusView.showSuccess();
-                }
-            }
 
             @Override
             public void onJoin(User user){
-                if(mOnlineUsers.isEmpty()) mStatusView.showSuccess();
+                if(mOnlineUsers.isEmpty() && !OnlineUserManager.getInstance().isRefresh()) mStatusView.showSuccess();
                 mOnlineUsers.add(user);
                 mRvMainAdapter.notifyItemInserted(mOnlineUsers.size());
-                mStatusView.showSuccess();
                 final String userIp = user.getIp();
                 final String name = user.getName();
                 ConnectManager.getInstance().addImageReceiveCallback(userIp, imagePath -> {
@@ -262,7 +240,7 @@ public class MainActivity extends BaseActivity {
                         }
                     }
                 });
-                new Handler().postDelayed(() -> ConnectManager.getInstance().connect(user.getIp(), new IConnectCallback() {
+                ConnectManager.getInstance().connect(user.getIp(), new IConnectCallback() {
                     @Override
                     public void onConnectSuccess(String targetIp) {
                         Image image = new Image(Constant.FILE_USER_IMAGE);
@@ -275,7 +253,7 @@ public class MainActivity extends BaseActivity {
                     public void onConnectFail(String targetIp) {
                         LogUtils.e(TAG, "一个发送失败，user = " + name);
                     }
-                }), Constant.WAITING_TIME + 1000);
+                });
                 ToastUtil.showToast(MainActivity.this, user.getName() + "加入聊天");
             }
 
@@ -290,8 +268,11 @@ public class MainActivity extends BaseActivity {
                 ToastUtil.showToast(MainActivity.this,  user.getName() + "退出聊天");
             }
         });
+        mWindowPopup.setRefreshCallback(() -> {
+            if(OnlineUserManager.getInstance().isRefresh()) return;
+            refresh();
+        });
     }
-
 
     @OnClick({R.id.iv_more})
     public void onViewClick(View view) {
@@ -307,12 +288,18 @@ public class MainActivity extends BaseActivity {
     /**
      * 刷新在线用户
      */
-    private void refreshOnlineUsers() {
+    private void refresh() {
         mStatusView.showLoading();
-        User user = (User) FileUtil.restoreObject(this, Constant.FILE_NAME_USER);
-        user.setImagePath(null);
-        OnlineUserManager.getInstance().login(user);
-        OnlineUserManager.getInstance().getOnlineUsers();
+        mOnlineUsers.clear();
+        mRvMainAdapter.notifyDataSetChanged();
+        OnlineUserManager.getInstance().refresh();
+        new Handler().postDelayed(() -> {
+            if(mOnlineUsers.isEmpty()){
+                mStatusView.showEmpty();
+            }else {
+                mStatusView.showSuccess();
+            }
+        }, Constant.WAITING_TIME);
     }
 
     /**

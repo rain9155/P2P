@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import com.example.p2p.app.App;
 import com.example.p2p.bean.Data;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IUserCallback;
@@ -11,6 +12,7 @@ import com.example.p2p.config.Constant;
 import com.example.p2p.utils.IpUtils;
 import com.example.p2p.utils.JsonUtils;
 import com.example.p2p.utils.LogUtils;
+import com.example.utils.FileUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,7 +50,7 @@ public class OnlineUserManager {
     private DatagramSocket mDatagramSocket;
     private Map<String, User> mOnlineUsers;
     private IUserCallback mUserCallback;
-    private volatile boolean isRefresh = true;
+    private boolean isRefresh;
     private volatile boolean isSendingImage = false;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()){
@@ -62,7 +64,6 @@ public class OnlineUserManager {
                     mUserCallback.onExit((User)msg.obj);
                     break;
                 case TYPE_JOIN_USERS:
-                    mUserCallback.onOnlineUsers((List<User>) msg.obj);
                     break;
                 default:
                     break;
@@ -120,7 +121,7 @@ public class OnlineUserManager {
                             if(!mOnlineUsers.containsKey(receiveIp)){
                                 mOnlineUsers.put(receiveIp, user);
                                 //通知主活动用用户加入
-                                if(mUserCallback != null && !isRefresh){
+                                if(mUserCallback != null){
                                     mHandler.obtainMessage(TYPE_JOIN_USER, mOnlineUsers.get(receiveIp)).sendToTarget();
                                 }
                                 LogUtils.d(TAG, "一个用户加入，地址 = " + receiveIp);
@@ -131,7 +132,7 @@ public class OnlineUserManager {
                             //用户退出在线用户列表
                             if(mOnlineUsers.containsKey(receiveIp)){
                                 User exitUser = mOnlineUsers.remove(receiveIp);
-                                if(mUserCallback != null && !isRefresh){
+                                if(mUserCallback != null){
                                     mHandler.obtainMessage(TYPE_EXIT_USER, exitUser).sendToTarget();
                                 }
                                 LogUtils.d(TAG, "一个用户退出，地址 = " + receiveIp);
@@ -141,6 +142,10 @@ public class OnlineUserManager {
                             //得到所有在线用户列表
                             if(!mOnlineUsers.containsKey(receiveIp)) {
                                 mOnlineUsers.put(receiveIp, user);
+                                //通知主活动用用户加入
+                                if(mUserCallback != null){
+                                    mHandler.obtainMessage(TYPE_JOIN_USER, mOnlineUsers.get(receiveIp)).sendToTarget();
+                                }
                                 LogUtils.d(TAG, "获得一个用户信息，地址 = " + receiveIp);
                             }
                         }
@@ -202,23 +207,13 @@ public class OnlineUserManager {
     /**
      * 等待返回在线用户列表
      */
-    public void getOnlineUsers() {
+    public void refresh() {
         isRefresh = true;
-        mExecutor.execute(() -> {
-            try {
-                Thread.sleep(Constant.WAITING_TIME);
-            }catch (InterruptedException e){
-                e.printStackTrace();
-            }
-            if(mUserCallback != null){
-                List<User> list = new ArrayList<>();
-                for(User user : mOnlineUsers.values()){
-                    list.add(user);
-                }
-                mHandler.obtainMessage(TYPE_JOIN_USERS, list).sendToTarget();
-            }
-            isRefresh = false;
-        });
+        mOnlineUsers.clear();
+        User user = (User) FileUtil.restoreObject(App.getContext(), Constant.FILE_NAME_USER);
+        user.setImagePath(null);
+        login(user);
+        mHandler.postDelayed(() -> isRefresh = false, Constant.WAITING_TIME);
     }
 
     /**

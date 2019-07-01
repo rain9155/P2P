@@ -205,13 +205,13 @@ public class ReceiveThread implements Runnable{
      */
     private String saveReceiveImage(byte[] imageBytes, int itemType) throws IOException {
         String path;
-        if(itemType == ItemType.RECEIVE_IMAGE.ordinal()){
-            String imagePath = FileUtils.getImagePath(mClientIp, ItemType.RECEIVE_IMAGE);
-            path = imagePath + System.currentTimeMillis() + ".png";
-        }else {
+        if(itemType == ItemType.OTHER.ordinal()){
             String imagePath = Constant.FILE_PATH_ONLINE_USER + mClientIp + File.separator + "image" + File.separator;
             FileUtils.makeDirs(imagePath);
             path = imagePath + "onLineUserImage.png";
+        }else {
+            String imagePath = FileUtils.getImagePath(mClientIp, ItemType.RECEIVE_IMAGE);
+            path = imagePath + System.currentTimeMillis() + ".png";
         }
         if(!FileUtils.saveFileBytes(imageBytes, path, false)) throw new IOException();
         return path;
