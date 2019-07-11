@@ -23,13 +23,12 @@ import com.example.p2p.R;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IRecordedCallback;
-import com.example.p2p.config.Constant;
 import com.example.p2p.core.MediaPlayerManager;
-import com.example.p2p.utils.FileUtils;
-import com.example.p2p.utils.LogUtils;
-import com.example.p2p.utils.VibrateUtils;
+import com.example.p2p.utils.FileUtil;
+import com.example.p2p.utils.LogUtil;
 import com.example.utils.DisplayUtil;
-import com.example.utils.FileUtil;
+import com.example.utils.FileUtils;
+import com.example.utils.VibrateUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,7 +121,7 @@ public class AudioTextView extends AppCompatTextView {
                         if(index >= 8) index = 7;
                         mAudioImage.setLevel(index);
                     }
-                    LogUtils.d(TAG, "MaxAmplitude = " + mMediaRecorder.getMaxAmplitude());
+                    LogUtil.d(TAG, "MaxAmplitude = " + mMediaRecorder.getMaxAmplitude());
                 }
                 return true;
             case MotionEvent.ACTION_UP:
@@ -168,11 +167,11 @@ public class AudioTextView extends AppCompatTextView {
         //设置音频的采样率
         mMediaRecorder.setAudioSamplingRate(10000);
         //设置音频文件的输出路径
-        String audioPath = FileUtils.getAudioPath(mTargetUser.getIp(), ItemType.SEND_AUDIO);
+        String audioPath = FileUtil.getAudioPath(mTargetUser.getIp(), ItemType.SEND_AUDIO);
         mFileName = audioPath + System.currentTimeMillis() + ".mp3";
         new File(mFileName);
         mMediaRecorder.setOutputFile(mFileName);
-        LogUtils.d(TAG, "初始化录音");
+        LogUtil.d(TAG, "初始化录音");
     }
 
     /**
@@ -182,13 +181,13 @@ public class AudioTextView extends AppCompatTextView {
         if(mMediaRecorder == null) return;
         try {
             mMediaRecorder.prepare();
-            LogUtils.d(TAG, "准备录音");
+            LogUtil.d(TAG, "准备录音");
         } catch (IOException e) {
             e.printStackTrace();
             if(mRecordedCallback != null){
                 mRecordedCallback.onError();
             }
-            LogUtils.d(TAG, "准备录制音频失败， e = " + e.getMessage());
+            LogUtil.d(TAG, "准备录制音频失败， e = " + e.getMessage());
         }
     }
 
@@ -201,7 +200,7 @@ public class AudioTextView extends AppCompatTextView {
         if(!isRecording){
             mMediaRecorder.start();
             isRecording = true;
-            LogUtils.d(TAG, "开始录音");
+            LogUtil.d(TAG, "开始录音");
         }
     }
 
@@ -210,8 +209,8 @@ public class AudioTextView extends AppCompatTextView {
      */
     private void cancelRecord(){
         stopRecord();
-        FileUtil.deleteDir(new File(mFileName));
-        LogUtils.d(TAG, "取消录音");
+        FileUtils.deleteFiles(new File(mFileName));
+        LogUtil.d(TAG, "取消录音");
         mDialog.dismiss();
     }
 
@@ -231,13 +230,13 @@ public class AudioTextView extends AppCompatTextView {
                 }
                 return;
             }
-            LogUtils.d(TAG, "音频文件位置，imagePath = " + mFileName + ", 音频时长，duration = " + duration + "秒");
+            LogUtil.d(TAG, "音频文件位置，imagePath = " + mFileName + ", 音频时长，duration = " + duration + "秒");
             if(mRecordedCallback != null){
                 mRecordedCallback.onFinish(mFileName, duration);
             }
             mDialog.dismiss();
         }
-        LogUtils.d(TAG, "录音完成");
+        LogUtil.d(TAG, "录音完成");
     }
 
     /**
@@ -248,7 +247,7 @@ public class AudioTextView extends AppCompatTextView {
     private void cancelStartRecord() {
         mAudioImage.setLevel(9);
         mAudioTextView.setText(getContext().getString(R.string.dialog_audio_warnning));
-        FileUtil.deleteDir(new File(mFileName));
+        FileUtils.deleteFiles(new File(mFileName));
         new Handler().postDelayed(() -> {
             mDialog.dismiss();
         }, 500);
@@ -262,9 +261,9 @@ public class AudioTextView extends AppCompatTextView {
         if(isRecording){
             try{
                 mMediaRecorder.stop();
-                LogUtils.d(TAG, "结束录音");
+                LogUtil.d(TAG, "结束录音");
             }catch (Exception e){
-                LogUtils.d(TAG, "结束录音失败， e = " + e.getMessage());
+                LogUtil.d(TAG, "结束录音失败， e = " + e.getMessage());
                 cancelStartRecord();
             }
             isRecording = false;
@@ -281,7 +280,7 @@ public class AudioTextView extends AppCompatTextView {
             isRecording = false;
         }
         MediaPlayerManager.getInstance().release();
-        LogUtils.d(TAG, "释放资源");
+        LogUtil.d(TAG, "释放资源");
     }
 
     public void setRecordedCallback(User user, IRecordedCallback callback){

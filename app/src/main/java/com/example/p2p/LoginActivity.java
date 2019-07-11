@@ -14,27 +14,27 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.p2p.app.App;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.config.Constant;
-import com.example.p2p.core.OnlineUserManager;
-import com.example.p2p.utils.CommonUtils;
-import com.example.p2p.utils.FileUtils;
-import com.example.p2p.utils.ImageUtils;
-import com.example.p2p.utils.IpUtils;
-import com.example.p2p.utils.LogUtils;
-import com.example.p2p.utils.SimpleTextWatchListener;
-import com.example.p2p.utils.WifiUtils;
+import com.example.p2p.utils.CommonUtil;
+import com.example.p2p.utils.FileUtil;
+import com.example.p2p.utils.ImageUtil;
+import com.example.p2p.utils.IpUtil;
+import com.example.p2p.utils.LogUtil;
+import com.example.p2p.utils.WifiUtil;
 import com.example.p2p.widget.customView.ScrollEditText;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
 import com.example.permission.PermissionHelper;
 import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
-import com.example.utils.FileUtil;
-import com.example.utils.ToastUtil;
+import com.example.utils.FileUtils;
+import com.example.utils.ImageUtils;
+import com.example.utils.ToastUtils;
+import com.example.utils.listener.TextWatchListener;
 import com.theartofdev.edmodo.cropper.CropImage;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -61,9 +61,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
-        CommonUtils.darkMode(this, true);
+        CommonUtil.darkMode(this, true);
 
-        User restoreUser = (User) FileUtil.restoreObject(LoginActivity.this, Constant.FILE_NAME_USER);
+        User restoreUser = (User) FileUtils.restoreObject(LoginActivity.this, Constant.FILE_NAME_USER);
         if (restoreUser != null) {
             mUserBitmap = BitmapFactory.decodeFile(restoreUser.getImagePath());
             mImagePath = restoreUser.getImagePath();
@@ -77,19 +77,19 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onAgree() {
                 gotoWifiSettingsDialog.dismiss();
-                WifiUtils.gotoWifiSettings(LoginActivity.this, REQUEST_WIFI_CODE);
+                WifiUtil.gotoWifiSettings(LoginActivity.this, REQUEST_WIFI_CODE);
             }
 
             @Override
             public void onDismiss() {
                 gotoWifiSettingsDialog.dismiss();
-                ToastUtil.showToast(LoginActivity.this, getString(R.string.toast_wifi_noconnect));
+                ToastUtils.showToast(App.getContext(), getString(R.string.toast_wifi_noconnect));
             }
         });
 
         ivIcon.setOnClickListener(v -> CropImage.startPickImageActivity(this));
 
-        edInput.addTextChangedListener(new SimpleTextWatchListener() {
+        edInput.addTextChangedListener(new TextWatchListener() {
             @Override
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty()) {
@@ -101,7 +101,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         btnLogin.setOnClickListener(v -> {
-            if (!WifiUtils.isWifiConnected(LoginActivity.this)) {
+            if (!WifiUtil.isWifiConnected(LoginActivity.this)) {
                 gotoWifiSettingsDialog.show(getSupportFragmentManager());
                 return;
             }
@@ -112,10 +112,10 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == REQUEST_WIFI_CODE) {
-            if (WifiUtils.isWifiConnected(LoginActivity.this)) {
+            if (WifiUtil.isWifiConnected(LoginActivity.this)) {
                 goMainActivity(saveUserMessage());
             } else {
-                ToastUtil.showToast(LoginActivity.this, getString(R.string.toast_wifi_noconnect));
+                ToastUtils.showToast(App.getContext(), getString(R.string.toast_wifi_noconnect));
             }
         }
         if(resultCode == Activity.RESULT_OK){
@@ -132,7 +132,7 @@ public class LoginActivity extends AppCompatActivity {
 
                             @Override
                             public void onDenied(Permission permission) {
-                                ToastUtil.showToast(LoginActivity.this, getString(R.string.toast_permission_rejected));
+                                ToastUtils.showToast(App.getContext(), getString(R.string.toast_permission_rejected));
                             }
                         }
                 );
@@ -142,27 +142,27 @@ public class LoginActivity extends AppCompatActivity {
                 Uri resultUri = result.getUri();
                 try (InputStream in = this.getContentResolver().openInputStream(resultUri)){
                    mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.3f,  0.3f);
-                   mImagePath = FileUtils.saveUserBitmap(mUserBitmap);
+                   mImagePath = FileUtil.saveUserBitmap(mUserBitmap);
                    ivIcon.setImageBitmap(mUserBitmap);
                 }catch (IOException e) {
                     e.printStackTrace();
-                    LogUtils.e(TAG, "获取图片失败， e = " + e.getMessage());
-                    ToastUtil.showToast(this, getString(R.string.toast_open_image_fail));
+                    LogUtil.e(TAG, "获取图片失败， e = " + e.getMessage());
+                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_open_image_fail));
                 }
             }
         }
     }
 
     private User saveUserMessage() {
-        String locIp = IpUtils.getLocIpAddress();
+        String locIp = IpUtil.getLocIpAddress();
         String name = edInput.getText().toString().trim();
         if(mUserBitmap == null){
             mUserBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_default_user);
             mUserBitmap = ImageUtils.compressBitmap(mUserBitmap, 0.3f, 0.3f);
-            mImagePath = FileUtils.saveUserBitmap(mUserBitmap);
+            mImagePath = FileUtil.saveUserBitmap(mUserBitmap);
         }
         User user = new User(name, locIp, mImagePath);
-        FileUtil.saveObject(LoginActivity.this, Constant.FILE_NAME_USER, user);
+        FileUtils.saveObject(LoginActivity.this, Constant.FILE_NAME_USER, user);
         return user;
     }
 

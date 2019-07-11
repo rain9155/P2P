@@ -2,19 +2,14 @@ package com.example.p2p.adapter;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.view.View;
-import android.view.ViewGroup;
 
 import com.example.baseadapter.BaseAdapter;
 import com.example.baseadapter.BaseViewHolder;
 import com.example.p2p.R;
 import com.example.p2p.bean.User;
-import com.example.p2p.core.OnlineUserManager;
-import com.example.p2p.utils.FileUtils;
-import com.example.p2p.utils.IpUtils;
+import com.example.p2p.utils.FileUtil;
+import com.example.p2p.utils.IpUtil;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,9 +26,9 @@ public class RvUsersAdapter extends BaseAdapter<User> {
     protected void onBindView(BaseViewHolder holder, User item) {
         String end;
         Bitmap bitmap;
-        if(item.getIp().equals(IpUtils.getLocIpAddress())){
+        if(item.getIp().equals(IpUtil.getLocIpAddress())){
             end = " - 自己";
-            bitmap = FileUtils.getUserBitmap();
+            bitmap = FileUtil.getUserBitmap();
         }else {
             end = "";
             bitmap = BitmapFactory.decodeFile(item.getImagePath());

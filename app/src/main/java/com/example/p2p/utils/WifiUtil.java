@@ -11,7 +11,7 @@ import android.net.wifi.WifiManager;
  * 打开Wifi的工具类
  * Created by 陈健宇 at 2019/6/7
  */
-public class WifiUtils {
+public class WifiUtil {
 
     /**
      * 跳转到wifi设置界面

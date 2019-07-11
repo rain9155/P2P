@@ -7,7 +7,7 @@ import com.google.gson.Gson;
  * 简单的json转换
  * Created by 陈健宇 at 2019/6/12
  */
-public class JsonUtils {
+public class JsonUtil {
 
     private static Gson sGson = new Gson();
 

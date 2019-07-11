@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +15,6 @@ import com.example.p2p.base.delegate.BaseSendMutiItemDelegate;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.utils.ImageUtils;
 
 import java.util.HashMap;
 import java.util.Map;

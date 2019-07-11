@@ -10,16 +10,15 @@ import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
-import com.example.p2p.bean.User;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.IImageReceiveCallback;
 import com.example.p2p.config.Constant;
-import com.example.p2p.utils.FileUtils;
-import com.example.p2p.utils.LogUtils;
+import com.example.p2p.utils.FileUtil;
+import com.example.p2p.utils.LogUtil;
+import com.example.utils.FileUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,7 +75,7 @@ public class ReceiveThread implements Runnable{
             try{
                 InputStream in = mSocket.getInputStream();
                 mes = receiveMessageByType(in);
-                LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
+                LogUtil.d(TAG, "收到来自客户端的信息，message = " + mes);
                 if(mes.itemType == ItemType.OTHER){
                     if(hasImageReceviceCallback(mClientIp)){
                         mHandler.obtainMessage(TYPE_RECEIVE_USER_IMAGE, mes).sendToTarget();
@@ -91,7 +90,7 @@ public class ReceiveThread implements Runnable{
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "获取客户端消息失败，e = " + e.getMessage());
+                LogUtil.e(TAG, "获取客户端消息失败，e = " + e.getMessage());
                 //两端的Socker连接都要关闭
                 ConnectManager.getInstance().removeConnect(mClientIp);
                 ConnectManager.getInstance().removeReceiveCallback(mClientIp);
@@ -134,7 +133,7 @@ public class ReceiveThread implements Runnable{
                 String fileType = in.readUTF();
                 String fileSize = in.readUTF();
                 String fileName = in.readUTF();
-                String path = FileUtils.getFilePath(mClientIp, ItemType.RECEIVE_FILE) + fileName + "." + fileType;
+                String path = FileUtil.getFilePath(mClientIp, ItemType.RECEIVE_FILE) + fileName + "." + fileType;
                 File file = new File(path);
                 if(file.exists()){//重复文件删除
                     file.delete();
@@ -194,9 +193,9 @@ public class ReceiveThread implements Runnable{
      * 保存接收到的音频
      */
     public String saveReceiveAudio(byte[] audioBytes) throws IOException {
-        String audioPath = FileUtils.getAudioPath(mClientIp, ItemType.RECEIVE_AUDIO);
+        String audioPath = FileUtil.getAudioPath(mClientIp, ItemType.RECEIVE_AUDIO);
         String path = audioPath + System.currentTimeMillis() + ".mp3";
-        if(!FileUtils.saveFileBytes(audioBytes, path, false)) throw new IOException();
+        if(!FileUtils.saveFileBytes(audioBytes, path)) throw new IOException();
         return path;
     }
 
@@ -210,10 +209,10 @@ public class ReceiveThread implements Runnable{
             FileUtils.makeDirs(imagePath);
             path = imagePath + "onLineUserImage.png";
         }else {
-            String imagePath = FileUtils.getImagePath(mClientIp, ItemType.RECEIVE_IMAGE);
+            String imagePath = FileUtil.getImagePath(mClientIp, ItemType.RECEIVE_IMAGE);
             path = imagePath + System.currentTimeMillis() + ".png";
         }
-        if(!FileUtils.saveFileBytes(imageBytes, path, false)) throw new IOException();
+        if(!FileUtils.saveFileBytes(imageBytes, path)) throw new IOException();
         return path;
     }
 
@@ -221,7 +220,7 @@ public class ReceiveThread implements Runnable{
      * 保存接收到的文件
      */
     private String saveReceiveFile(byte[] fileBytes, String fileName, String fileType) throws IOException {
-        String filePath = FileUtils.getFilePath(mClientIp, ItemType.RECEIVE_FILE);
+        String filePath = FileUtil.getFilePath(mClientIp, ItemType.RECEIVE_FILE);
         String path = filePath + fileName + "." + fileType;
         if(!FileUtils.saveFileBytes(fileBytes, path, true)) throw new IOException();
         return path;
@@ -238,7 +237,7 @@ public class ReceiveThread implements Runnable{
             in.readFully(tempBytes);
             os.write(tempBytes, 0, tempBytes.length);
             bytes = os.toByteArray();
-            LogUtils.d(TAG, "接收中，目前长度 = " + bytes.length);
+            LogUtil.d(TAG, "接收中，目前长度 = " + bytes.length);
         }
         os.close();
         return bytes;

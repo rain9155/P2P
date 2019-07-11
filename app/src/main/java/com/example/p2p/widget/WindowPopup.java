@@ -9,15 +9,8 @@ import android.view.View;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import com.example.loading.StatusView;
 import com.example.p2p.R;
-import com.example.p2p.bean.User;
 import com.example.p2p.callback.IRefreshCallback;
-import com.example.p2p.config.Constant;
-import com.example.p2p.core.OnlineUserManager;
-import com.example.utils.FileUtil;
-
-
 
 /**
  * Created by 陈健宇 at 2019/6/29

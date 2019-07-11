@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.example.p2p.app.App;
 import com.example.p2p.config.Constant;
-import com.example.utils.FileUtil;
+import com.example.utils.FileUtils;
 
 /**
  * 广播的数据
@@ -16,7 +16,7 @@ public class Data {
     private User user;
 
     public Data(int code) {
-       this(code, (User) FileUtil.restoreObject(App.getContext(), Constant.FILE_NAME_USER));
+       this(code, (User) FileUtils.restoreObject(App.getContext(), Constant.FILE_NAME_USER));
     }
 
     public Data(int code, User user) {

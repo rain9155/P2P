@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.loading.Loading;
 import com.example.loading.StatusView;
 import com.example.p2p.adapter.RvUsersAdapter;
+import com.example.p2p.app.App;
 import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.ItemType;
@@ -34,21 +35,20 @@ import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
-import com.example.p2p.utils.LogUtils;
-import com.example.p2p.utils.WifiUtils;
+import com.example.p2p.utils.LogUtil;
+import com.example.p2p.utils.WifiUtil;
 import com.example.p2p.widget.WindowPopup;
 import com.example.p2p.widget.dialog.ConnectingDialog;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
 import com.example.permission.PermissionHelper;
 import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
-import com.example.utils.FileUtil;
-import com.example.utils.ToastUtil;
+import com.example.utils.FileUtils;
+import com.example.utils.ToastUtils;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
 import butterknife.BindView;
 import butterknife.OnClick;
 
@@ -119,19 +119,19 @@ public class MainActivity extends BaseActivity {
             super.onBackPressed();
         }else {
             mLastPressTime = System.currentTimeMillis();
-            ToastUtil.showToast(this, getString(R.string.main_exit));
+            ToastUtils.showToast(App.getContext(), getString(R.string.main_exit));
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if(requestCode == REQUEST_WIFI_ENABLE){
-            if(WifiUtils.isWifiConnected(MainActivity.this)){
+            if(WifiUtil.isWifiConnected(MainActivity.this)){
                refresh();
             }else {
                 //等待一下，如果用户返回过快，wifi可能正在连接中，但还连接上
                 new Handler().postDelayed(() -> {
-                    if(WifiUtils.isWifiConnected(MainActivity.this)){
+                    if(WifiUtil.isWifiConnected(MainActivity.this)){
                         refresh();
                     }else {
                         if(mOnlineUsers.isEmpty())
@@ -153,7 +153,7 @@ public class MainActivity extends BaseActivity {
         ivBack.setVisibility(View.GONE);
         tvTitle.setText(getString(R.string.main_tlTitle));
         mStatusView = Loading.beginBuildStatusView(this)
-                .warp(findViewById(R.id.rv_user))
+                .warpView(findViewById(R.id.rv_user))
                 .addLoadingView(R.layout.loading_view)
                 .addEmptyView(R.layout.empty_view)
                 .create();
@@ -174,7 +174,7 @@ public class MainActivity extends BaseActivity {
 
                     @Override
                     public void onDenied(Permission permission) {
-                        ToastUtil.showToast(MainActivity.this, getString(R.string.toast_permission_rejected));
+                        ToastUtils.showToast(App.getContext(), getString(R.string.toast_permission_rejected));
                         finish();
                     }
                 }
@@ -193,26 +193,26 @@ public class MainActivity extends BaseActivity {
                 @Override
                 public void onConnectSuccess(String targetIp) {
                     mConnectingDialog.dismiss();
-                    ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_success));
+                    ToastUtils.showToast(App.getContext(), getString(R.string.main_connecting_success));
                     ChatActivity.startActiivty(MainActivity.this, mOnlineUsers.get(mPosition), REQUEST_SOCKET_STATE);
                 }
 
                 @Override
                 public void onConnectFail(String targetIp) {
                     mConnectingDialog.dismiss();
-                    ToastUtil.showToast(MainActivity.this, getString(R.string.main_connecting_fail));
+                    ToastUtils.showToast(App.getContext(), getString(R.string.main_connecting_fail));
                 }
             });
         });
         mGotoWifiSettingsDialog.setDialogCallback(new IDialogCallback() {
             @Override
             public void onAgree() {
-                WifiUtils.gotoWifiSettings(MainActivity.this, REQUEST_WIFI_ENABLE);
+                WifiUtil.gotoWifiSettings(MainActivity.this, REQUEST_WIFI_ENABLE);
             }
 
             @Override
             public void onDismiss() {
-                ToastUtil.showToast(MainActivity.this, getString(R.string.toast_wifi_noconnect));
+                ToastUtils.showToast(App.getContext(), getString(R.string.toast_wifi_noconnect));
                 if(mOnlineUsers.isEmpty()){
                     mStatusView.showEmpty();
                     return;
@@ -235,7 +235,7 @@ public class MainActivity extends BaseActivity {
                         if(mOnlineUsers.get(i).getIp().equals(userIp)){
                             mOnlineUsers.get(i).setImagePath(imagePath);
                             mRvMainAdapter.notifyItemChanged(i);
-                            LogUtils.d(TAG, "接收到用户图片，name = " + name + ", path = " + imagePath);
+                            LogUtil.d(TAG, "接收到用户图片，name = " + name + ", path = " + imagePath);
                             break;
                         }
                     }
@@ -246,15 +246,15 @@ public class MainActivity extends BaseActivity {
                         Image image = new Image(Constant.FILE_USER_IMAGE);
                         Mes<Image> message = new Mes<>(ItemType.OTHER, MesType.IMAGE, userIp, image);
                         ConnectManager.getInstance().sendMessage(userIp, message);
-                        LogUtils.d(TAG, "发送用户图片，name = " + name);
+                        LogUtil.d(TAG, "发送用户图片，name = " + name);
                     }
 
                     @Override
                     public void onConnectFail(String targetIp) {
-                        LogUtils.e(TAG, "一个发送失败，user = " + name);
+                        LogUtil.e(TAG, "一个发送失败，user = " + name);
                     }
                 });
-                ToastUtil.showToast(MainActivity.this, user.getName() + "加入聊天");
+                ToastUtils.showToast(App.getContext(), user.getName() + getString(R.string.toast_user_login));
             }
 
             @Override
@@ -262,10 +262,10 @@ public class MainActivity extends BaseActivity {
                 int index = mOnlineUsers.indexOf(user);
                 mOnlineUsers.remove(user);
                 mRvMainAdapter.notifyItemRemoved(index);
-                FileUtil.deleteDir(new File(Constant.FILE_PATH_ONLINE_USER + user.getIp() + File.separator));
+                FileUtils.deleteFiles(new File(Constant.FILE_PATH_ONLINE_USER + user.getIp() + File.separator));
                 ConnectManager.getInstance().removeConnect(user.getIp());
                 if(mOnlineUsers.isEmpty()) mStatusView.showEmpty();
-                ToastUtil.showToast(MainActivity.this,  user.getName() + "退出聊天");
+                ToastUtils.showToast(App.getContext(),  user.getName() + getString(R.string.toast_user_exit));
             }
         });
         mWindowPopup.setRefreshCallback(() -> {
@@ -314,14 +314,14 @@ public class MainActivity extends BaseActivity {
                     NetworkInfo.State state = networkInfo.getState();
                     switch (state){
                         case CONNECTED:
-                            LogUtils.d(TAG, "wifi已经连接");
+                            LogUtil.d(TAG, "wifi已经连接");
                             if(mGotoWifiSettingsDialog.isAdded()) mGotoWifiSettingsDialog.dismiss();
                             break;
                         case DISCONNECTED:
-                            LogUtils.d(TAG, "wifi已经断开");
+                            LogUtil.d(TAG, "wifi已经断开");
                             break;
                         default:
-                            LogUtils.d(TAG, "wifi已其他状态 = " + state);
+                            LogUtil.d(TAG, "wifi已其他状态 = " + state);
                             break;
                     }
                 }
@@ -330,21 +330,21 @@ public class MainActivity extends BaseActivity {
                 int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_UNKNOWN);
                 switch (state){
                     case WifiManager.WIFI_STATE_ENABLED:
-                        LogUtils.d(TAG, "wifi已经打开");
+                        LogUtil.d(TAG, "wifi已经打开");
                         break;
                     case WifiManager.WIFI_STATE_DISABLED:
-                        LogUtils.d(TAG, "wifi已经关闭");
+                        LogUtil.d(TAG, "wifi已经关闭");
                         if(mConnectingDialog.isAdded()) mConnectingDialog.dismiss();
                         mGotoWifiSettingsDialog.show(getSupportFragmentManager());
                         break;
                     case WifiManager.WIFI_STATE_DISABLING:
-                        LogUtils.d(TAG, "wifi关闭中...");
+                        LogUtil.d(TAG, "wifi关闭中...");
                         break;
                     case WifiManager.WIFI_STATE_ENABLING:
-                        LogUtils.d(TAG, "wifi打开中...");
+                        LogUtil.d(TAG, "wifi打开中...");
                         break;
                     default:
-                        LogUtils.d(TAG, "wifi的其他状态 = " + state);
+                        LogUtil.d(TAG, "wifi的其他状态 = " + state);
                         break;
                 }
             }

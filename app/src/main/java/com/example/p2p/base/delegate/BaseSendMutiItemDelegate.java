@@ -6,7 +6,7 @@ import com.example.baseadapter.BaseViewHolder;
 import com.example.baseadapter.mutiple.MutiItemDelegate;
 import com.example.p2p.R;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.utils.FileUtils;
+import com.example.p2p.utils.FileUtil;
 
 /**
  * Created by 陈健宇 at 2019/6/26
@@ -16,7 +16,7 @@ public abstract  class BaseSendMutiItemDelegate implements MutiItemDelegate<Mes>
     private Bitmap mUserBitmap;
 
     public BaseSendMutiItemDelegate() {
-        mUserBitmap = FileUtils.getUserBitmap();
+        mUserBitmap = FileUtil.getUserBitmap();
     }
 
     @Override

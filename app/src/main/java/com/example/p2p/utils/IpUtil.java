@@ -11,16 +11,15 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.Enumeration;
 
 /**
  * 有关Ip地址操作的方法
  * Created by 陈健宇 at 2019/6/6
  */
-public class IpUtils {
+public class IpUtil {
 
-    private static final String TAG  = IpUtils.class.getSimpleName();
+    private static final String TAG  = IpUtil.class.getSimpleName();
 
     /**
      * 获得本机ip地址
@@ -38,18 +37,18 @@ public class IpUtils {
                     //当address是IPV4并且不是环回测试地址时
                     if(address instanceof Inet4Address && !address.isLoopbackAddress()){
                         ip = address.getHostAddress();
-                        LogUtils.d(TAG,
+                        LogUtil.d(TAG,
                                 "网卡接口名称 = " + networkInterface.getName() +
                                 "ip地址 = " + address.getHostAddress());
                     }
                 }
             }
         } catch (SocketException e) {
-            LogUtils.e(TAG, "获取本地Ip地址失败");
+            LogUtil.e(TAG, "获取本地Ip地址失败");
             e.printStackTrace();
         }
-        if("".equals(ip)) LogUtils.d(TAG, "获取本地IP地址为空");
-        else LogUtils.d(TAG, "获取本地IP地址成功，userIp = " + ip);
+        if("".equals(ip)) LogUtil.d(TAG, "获取本地IP地址为空");
+        else LogUtil.d(TAG, "获取本地IP地址成功，userIp = " + ip);
         return ip;
     }
 
@@ -68,7 +67,7 @@ public class IpUtils {
                 (ipAddress >> 16 & 0xff),
                 (ipAddress >> 24 & 0xff)
         );
-        LogUtils.d(TAG, "获取本机ip地址， userIp = " + ip);
+        LogUtil.d(TAG, "获取本机ip地址， userIp = " + ip);
         return ip;
     }
 
@@ -78,7 +77,7 @@ public class IpUtils {
     public static String getLocIpAddressPrefix(){
         String ip = getLocIpAddress();
         String prefix = ip.substring(0, ip.lastIndexOf(".") + 1);
-        LogUtils.d(TAG, "本机ip地址的前缀为， ipPrefix = " + prefix);
+        LogUtil.d(TAG, "本机ip地址的前缀为， ipPrefix = " + prefix);
         return prefix;
     }
 

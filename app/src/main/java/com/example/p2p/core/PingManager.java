@@ -6,9 +6,9 @@ import android.os.Message;
 
 import com.example.p2p.app.App;
 import com.example.p2p.callback.IScanCallback;
-import com.example.p2p.utils.IpUtils;
-import com.example.p2p.utils.LogUtils;
-import com.example.p2p.utils.WifiUtils;
+import com.example.p2p.utils.IpUtil;
+import com.example.p2p.utils.LogUtil;
+import com.example.p2p.utils.WifiUtil;
 
 import java.io.IOException;
 import java.util.List;
@@ -83,7 +83,7 @@ public class PingManager {
      */
     public void startScan(){
         if(isScanning()) return;
-        if(!WifiUtils.isWifiConnected(App.getContext())){
+        if(!WifiUtil.isWifiConnected(App.getContext())){
             if(mScanCallback != null){
                 mScanCallback.onScanError();
             }
@@ -91,8 +91,8 @@ public class PingManager {
         }
         mPingSuccessList.clear();
         mCountDownLatch = new CountDownLatch(254);
-        String locIpAddressPrefix = IpUtils.getLocIpAddressPrefix();
-        String locIpAddress = IpUtils.getLocIpAddress();
+        String locIpAddressPrefix = IpUtil.getLocIpAddressPrefix();
+        String locIpAddress = IpUtil.getLocIpAddress();
         for(int i = 1; i <= 255; i++){
             final String ipAddress = locIpAddressPrefix + i;
             if(ipAddress.equals(locIpAddress)) continue;
@@ -120,18 +120,18 @@ public class PingManager {
             process = mRuntime.exec(pingArgs + ipAddress);
             exit = process.waitFor();
             if(exit == 0){
-                LogUtils.d(TAG, "ping Ip成功， userIp = " + ipAddress);
+                LogUtil.d(TAG, "ping Ip成功， userIp = " + ipAddress);
             }else if(exit == 1){
-                LogUtils.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
+                LogUtil.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
             }else if(exit == 2){
-                LogUtils.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
+                LogUtil.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-            LogUtils.e(TAG, "等待ping命令返回出错，" + e.getMessage());
+            LogUtil.e(TAG, "等待ping命令返回出错，" + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
-            LogUtils.e(TAG, "执行ping命令出错, " + e.getMessage());
+            LogUtil.e(TAG, "执行ping命令出错, " + e.getMessage());
         }finally {
             if(process != null) process.destroy();
         }
@@ -169,7 +169,7 @@ public class PingManager {
             try {
                 mCountDownLatch.await();
             } catch (InterruptedException e) {
-                LogUtils.d(TAG, "等待ping任务执行完毕出错， e = " + e.getMessage());
+                LogUtil.d(TAG, "等待ping任务执行完毕出错， e = " + e.getMessage());
                 e.printStackTrace();
             }
             if(mScanCallback != null){

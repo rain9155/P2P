@@ -8,7 +8,7 @@ import com.example.p2p.BuildConfig;
  * log工具
  * Created by 陈健宇 at 2019/6/6
  */
-public class LogUtils {
+public class LogUtil {
 
     private static boolean isDebug = BuildConfig.DEBUG;
 

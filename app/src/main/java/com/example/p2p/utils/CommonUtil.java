@@ -22,7 +22,7 @@ import com.example.p2p.R;
 /**
  * Created by 陈健宇 at 2019/5/28
  */
-public class CommonUtils {
+public class CommonUtil {
 
     /**
      * 设置状态栏字体颜色

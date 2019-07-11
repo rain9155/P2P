@@ -4,7 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 
-import com.example.p2p.utils.CommonUtils;
+import com.example.p2p.utils.CommonUtil;
 
 import butterknife.ButterKnife;
 
@@ -20,7 +20,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutId());
         ButterKnife.bind(this);
-        CommonUtils.darkMode(this, true);
+        CommonUtil.darkMode(this, true);
         initView();
         initCallback();
     }

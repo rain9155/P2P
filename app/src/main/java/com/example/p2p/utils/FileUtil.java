@@ -3,7 +3,6 @@ package com.example.p2p.utils;
 import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,77 +10,30 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-
 import androidx.annotation.NonNull;
-import androidx.appcompat.view.menu.BaseMenuPresenter;
-
-import com.example.p2p.R;
-import com.example.p2p.app.App;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.config.Constant;
-import com.example.p2p.config.FileType;
-import com.example.p2p.config.MimeType;
-import com.example.utils.FileUtil;
-
-import java.io.BufferedInputStream;
+import com.example.utils.FileUtils;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Locale;
-
-import static com.example.p2p.utils.IntentUtils.*;
 
 /**
  * 文件操作类
  * Created by 陈健宇 at 2019/6/17
  */
-public class FileUtils {
+public class FileUtil {
 
-    private static final String TAG = FileUtils.class.getSimpleName();
-
-    /**
-     * 获得应用关联文件路径
-     */
-    public static String getFilePath(Context context, String name){
-        String filePath;
-        if (!"mounted".equals(Environment.getExternalStorageState()) && Environment.isExternalStorageRemovable()) {
-            filePath = context.getFilesDir().getPath();
-        } else {
-            filePath = context.getExternalFilesDir(null).getPath();
-        }
-        return filePath + File.separator + name;
-    }
-
-    /**
-     * 根据给定的path建立文件夹
-     * @param path 文件夹路径
-     * @return true表示建立成功，false反之
-     */
-    public static boolean makeDirs(String path){
-        char separator = path.charAt(path.length() - 1);
-        if(!String.valueOf(separator).equals(File.separator)){
-            StringBuilder builder = new StringBuilder(path);
-            builder.append(File.separator);
-            path = builder.toString();
-        }
-        File dir = new File(path);
-        if(!dir.isDirectory()){
-            dir.mkdirs();
-        }
-        return dir.isDirectory();
-    }
+    private static final String TAG = FileUtil.class.getSimpleName();
 
     /**
      * 保存用户图片
      * @param bitmap 图片
      */
     public static String saveUserBitmap(Bitmap bitmap){
-        makeDirs(Constant.FILE_PATH_USER);
+        FileUtils.makeDirs(Constant.FILE_PATH_USER);
         String imagePath = Constant.FILE_PATH_USER + "userImage.png";
         File file = new File(imagePath);
         saveBitmap(bitmap, file);
@@ -104,7 +56,7 @@ public class FileUtils {
      */
     public static String saveOnlineUserBitmap(Bitmap bitmap, String name){
         String path = Constant.FILE_PATH_ONLINE_USER + name + File.separator + "image" + File.separator;
-        makeDirs(path);
+        FileUtils.makeDirs(path);
         String fileName = path + "onLineUserImage.png";
         File file = new File(fileName);
         saveBitmap(bitmap, file);
@@ -125,7 +77,7 @@ public class FileUtils {
         }else {
             audioPath =  Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "sendAudio" + File.separator;
         }
-        makeDirs(audioPath);
+        FileUtils.makeDirs(audioPath);
         return audioPath;
     }
 
@@ -142,7 +94,7 @@ public class FileUtils {
         }else {
             imagePath = Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "sendImage" + File.separator;
         }
-        makeDirs(imagePath);
+        FileUtils.makeDirs(imagePath);
         return imagePath;
     }
 
@@ -159,86 +111,8 @@ public class FileUtils {
         }else {
             filePath = Constant.FILE_PATH_ONLINE_USER + ip + File.separator + "sendFile" + File.separator;
         }
-        makeDirs(filePath);
+        FileUtils.makeDirs(filePath);
         return filePath;
-    }
-
-    /**
-     * 根据路径获得字节流
-     * @return 字节流
-     */
-    public static byte[] getFileBytes(String path){
-        byte[] bytes = new byte[0];
-        try(InputStream in = new BufferedInputStream(new FileInputStream(path))){
-            bytes = new byte[in.available()];
-            in.read(bytes);
-            return bytes;
-        } catch (IOException e) {
-            e.printStackTrace();
-            LogUtils.e(TAG, "获取字节流失败， e = " + e.getMessage());
-        }
-        return bytes;
-    }
-
-    /**
-     * 根据路径存放字节流
-     * @return false表示失败，反之成功
-     */
-    public static boolean saveFileBytes(byte[] bytes, String path, boolean append){
-        File file = new File(path);
-        if(!file.exists()){
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-        try(
-                FileOutputStream fileOutputStream = new FileOutputStream(file, append);
-                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)
-        ){
-
-            bufferedOutputStream.write(bytes);
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            LogUtils.e(TAG, "保存字节流失败");
-        }
-        return false;
-    }
-
-    /**
-     * 找到可以打开文件的所有应用
-     * @param filePath 文件的真实路径
-     */
-    public static void openFile(Context context, String filePath) {
-        String end = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase(Locale.getDefault());
-        Intent intent = null;
-        if (end.equals("m4a") || end.equals("mp3") || end.equals("mid") || end.equals("xmf") || end.equals("ogg") || end.equals("wav")) {
-            intent = getAudioFileIntent(context, filePath);
-        } else if (end.equals("3gp") || end.equals("mp4")) {
-            intent = getVideoFileIntent(context, filePath);
-        } else if (end.equals("jpg") || end.equals("gif") || end.equals("png") || end.equals("jpeg") || end.equals("bmp")) {
-            intent = getImageFileIntent(context, filePath);
-        } else if (end.equals("apk")) {
-            intent = getApkFileIntent(context, filePath);
-        } else if (end.equals("ppt") || end.equals("pptx")) {
-            intent = getPPtFileIntent(context, filePath);
-        } else if (end.equals("xls") || end.equals("xlsx")) {
-            intent = getExcelFileIntent(context, filePath);
-        } else if (end.equals("doc") || end.equals("docx")) {
-            intent = getWordFileIntent(context, filePath);
-        } else if (end.equals("pdf")) {
-            intent = getPdfFileIntent(context, filePath);
-        } else if (end.equals("txt")) {
-            intent = getTxtFileIntent(context, filePath);
-        } else if(end.equals("zip")){
-            intent = getZipFileIntent(context, filePath);
-        }else {
-            intent = getAllIntent(context, filePath);
-        }
-        context.startActivity(intent);
     }
 
     /**
@@ -248,7 +122,7 @@ public class FileUtils {
     public static String getFileSize(String filePath){
         File file = new File(filePath);
         if(!file.isFile()) return "0k";
-        return FileUtil.getFormatSize(file.length());
+        return FileUtils.getFormatSize(file.length());
     }
 
     /**
@@ -299,7 +173,7 @@ public class FileUtils {
             }
         }catch (Exception e){
             e.printStackTrace();
-            LogUtils.e(TAG, "无法获取文件真实路径，请使用url获取图片，e = " + e.getMessage());
+            LogUtil.e(TAG, "无法获取文件真实路径，请使用url获取图片，e = " + e.getMessage());
             return null;
         }
         return path;
@@ -331,7 +205,7 @@ public class FileUtils {
                 file.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "创建文件失败， e = " + e.getMessage());
+                LogUtil.e(TAG, "创建文件失败， e = " + e.getMessage());
             }
         }
         try {

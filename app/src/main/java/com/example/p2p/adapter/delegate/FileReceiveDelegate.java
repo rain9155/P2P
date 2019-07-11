@@ -10,7 +10,7 @@ import com.example.p2p.base.delegate.BaseReceiveMutiItemDelegate;
 import com.example.p2p.bean.Document;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.utils.ImageUtils;
+import com.example.p2p.utils.ImageUtil;
 
 /**
  * 文件接收item
@@ -35,7 +35,7 @@ public class FileReceiveDelegate extends BaseReceiveMutiItemDelegate {
         Document file = (Document) items.data;
         holder.setText(R.id.tv_message, file.fileName)
                 .setText(R.id.tv_size, file.fileSize)
-                .setImageResource(R.id.iv_file_icon, ImageUtils.getImageId(file.fileType));
+                .setImageResource(R.id.iv_file_icon, ImageUtil.getImageId(file.fileType));
     }
 
 }

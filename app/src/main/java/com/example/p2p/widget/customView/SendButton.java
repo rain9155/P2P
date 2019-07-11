@@ -9,7 +9,7 @@ import android.view.animation.AccelerateInterpolator;
 
 import androidx.appcompat.widget.AppCompatButton;
 
-import com.example.p2p.utils.SimpleAnimatorListener;
+import com.example.utils.listener.AnimatorListener;
 
 /**
  * 发送消息按钮
@@ -39,7 +39,7 @@ public class SendButton extends AppCompatButton {
             mAnimator.setFloatValues(0, 1.0f);
         }else if(visibility == View.GONE){
             mAnimator.setFloatValues(1.0f, 0);
-            mAnimator.addListener(new SimpleAnimatorListener(){
+            mAnimator.addListener(new AnimatorListener(){
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     SendButton.this.setVisibility(INVISIBLE);

@@ -41,6 +41,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.example.p2p.adapter.RvChatAdapter;
 import com.example.p2p.adapter.RvEmojiAdapter;
 import com.example.p2p.adapter.VpEmojiAdapter;
+import com.example.p2p.app.App;
 import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Audio;
 import com.example.p2p.bean.Document;
@@ -56,11 +57,9 @@ import com.example.p2p.config.Constant;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.db.EmojiDao;
-import com.example.p2p.utils.FileUtils;
-import com.example.p2p.utils.ImageUtils;
-import com.example.p2p.utils.IntentUtils;
-import com.example.p2p.utils.LogUtils;
-import com.example.p2p.utils.SimpleTextWatchListener;
+import com.example.p2p.utils.FileUtil;
+import com.example.p2p.utils.ImageUtil;
+import com.example.p2p.utils.LogUtil;
 import com.example.p2p.widget.customView.AudioTextView;
 import com.example.p2p.widget.customView.IndicatorView;
 import com.example.p2p.widget.customView.SendButton;
@@ -72,9 +71,12 @@ import com.example.permission.callback.IPermissionCallback;
 import com.example.permission.callback.IPermissionsCallback;
 import com.example.utils.CommonUtil;
 import com.example.utils.DisplayUtil;
-import com.example.utils.FileUtil;
-import com.example.utils.KeyBoardUtil;
-import com.example.utils.ToastUtil;
+import com.example.utils.FileUtils;
+import com.example.utils.ImageUtils;
+import com.example.utils.IntentUtils;
+import com.example.utils.KeyBoardUtils;
+import com.example.utils.ToastUtils;
+import com.example.utils.listener.TextWatchListener;
 import com.nbsp.materialfilepicker.MaterialFilePicker;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
@@ -155,7 +157,7 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mTargetUser = (User) getIntent().getSerializableExtra(Constant.EXTRA_TARGET_USER);
-        mUser = (User) FileUtil.restoreObject(this, Constant.FILE_NAME_USER);
+        mUser = (User) FileUtils.restoreObject(this, Constant.FILE_NAME_USER);
         super.onCreate(savedInstanceState);
     }
 
@@ -167,7 +169,7 @@ public class ChatActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        KeyBoardUtil.closeKeyBoard(this, edEdit);
+        KeyBoardUtils.closeKeyBoard(this, edEdit);
         if (clMore.isShown()) clMore.setVisibility(View.GONE);
         if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         super.onBackPressed();
@@ -209,7 +211,7 @@ public class ChatActivity extends BaseActivity {
 
                     @Override
                     public void onDenied(List<Permission> permissions) {
-                        ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_permission_rejected));
+                        ToastUtils.showToast(App.getContext(), getString(R.string.toast_permission_rejected));
                         finish();
                     }
                 }
@@ -283,7 +285,7 @@ public class ChatActivity extends BaseActivity {
                 srlChat.setRefreshing(false), 2000)
         );
         //editText文本变化监听
-        edEdit.addTextChangedListener(new SimpleTextWatchListener() {
+        edEdit.addTextChangedListener(new TextWatchListener() {
             @Override
             public void afterTextChanged(Editable s) {
                 int visibility = "".equals(s.toString().trim()) ? View.GONE : View.VISIBLE;
@@ -308,7 +310,7 @@ public class ChatActivity extends BaseActivity {
         //聊天列表触摸监听
         rvChat.setOnTouchListener((view, event) -> {
             edEdit.clearFocus();
-            if(isKeyboardShowing) KeyBoardUtil.closeKeyBoard(ChatActivity.this, edEdit);
+            if(isKeyboardShowing) KeyBoardUtils.closeKeyBoard(ChatActivity.this, edEdit);
             if (clMore.isShown()) clMore.setVisibility(View.GONE);
             if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
             return false;
@@ -339,7 +341,7 @@ public class ChatActivity extends BaseActivity {
 
             @Override
             public void onSendFail(Mes<?> message) {
-                ToastUtil.showToast(ChatActivity.this, "发送消息失败");
+                ToastUtils.showToast(App.getContext(), "发送消息失败");
             }
         });
         //录音结束回调
@@ -351,7 +353,7 @@ public class ChatActivity extends BaseActivity {
 
             @Override
             public void onError() {
-                ToastUtil.showToast(ChatActivity.this, getString(R.string.chat_audio_error));
+                ToastUtils.showToast(App.getContext(), getString(R.string.chat_audio_error));
             }
         });
         //聊天列表的item点击回调
@@ -457,14 +459,14 @@ public class ChatActivity extends BaseActivity {
                     public void onAccepted(Permission permission) {
                         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                         String imageFileName = System.currentTimeMillis() + ".png";
-                        mTakedImageUri = ImageUtils.getImageUri(ChatActivity.this, FileUtils.getImagePath(mTargetUser.getIp(), ItemType.SEND_IMAGE), imageFileName);
+                        mTakedImageUri = ImageUtil.getImageUri(ChatActivity.this, FileUtil.getImagePath(mTargetUser.getIp(), ItemType.SEND_IMAGE), imageFileName);
                         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, mTakedImageUri);
                         startActivityForResult(cameraIntent, REQUEST_CODE_TAKE_IMAGE);
                     }
 
                     @Override
                     public void onDenied(Permission permission) {
-                        ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_permission_rejected));
+                        ToastUtils.showToast(App.getContext(), getString(R.string.toast_permission_rejected));
                     }
                 }
         );
@@ -501,7 +503,7 @@ public class ChatActivity extends BaseActivity {
      */
     private void sendImage(Uri imageUri) {
         isSendingImage = true;
-        String imagePath = ImageUtils.saveImageByUri(this, imageUri, mTargetUser.getIp());
+        String imagePath = ImageUtil.saveImageByUri(this, imageUri, mTargetUser.getIp());
         Image image = new Image(imagePath);
         Mes<Image> message = new Mes<>(ItemType.SEND_IMAGE, MesType.IMAGE, mUser.getIp(), image);
         addMessage(message);
@@ -532,7 +534,7 @@ public class ChatActivity extends BaseActivity {
         criteria.setCostAllowed(false);//不需要成本
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         String bestProvider = locationManager.getBestProvider(criteria, true);//得到最好的位置提供者，如GPS，netWork等
-        LogUtils.d(TAG, "provider = " + bestProvider);
+        LogUtil.d(TAG, "provider = " + bestProvider);
         PermissionHelper.getInstance().with(this).requestPermission(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 new IPermissionCallback() {
@@ -544,7 +546,7 @@ public class ChatActivity extends BaseActivity {
                             Location location = null;//里面存放着定位的信息,经纬度,海拔等
                             if(!TextUtils.isEmpty(bestProvider)){
                                 location = locationManager.getLastKnownLocation(bestProvider);
-                                LogUtils.d(TAG, "location = " + location);
+                                LogUtil.d(TAG, "location = " + location);
                             }else {//没有最好的定位方案则手动配置
                                 if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
                                     location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -553,12 +555,12 @@ public class ChatActivity extends BaseActivity {
                                 else if(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
                                     location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
                             }
-                            LogUtils.d(TAG, "location = " + location);
+                            LogUtil.d(TAG, "location = " + location);
                             final Location finalLocation = location;
                             runOnUiThread(() -> {
                                 if(null == finalLocation){
                                     mLocatingDialog.dismiss();
-                                    ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_location_fail));
+                                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
                                     return;
                                 }
                                 Geocoder geocoder = new Geocoder(ChatActivity.this, Locale.getDefault());//地区编码,可以得到具体的地理位置
@@ -566,7 +568,7 @@ public class ChatActivity extends BaseActivity {
                                     List<Address> addresses = geocoder.getFromLocation(finalLocation.getLatitude(), finalLocation.getLongitude(), 1);
                                     if(CommonUtil.isEmptyList(addresses)){
                                         mLocatingDialog.dismiss();
-                                        ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_location_fail));
+                                        ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
                                         return;
                                     }
                                     Address address = addresses.get(0);
@@ -574,7 +576,7 @@ public class ChatActivity extends BaseActivity {
                                     String city = address.getLocality();
                                     String citySub = address.getSubLocality();
                                     String thoroughfare = address.getThoroughfare();
-                                    LogUtils.d(TAG, "country = " + country
+                                    LogUtil.d(TAG, "country = " + country
                                             + ", city = " + city
                                             + ", citySub = " + citySub
                                             + ", fare = " + thoroughfare);
@@ -587,8 +589,8 @@ public class ChatActivity extends BaseActivity {
                                             new Mes<String>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), builder.toString()));
                                 } catch (IOException e) {
                                     e.printStackTrace();
-                                    ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_location_fail));
-                                    LogUtils.e(TAG, "定位失败， e = " + e.getMessage());
+                                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
+                                    LogUtil.e(TAG, "定位失败， e = " + e.getMessage());
                                 }
                                 mLocatingDialog.dismiss();
                             });
@@ -597,7 +599,7 @@ public class ChatActivity extends BaseActivity {
 
                     @Override
                     public void onDenied(Permission permission) {
-                        ToastUtil.showToast(ChatActivity.this, getString(R.string.toast_permission_rejected));
+                        ToastUtils.showToast(App.getContext(), getString(R.string.toast_permission_rejected));
                     }
                 }
         );
@@ -609,7 +611,7 @@ public class ChatActivity extends BaseActivity {
     private void sendFile(String filePath) {
         isSendingFile = true;
         String fileType = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase(Locale.getDefault());
-        String size = FileUtils.getFileSize(filePath);
+        String size = FileUtil.getFileSize(filePath);
         String name = filePath.substring(filePath.lastIndexOf(java.io.File.separator) + 1, filePath.lastIndexOf("."));
         Document file = new Document(filePath, name, size, fileType);
         Mes<Document> message = new Mes<>(ItemType.SEND_FILE, MesType.FILE, mUser.getIp(), file);
@@ -646,7 +648,7 @@ public class ChatActivity extends BaseActivity {
         ivAudio.setVisibility(View.VISIBLE);
         if(clMore.isShown()) clMore.setVisibility(View.GONE);
         if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
-        if(!isKeyboardShowing) KeyBoardUtil.openKeyBoard(this, edEdit);
+        if(!isKeyboardShowing) KeyBoardUtils.openKeyBoard(this, edEdit);
         edEdit.setVisibility(View.VISIBLE);
         tvAudio.setVisibility(View.INVISIBLE);
         edEdit.requestFocus();
@@ -661,7 +663,7 @@ public class ChatActivity extends BaseActivity {
         ivKeyborad.setVisibility(View.VISIBLE);
         if(clMore.isShown()) clMore.setVisibility(View.GONE);
         if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
-        if(isKeyboardShowing) KeyBoardUtil.closeKeyBoard(this, edEdit);
+        if(isKeyboardShowing) KeyBoardUtils.closeKeyBoard(this, edEdit);
         edEdit.setVisibility(View.INVISIBLE);
         tvAudio.setVisibility(View.VISIBLE);
     }
@@ -682,10 +684,10 @@ public class ChatActivity extends BaseActivity {
             if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         } else if (clMore.isShown() && !isKeyboardShowing) {//如果键盘没有显示，但更多布局显示，隐藏更多布局，显示键盘
             clMore.setVisibility(visibility);
-            KeyBoardUtil.openKeyBoard(this, edEdit);
+            KeyBoardUtils.openKeyBoard(this, edEdit);
         } else if (!clMore.isShown() && isKeyboardShowing) {//如果只有键盘显示，就隐藏键盘，显示更多布局
             lockContentHeight();
-            KeyBoardUtil.closeKeyBoard(this, edEdit);
+            KeyBoardUtils.closeKeyBoard(this, edEdit);
             edEdit.postDelayed(() -> {
                 unlockContentHeightDelayed();
                 clMore.setVisibility(visibility);
@@ -709,10 +711,10 @@ public class ChatActivity extends BaseActivity {
             if (clMore.isShown()) clMore.setVisibility(View.GONE);
         } else if (llEmoji.isShown() && !isKeyboardShowing) {
             llEmoji.setVisibility(visibility);
-            KeyBoardUtil.openKeyBoard(this, edEdit);
+            KeyBoardUtils.openKeyBoard(this, edEdit);
         } else if (!llEmoji.isShown() && isKeyboardShowing) {
             lockContentHeight();
-            KeyBoardUtil.closeKeyBoard(this, edEdit);
+            KeyBoardUtils.closeKeyBoard(this, edEdit);
             edEdit.postDelayed(() -> {
                 unlockContentHeightDelayed();
                 llEmoji.setVisibility(visibility);

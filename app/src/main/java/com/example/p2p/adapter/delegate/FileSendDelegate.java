@@ -1,13 +1,9 @@
 package com.example.p2p.adapter.delegate;
 
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.example.baseadapter.BaseViewHolder;
 import com.example.p2p.R;
@@ -15,7 +11,7 @@ import com.example.p2p.base.delegate.BaseSendMutiItemDelegate;
 import com.example.p2p.bean.Document;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.bean.Mes;
-import com.example.p2p.utils.ImageUtils;
+import com.example.p2p.utils.ImageUtil;
 
 /**
  * 文件发送item
@@ -40,7 +36,7 @@ public class FileSendDelegate extends BaseSendMutiItemDelegate {
         Document file = (Document) items.data;
         holder.setText(R.id.tv_message, file.fileName)
                 .setText(R.id.tv_size, file.fileSize)
-                .setImageResource(R.id.iv_file_icon, ImageUtils.getImageId(file.fileType));
+                .setImageResource(R.id.iv_file_icon, ImageUtil.getImageId(file.fileType));
         ProgressBar progressBar = holder.getView(R.id.progress);
         if(file.progress < 100){
             progressBar.setProgress(file.progress);

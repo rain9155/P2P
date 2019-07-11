@@ -10,14 +10,13 @@ import com.example.p2p.bean.Document;
 import com.example.p2p.bean.Image;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.MesType;
-import com.example.p2p.bean.User;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IProgressCallback;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.callback.IImageReceiveCallback;
-import com.example.p2p.utils.FileUtils;
-import com.example.p2p.utils.LogUtils;
+import com.example.p2p.utils.LogUtil;
+import com.example.utils.FileUtils;
 
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
@@ -34,8 +33,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 管理着每个客户端的连接状态，控制和客户端的连接
@@ -56,7 +59,9 @@ public class ConnectManager {
     private Map<String, IReceiveMessageCallback> mReceiveCallbacks;//保存每个消息接受回调到ip地址的映射
     private Map<String, IImageReceiveCallback> mImageReceiveCallbacks;//接收用户头像回调
     private Map<String, List<Mes>> mSaveMessages;//暂存消息回调
+    private Map<String, ScheduledFuture> mScheduledTasks;
     private ExecutorService mExecutor;
+    private ScheduledExecutorService mScheduledExecutor;
     private volatile ISendMessgeCallback mSendMessgeCallback;
     private volatile boolean isRelease;
 
@@ -80,7 +85,9 @@ public class ConnectManager {
         mClients = new ConcurrentHashMap<>();
         mReceiveCallbacks = new ConcurrentHashMap<>();
         mImageReceiveCallbacks = new ConcurrentHashMap<>();
+        mScheduledTasks = new ConcurrentHashMap<>();
         mExecutor = Executors.newCachedThreadPool();
+        mScheduledExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2);
         mSaveMessages = new HashMap<>();
     }
 
@@ -105,10 +112,10 @@ public class ConnectManager {
             try {
                 //创建ServerSocket监听，并绑定端口号
                 mServerSocket = new ServerSocket(PORT);
-                LogUtils.d(TAG, "开启服务端监听，端口号 = " + PORT);
+                LogUtil.d(TAG, "开启服务端监听，端口号 = " + PORT);
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "绑定端口号失败，e = " + e.getMessage());
+                LogUtil.e(TAG, "绑定端口号失败，e = " + e.getMessage());
             }
             while (true){
                 try {
@@ -116,18 +123,19 @@ public class ConnectManager {
                     Socket socket = mServerSocket.accept();
                     String ipAddress = socket.getInetAddress().getHostAddress();
                     if(isClose(ipAddress)){
-                        LogUtils.d(TAG, "一个用户加入聊天，socket = " + socket);
+                        LogUtil.d(TAG, "一个用户加入聊天，socket = " + socket);
                         //每个客户端连接用一个线程不断的读
                         ReceiveThread receiveThread = new ReceiveThread(socket);
                         //缓存客户端的连接
                         mClients.put(ipAddress, socket);
-                        LogUtils.d(TAG, "已连接的客户端数量：" + mClients.size());
                         //放到线程池中执行
                         mExecutor.execute(receiveThread);
+                        LogUtil.d(TAG, "已连接的客户端数量：" + mClients.size());
+                        heartBeat(ipAddress);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    LogUtils.e(TAG, "调用accept()监听失败， e = " + e.getMessage());
+                    LogUtil.e(TAG, "调用accept()监听失败， e = " + e.getMessage());
                     break;
                 }
             }
@@ -136,7 +144,7 @@ public class ConnectManager {
                 mServerSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "关闭端口号失败， e = " + e.getMessage());
+                LogUtil.e(TAG, "关闭端口号失败， e = " + e.getMessage());
             }
         }).start();
     }
@@ -148,7 +156,7 @@ public class ConnectManager {
      */
     public void connect(String targetIp, IConnectCallback callback){
         if(isContains(targetIp)){
-            LogUtils.d(TAG, "客户端连接已经存在");
+            LogUtil.d(TAG, "客户端连接已经存在");
             if(callback != null){
                 callback.onConnectSuccess(targetIp);
             }
@@ -166,6 +174,7 @@ public class ConnectManager {
                 ReceiveThread receiveThread = new ReceiveThread(socket);
                 mClients.put(targetIp, socket);
                 mExecutor.execute(receiveThread);
+                heartBeat(targetIp);
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.d(TAG, "连接targetIp = " + targetIp + "失败，e = " + e.getMessage());
@@ -189,7 +198,7 @@ public class ConnectManager {
     public void sendMessage(String targetIp, Mes<?> mes, IProgressCallback callback){
         Mes<?> message = mes.clone();
         if(!isContains(targetIp)){
-            LogUtils.d(TAG, "客户端连接已经断开");
+            LogUtil.d(TAG, "客户端连接已经断开");
             //重连
             connect(targetIp, new IConnectCallback() {
                 @Override
@@ -236,6 +245,26 @@ public class ConnectManager {
     }
 
     /**
+     * 简单心跳机制
+     */
+    private void heartBeat(String ipAddress) {
+        ScheduledFuture task = mScheduledExecutor.scheduleAtFixedRate(() -> {
+            int result = PingManager.getInstance().ping(ipAddress);
+            Log.d(TAG, "探测对方是否在线, result = " + result);
+            if(result != 0){
+                removeConnect(ipAddress);
+                ScheduledFuture futureTask = mScheduledTasks.remove(ipAddress);
+                if(futureTask != null){
+                    Log.d(TAG, "任务是否取消，cancel = " + futureTask.cancel(true));
+                }
+            }
+        }, 1, 10, TimeUnit.SECONDS);
+        if(!mScheduledTasks.containsKey(ipAddress)){
+            mScheduledTasks.put(ipAddress, task);
+        }
+    }
+
+    /**
      * 从客户端集合中移除一个连接
      * @param ipAddress 客户端的ip地址
      */
@@ -244,10 +273,10 @@ public class ConnectManager {
         if(socket != null){
             try {
                 socket.close();
-                LogUtils.d(TAG, "一个用户退出聊天，socket = " + socket);
+                LogUtil.d(TAG, "一个用户退出聊天，socket = " + socket);
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtils.d(TAG, "关闭移除的Socket连接出现错误， e = " + e.getMessage());
+                LogUtil.d(TAG, "关闭移除的Socket连接出现错误， e = " + e.getMessage());
             }
         }
     }
@@ -267,6 +296,7 @@ public class ConnectManager {
     public void destory(){
         release();
         mImageReceiveCallbacks.clear();
+        mScheduledTasks.clear();
         for(String ip : mClients.keySet()){
             removeConnect(ip);
         }
@@ -458,7 +488,7 @@ public class ConnectManager {
             end += MAX_SEND_DATA;
             if(end >= maxSendLen) end = maxSendLen;
             os.write(bytes, start, end - start);
-            LogUtils.d(TAG, "传送数据中，offet = " + (end - start) + ", 长度， len = " + maxSendLen);
+            LogUtil.d(TAG, "传送数据中，offet = " + (end - start) + ", 长度， len = " + maxSendLen);
             start = end;
             if(callback != null){
                 double num = (preSendLen + start) / (fileLen * 1.0);

@@ -27,6 +27,9 @@
     <string name="toast_login_success">登陆成功</string>
     <string name="toast_login_fail">登陆失败</string>
     <string name="toast_location_fail">"定位失败"</string>
+    <string name="toast_user_exit">退出聊天</string>
+    <string name="toast_user_login">加入聊天</string>
+
 
     <string name="dialog_connecting">连接中...</string>
     <string name="dialog_locating">定位中...</string>

@@ -1,11 +1,8 @@
 package com.example.p2p.config;
 
-import android.os.Environment;
-
 import com.example.p2p.app.App;
-import com.example.p2p.utils.FileUtils;
-
-import java.io.File;
+import com.example.p2p.utils.FileUtil;
+import com.example.utils.FileUtils;
 
 /**
  * 常量
