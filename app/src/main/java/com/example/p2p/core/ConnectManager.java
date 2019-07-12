@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
@@ -108,7 +110,7 @@ public class ConnectManager {
      * 初始化ServerSocket监听，绑定端口号, 等待客户端连接
      */
     public void initListener(){
-        new Thread(() -> {
+        mExecutor.execute(() -> {
             try {
                 //创建ServerSocket监听，并绑定端口号
                 mServerSocket = new ServerSocket(PORT);
@@ -131,6 +133,7 @@ public class ConnectManager {
                         //放到线程池中执行
                         mExecutor.execute(receiveThread);
                         LogUtil.d(TAG, "已连接的客户端数量：" + mClients.size());
+                        //简单的心跳机制
                         heartBeat(ipAddress);
                     }
                 } catch (IOException e) {
@@ -146,7 +149,7 @@ public class ConnectManager {
                 e.printStackTrace();
                 LogUtil.e(TAG, "关闭端口号失败， e = " + e.getMessage());
             }
-        }).start();
+        });
     }
 
     /**
@@ -245,22 +248,13 @@ public class ConnectManager {
     }
 
     /**
-     * 简单心跳机制
+     * 从定时任务列表中取消一个任务
      */
-    private void heartBeat(String ipAddress) {
-        ScheduledFuture task = mScheduledExecutor.scheduleAtFixedRate(() -> {
-            int result = PingManager.getInstance().ping(ipAddress);
-            Log.d(TAG, "探测对方是否在线, result = " + result);
-            if(result != 0){
-                removeConnect(ipAddress);
-                ScheduledFuture futureTask = mScheduledTasks.remove(ipAddress);
-                if(futureTask != null){
-                    Log.d(TAG, "任务是否取消，cancel = " + futureTask.cancel(true));
-                }
-            }
-        }, 1, 10, TimeUnit.SECONDS);
-        if(!mScheduledTasks.containsKey(ipAddress)){
-            mScheduledTasks.put(ipAddress, task);
+    public void cancelScheduledTask(String ipAddress){
+        ScheduledFuture futureTask = mScheduledTasks.remove(ipAddress);
+        if(futureTask != null){
+            futureTask.cancel(true);
+            Log.d(TAG, "移除一个定时任务， ip = " + ipAddress);
         }
     }
 
@@ -296,9 +290,13 @@ public class ConnectManager {
     public void destory(){
         release();
         mImageReceiveCallbacks.clear();
-        mScheduledTasks.clear();
-        for(String ip : mClients.keySet()){
+        Set<String> ipSet = mClients.keySet();
+        for(String ip : ipSet){
             removeConnect(ip);
+        }
+        Set<String> ipSet2 = mScheduledTasks.keySet();
+        for(String ip : ipSet2){
+            cancelScheduledTask(ip);
         }
     }
 
@@ -410,6 +408,22 @@ public class ConnectManager {
         this.mSendMessgeCallback = callback;
     }
 
+    /**
+     * 简单心跳机制
+     */
+    private void heartBeat(String ipAddress) {
+        if(!mScheduledTasks.containsKey(ipAddress)){
+            ScheduledFuture task = mScheduledExecutor.scheduleAtFixedRate(() -> {
+                int result = PingManager.getInstance().ping(ipAddress);
+                Log.d(TAG, "探测对方是否在线, result = " + result + ", ipAddress = " + ipAddress);
+                if(result != 0){
+                    removeConnect(ipAddress);
+                    cancelScheduledTask(ipAddress);
+                }
+            }, 10, 10, TimeUnit.SECONDS);
+            mScheduledTasks.put(ipAddress, task);
+        }
+    }
 
     /**
      * 根据消息类型发送消息

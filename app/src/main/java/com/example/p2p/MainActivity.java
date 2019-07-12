@@ -264,6 +264,7 @@ public class MainActivity extends BaseActivity {
                 mRvMainAdapter.notifyItemRemoved(index);
                 FileUtils.deleteFiles(new File(Constant.FILE_PATH_ONLINE_USER + user.getIp() + File.separator));
                 ConnectManager.getInstance().removeConnect(user.getIp());
+                ConnectManager.getInstance().cancelScheduledTask(user.getIp());
                 if(mOnlineUsers.isEmpty()) mStatusView.showEmpty();
                 ToastUtils.showToast(App.getContext(),  user.getName() + getString(R.string.toast_user_exit));
             }

@@ -91,7 +91,7 @@ public class OnlineUserManager {
      * 初始化监听，绑定指定端口, 等待接受广播
      */
     public void initListener(){
-        new Thread(() -> {
+        mExecutor.execute(() -> {
             try {
                 mDatagramSocket = new DatagramSocket(PORT);
                 LogUtil.d(TAG, "开启广播监听，端口号 = " + PORT);
@@ -158,7 +158,7 @@ public class OnlineUserManager {
             if(mDatagramSocket != null){
                 mDatagramSocket.close();
             }
-        }).start();
+        });
     }
 
     /**
