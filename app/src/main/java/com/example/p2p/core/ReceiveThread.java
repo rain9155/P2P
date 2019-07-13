@@ -94,6 +94,7 @@ public class ReceiveThread implements Runnable{
                 //两端的Socker连接都要关闭
                 ConnectManager.getInstance().removeConnect(mClientIp);
                 ConnectManager.getInstance().removeReceiveCallback(mClientIp);
+                ConnectManager.getInstance().cancelScheduledTask(mClientIp);
                 break;
             }
         }

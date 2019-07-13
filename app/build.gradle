@@ -26,7 +26,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation project(':baseadapter')
+    //implementation project(':baseadapter')
 
     implementation 'androidx.appcompat:appcompat:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
@@ -34,6 +34,7 @@ dependencies {
 
     implementation 'com.jianyu:utils:1.0.1'
     implementation 'com.jianyu:permissionhelper:1.0.0'
+    implementation 'com.jianyu:baseadapter:1.0.1'
     implementation 'com.github.rain9155:Loading:1.0.1'
 
     implementation 'com.jakewharton:butterknife:10.1.0'

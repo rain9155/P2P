@@ -3,8 +3,8 @@ package com.example.p2p.adapter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.example.baseadapter.BaseAdapter;
-import com.example.baseadapter.BaseViewHolder;
+import com.example.library.BaseAdapter;
+import com.example.library.BaseViewHolder;
 import com.example.p2p.R;
 import com.example.p2p.bean.User;
 import com.example.p2p.utils.FileUtil;

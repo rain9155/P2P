@@ -5,7 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
-import com.example.baseadapter.BaseViewHolder;
+import com.example.library.BaseViewHolder;
 import com.example.p2p.R;
 import com.example.p2p.base.delegate.BaseSendMutiItemDelegate;
 import com.example.p2p.bean.Document;
