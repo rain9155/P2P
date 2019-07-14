@@ -1,5 +1,5 @@
 # P2P
-### 一个基于P2P的局域网即时通信应用
+### 一个基于P2P的局域网即时通信应用, 欢迎大家star、fork，
 ## Pre
 
 关于该应用的设计思路可以查看这篇文章[基于P2P的局域网即时通信应用](https://blog.csdn.net/Rain_9155/article/details/95865007)，
