@@ -8,10 +8,10 @@ import androidx.annotation.NonNull;
  */
 public class Mes<T>{
 
-    public ItemType itemType;
-    public MesType mesType;
-    public String userIp;
-    public T data;
+    public ItemType itemType;//Mes的Item类型
+    public MesType mesType;//Mes的类型
+    public String userIp;//发送Mes的用户的ip
+    public T data;//具体消息
 
     public Mes(MesType mesType){
         this(ItemType.ERROR, mesType, "0.0.0.0", null);

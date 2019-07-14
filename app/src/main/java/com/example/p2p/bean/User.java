@@ -11,10 +11,10 @@ import java.io.Serializable;
  */
 public class User implements Serializable {
 
-    private String mName;
-    private String mIp;
-    private String mImagePath;
-    private int mImageLen;
+    private String mName;//名字
+    private String mIp;//ip
+    private String mImagePath;//头像路径
+    private int mImageLen;//头像长度
 
     public User(String name, String ip, String imagePath) {
        this(name, ip, imagePath, 0);
