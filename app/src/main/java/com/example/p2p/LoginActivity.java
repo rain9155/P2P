@@ -111,6 +111,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_WIFI_CODE) {
             if (WifiUtil.isWifiConnected(LoginActivity.this)) {
                 goMainActivity(saveUserMessage());
@@ -118,7 +119,7 @@ public class LoginActivity extends AppCompatActivity {
                 ToastUtils.showToast(App.getContext(), getString(R.string.toast_wifi_noconnect));
             }
         }
-        if(resultCode == Activity.RESULT_OK){
+        if (resultCode == Activity.RESULT_OK) {
             if (requestCode == CropImage.PICK_IMAGE_CHOOSER_REQUEST_CODE) {
                 Uri imageUri = CropImage.getPickImageResultUri(this, data);
                 PermissionHelper.getInstance().with(this).requestPermission(
@@ -140,11 +141,11 @@ public class LoginActivity extends AppCompatActivity {
             if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
                 CropImage.ActivityResult result = CropImage.getActivityResult(data);
                 Uri resultUri = result.getUri();
-                try (InputStream in = this.getContentResolver().openInputStream(resultUri)){
-                   mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.3f,  0.3f);
-                   mImagePath = FileUtil.saveUserBitmap(mUserBitmap);
-                   ivIcon.setImageBitmap(mUserBitmap);
-                }catch (IOException e) {
+                try (InputStream in = this.getContentResolver().openInputStream(resultUri)) {
+                    mUserBitmap = ImageUtils.compressBitmap(BitmapFactory.decodeStream(in), 0.3f, 0.3f);
+                    mImagePath = FileUtil.saveUserBitmap(mUserBitmap);
+                    ivIcon.setImageBitmap(mUserBitmap);
+                } catch (IOException e) {
                     e.printStackTrace();
                     LogUtil.e(TAG, "获取图片失败， e = " + e.getMessage());
                     ToastUtils.showToast(App.getContext(), getString(R.string.toast_open_image_fail));
@@ -167,8 +168,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void goMainActivity(User restoreUser) {
-        //restoreUser.setImagePath(null);
-       // OnlineUserManager.getInstance().login(restoreUser);
         MainActivity.startActivity(this);
         finish();
     }

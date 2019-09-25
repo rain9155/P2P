@@ -35,7 +35,7 @@
             android:textSize="@dimen/sp_16"
             android:gravity="center"
             android:clickable="true"
-            android:background="@drawable/selector_popup_tv"
+            android:background="@drawable/select_popup_tv"
             android:paddingTop="@dimen/dp_10"
             android:paddingStart="@dimen/dp_30"
             android:paddingEnd="@dimen/dp_30"

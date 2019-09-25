@@ -102,7 +102,7 @@
         android:id="@+id/btn_send"
         android:layout_width="45dp"
         android:layout_height="32dp"
-        android:background="@drawable/selector_chat_send"
+        android:background="@drawable/select_chat_send"
         android:textColor="@color/colorWhite"
         android:text="@string/chat_btnSend"
         android:textSize="12sp"

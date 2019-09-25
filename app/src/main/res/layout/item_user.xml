@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@drawable/selector_item_user">
+    android:background="@drawable/select_item_user">
 
     <com.example.p2p.widget.customView.ShapeImageView
         android:id="@+id/iv_face"

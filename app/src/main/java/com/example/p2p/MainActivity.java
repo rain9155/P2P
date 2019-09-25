@@ -125,16 +125,17 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if(requestCode == REQUEST_WIFI_ENABLE){
-            if(WifiUtil.isWifiConnected(MainActivity.this)){
-               refresh();
-            }else {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_WIFI_ENABLE) {
+            if (WifiUtil.isWifiConnected(MainActivity.this)) {
+                refresh();
+            } else {
                 //等待一下，如果用户返回过快，wifi可能正在连接中，但还连接上
                 new Handler().postDelayed(() -> {
-                    if(WifiUtil.isWifiConnected(MainActivity.this)){
+                    if (WifiUtil.isWifiConnected(MainActivity.this)) {
                         refresh();
-                    }else {
-                        if(mOnlineUsers.isEmpty())
+                    } else {
+                        if (mOnlineUsers.isEmpty())
                             mStatusView.showEmpty();
                     }
                 }, Constant.WAITING_TIME);

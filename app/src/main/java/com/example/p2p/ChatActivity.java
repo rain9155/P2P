@@ -1,6 +1,10 @@
 package com.example.p2p;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -23,6 +27,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.LinearInterpolator;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -72,7 +77,6 @@ import com.example.permission.callback.IPermissionsCallback;
 import com.example.utils.CommonUtil;
 import com.example.utils.DisplayUtil;
 import com.example.utils.FileUtils;
-import com.example.utils.ImageUtils;
 import com.example.utils.IntentUtils;
 import com.example.utils.KeyBoardUtils;
 import com.example.utils.ToastUtils;
@@ -135,6 +139,9 @@ public class ChatActivity extends BaseActivity {
     ImageView ivKeyborad;
     @BindView(R.id.tv_audio)
     AudioTextView tvAudio;
+    @BindView(R.id.cl_edit)
+    ConstraintLayout clEdit;
+
 
     private final String TAG = this.getClass().getSimpleName();
     private final static int REQUEST_CODE_GET_IMAGE= 0x000;
@@ -154,10 +161,14 @@ public class ChatActivity extends BaseActivity {
     private LocatingDialog mLocatingDialog;
     private boolean isSendingImage, isSendingFile;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mTargetUser = (User) getIntent().getSerializableExtra(Constant.EXTRA_TARGET_USER);
         mUser = (User) FileUtils.restoreObject(this, Constant.FILE_NAME_USER);
+        //测试
+        mTargetUser = new User("rain", "123.123.123.123", "http://234");
+        mUser = new User("jianyu", "123.123.123.123", "http://234");
         super.onCreate(savedInstanceState);
     }
 
@@ -185,10 +196,12 @@ public class ChatActivity extends BaseActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if(resultCode != Activity.RESULT_OK) return;
-        if(requestCode == REQUEST_CODE_GET_IMAGE) sendImage(data.getData());
-        if(requestCode == REQUEST_CODE_TAKE_IMAGE) sendImage(mTakedImageUri);
-        if(requestCode == REQUEST_CODE_GET_FILE) sendFile(data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH));
+        if (resultCode != Activity.RESULT_OK) return;
+        if (requestCode == REQUEST_CODE_GET_IMAGE) sendImage(data.getData());
+        if (requestCode == REQUEST_CODE_TAKE_IMAGE) sendImage(mTakedImageUri);
+        if (requestCode == REQUEST_CODE_GET_FILE)
+            sendFile(data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH));
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -674,23 +687,23 @@ public class ChatActivity extends BaseActivity {
      */
     private void changeMoreLayout() {
         edEdit.clearFocus();
-        int visibility = clMore.isShown() ? View.GONE : View.VISIBLE;
         if (!clMore.isShown() && !isKeyboardShowing) {//如果键盘没有显示，且更多布局也没有显示，只显示更多布局
-            clMore.setVisibility(visibility);
-            tvAudio.setVisibility(View.INVISIBLE);
+            clMore.setVisibility(View.VISIBLE);
             edEdit.setVisibility(View.VISIBLE);
             ivAudio.setVisibility(View.VISIBLE);
+            tvAudio.setVisibility(View.INVISIBLE);
             ivKeyborad.setVisibility(View.INVISIBLE);
-            if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+            if (llEmoji.isShown())
+                llEmoji.setVisibility(View.GONE);
         } else if (clMore.isShown() && !isKeyboardShowing) {//如果键盘没有显示，但更多布局显示，隐藏更多布局，显示键盘
-            clMore.setVisibility(visibility);
+            clMore.setVisibility(View.GONE);
             KeyBoardUtils.openKeyBoard(this, edEdit);
         } else if (!clMore.isShown() && isKeyboardShowing) {//如果只有键盘显示，就隐藏键盘，显示更多布局
             lockContentHeight();
             KeyBoardUtils.closeKeyBoard(this, edEdit);
             edEdit.postDelayed(() -> {
                 unlockContentHeightDelayed();
-                clMore.setVisibility(visibility);
+                clMore.setVisibility(View.VISIBLE);
 
             }, 200);
         }
@@ -700,9 +713,8 @@ public class ChatActivity extends BaseActivity {
      * 改变表情布局显示
      */
     private void changeEmojiLayout() {
-        int visibility = llEmoji.isShown() ? View.GONE : View.VISIBLE;
         if (!llEmoji.isShown() && !isKeyboardShowing) {
-            llEmoji.setVisibility(visibility);
+            llEmoji.setVisibility(View.VISIBLE);
             tvAudio.setVisibility(View.INVISIBLE);
             edEdit.setVisibility(View.VISIBLE);
             edEdit.requestFocus();
@@ -710,14 +722,14 @@ public class ChatActivity extends BaseActivity {
             ivKeyborad.setVisibility(View.INVISIBLE);
             if (clMore.isShown()) clMore.setVisibility(View.GONE);
         } else if (llEmoji.isShown() && !isKeyboardShowing) {
-            llEmoji.setVisibility(visibility);
+            llEmoji.setVisibility( View.GONE);
             KeyBoardUtils.openKeyBoard(this, edEdit);
         } else if (!llEmoji.isShown() && isKeyboardShowing) {
             lockContentHeight();
             KeyBoardUtils.closeKeyBoard(this, edEdit);
             edEdit.postDelayed(() -> {
                 unlockContentHeightDelayed();
-                llEmoji.setVisibility(visibility);
+                llEmoji.setVisibility(View.VISIBLE);
 
             }, 200);
         }
@@ -745,6 +757,7 @@ public class ChatActivity extends BaseActivity {
     private boolean isButtomLayoutShown() {
         return clMore.isShown() || llEmoji.isShown();
     }
+
 
     public static void startActiivty(Activity context, User user, int code) {
         Intent intent = new Intent(context, ChatActivity.class);

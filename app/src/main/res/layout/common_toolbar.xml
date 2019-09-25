@@ -18,7 +18,7 @@
             android:layout_height="@dimen/dp_40"
             android:src="@drawable/ic_back"
             android:padding="@dimen/dp_10"
-            android:background="@drawable/selector_bar_iv"
+            android:background="@drawable/select_bar_iv"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -44,7 +44,7 @@
             android:src="@drawable/ic_add"
             android:tint="@color/colorBlack"
             android:padding="@dimen/dp_10"
-            android:background="@drawable/selector_bar_iv"
+            android:background="@drawable/select_bar_iv"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintRight_toRightOf="parent"/>

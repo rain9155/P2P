@@ -38,7 +38,7 @@
         android:background="@color/colorDivide"/>
 
     <include
-        android:id="@+id/ll_edit"
+        android:id="@+id/cl_edit"
         layout="@layout/chat_edit_layout" />
 
     <View
