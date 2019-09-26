@@ -60,12 +60,85 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_photos"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-    </androidx.recyclerview.widget.RecyclerView>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_photos"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </androidx.recyclerview.widget.RecyclerView>
+
+        <TextView
+            android:id="@+id/tv_photo_data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPhotoData"
+            android:textColor="@color/white"
+            android:padding="@dimen/dp_2"
+            tools:text="今天"/>
+
+    </FrameLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPhotoBg"
+        android:padding="@dimen/dp_8">
+
+        <TextView
+            android:id="@+id/tv_photo_video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/photo_tvPhotoVideo"
+            android:textColor="@color/white"
+            android:textSize="@dimen/sp_16"
+            android:padding="@dimen/dp_5"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"/>
+
+        <ImageView
+            android:id="@+id/iv_photo"
+            android:layout_width="@dimen/dp_10"
+            android:layout_height="@dimen/dp_10"
+            android:src="@drawable/ic_photo_indicator"
+            android:tint="@color/white"
+            app:layout_constraintBottom_toBottomOf="@id/tv_photo_video"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toRightOf="@id/tv_photo_video"/>
+
+        <RadioButton
+            android:id="@+id/rb_raw_photo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/photo_tvRawPhoto"
+            android:textColor="@color/white"
+            android:textSize="@dimen/sp_16"
+            android:buttonTint="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/tv_preview_photo"
+            app:layout_constraintLeft_toRightOf="@+id/tv_photo_video"/>
+
+
+
+        <TextView
+            android:id="@+id/tv_preview_photo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/photo_tvPreviewPhoto"
+            android:textColor="@color/white"
+            android:padding="@dimen/dp_5"
+            android:textSize="@dimen/sp_16"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintRight_toRightOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 </LinearLayout>

@@ -44,4 +44,10 @@
     <string name="popup_tvRefresh">刷新列表</string>
     <string name="popup_tvTest">关闭测试</string>
 
+
+    <string name="photo_tvPhotoVideo">图片和视频</string>
+    <string name="photo_tvRawPhoto">原图</string>
+    <string name="photo_tvPreviewPhoto">预览</string>
+
+
 </resources>

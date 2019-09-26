@@ -10,7 +10,7 @@
     <color name="colorGreenSelected">#81C784</color>
     <color name="colorGreenEnabled">#D2F3D2</color>
     <color name="colorGreenSend">#6AEC6A</color>
-    <color name="colorDisenable">#B3FFFFFF</color>
+    <color name="colorDisEnable">#B3FFFFFF</color>
     <color name="colorDivide">#d9d9d9</color>
     <color name="colorIndicator">#6DB6B6B6</color>
     <color name="colorIndicatorSelected">#FF888888</color>
@@ -18,4 +18,6 @@
     <color name="colorPopupSelected">#FF888888</color>
     <color name="colorPopupBg">#616161</color>
     <color name="colorAudioCancel">#83D83E3E</color>
+    <color name="colorPhotoData">#9e111212</color>
+    <color name="colorPhotoBg">#424242</color>
 </resources>
