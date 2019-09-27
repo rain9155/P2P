@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * 图片工具类
  * Created by 陈健宇 at 2019/6/20
  */
 public class ImageUtil {

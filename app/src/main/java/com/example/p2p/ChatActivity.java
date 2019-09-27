@@ -185,7 +185,7 @@ public class ChatActivity extends BaseActivity {
         if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
         super.onBackPressed();
     }
-    
+
     @Override
     protected void onDestroy() {
         ConnectManager.getInstance().release();
@@ -538,76 +538,13 @@ public class ChatActivity extends BaseActivity {
      * 发送定位信息
      */
     private void sendLocation() {
-        Criteria criteria = new Criteria();//配置定位的一些配置信息
-        criteria.setPowerRequirement(Criteria.POWER_LOW);//低电耗
-        criteria.setBearingAccuracy(Criteria.ACCURACY_COARSE);//标准精度为粗糙
-        criteria.setAltitudeRequired(false);//不需要海拔
-        criteria.setBearingRequired(false);//不需要导向
-        criteria.setAccuracy(Criteria.ACCURACY_LOW);//精度为低
-        criteria.setCostAllowed(false);//不需要成本
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        String bestProvider = locationManager.getBestProvider(criteria, true);//得到最好的位置提供者，如GPS，netWork等
-        LogUtil.d(TAG, "provider = " + bestProvider);
         PermissionHelper.getInstance().with(this).requestPermission(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 new IPermissionCallback() {
                     @SuppressLint("MissingPermission")
                     @Override
                     public void onAccepted(Permission permission) {
-                        mLocatingDialog.show(getSupportFragmentManager());
-                        ConnectManager.getInstance().executeTast(() -> {
-                            Location location = null;//里面存放着定位的信息,经纬度,海拔等
-                            if(!TextUtils.isEmpty(bestProvider)){
-                                location = locationManager.getLastKnownLocation(bestProvider);
-                                LogUtil.d(TAG, "location = " + location);
-                            }else {//没有最好的定位方案则手动配置
-                                if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-                                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                                else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
-                                    location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                                else if(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
-                                    location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-                            }
-                            LogUtil.d(TAG, "location = " + location);
-                            final Location finalLocation = location;
-                            runOnUiThread(() -> {
-                                if(null == finalLocation){
-                                    mLocatingDialog.dismiss();
-                                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
-                                    return;
-                                }
-                                Geocoder geocoder = new Geocoder(ChatActivity.this, Locale.getDefault());//地区编码,可以得到具体的地理位置
-                                try {
-                                    List<Address> addresses = geocoder.getFromLocation(finalLocation.getLatitude(), finalLocation.getLongitude(), 1);
-                                    if(CommonUtil.isEmptyList(addresses)){
-                                        mLocatingDialog.dismiss();
-                                        ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
-                                        return;
-                                    }
-                                    Address address = addresses.get(0);
-                                    String country = address.getCountryName();
-                                    String city = address.getLocality();
-                                    String citySub = address.getSubLocality();
-                                    String thoroughfare = address.getThoroughfare();
-                                    LogUtil.d(TAG, "country = " + country
-                                            + ", city = " + city
-                                            + ", citySub = " + citySub
-                                            + ", fare = " + thoroughfare);
-                                    StringBuilder builder = new StringBuilder(32);
-                                    builder.append("位置：").append(country).append(city);
-                                    if(!TextUtils.isEmpty(citySub)) builder.append(citySub);
-                                    if(!TextUtils.isEmpty(thoroughfare)) builder.append(thoroughfare);
-                                    ConnectManager.getInstance().sendMessage(
-                                            mTargetUser.getIp(),
-                                            new Mes<String>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), builder.toString()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
-                                    LogUtil.e(TAG, "定位失败， e = " + e.getMessage());
-                                }
-                                mLocatingDialog.dismiss();
-                            });
-                        });
+                        getLocation();
                     }
 
                     @Override
@@ -758,6 +695,73 @@ public class ChatActivity extends BaseActivity {
         return clMore.isShown() || llEmoji.isShown();
     }
 
+    @SuppressLint("MissingPermission")
+    private void getLocation() {
+        Criteria criteria = new Criteria();//配置定位的一些配置信息
+        criteria.setPowerRequirement(Criteria.POWER_LOW);//低电耗
+        criteria.setBearingAccuracy(Criteria.ACCURACY_COARSE);//标准精度为粗糙
+        criteria.setAltitudeRequired(false);//不需要海拔
+        criteria.setBearingRequired(false);//不需要导向
+        criteria.setAccuracy(Criteria.ACCURACY_LOW);//精度为低
+        criteria.setCostAllowed(false);//不需要成本
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        String bestProvider = locationManager.getBestProvider(criteria, true);//得到最好的位置提供者，如GPS，netWork等
+        LogUtil.d(TAG, "provider = " + bestProvider);
+        mLocatingDialog.show(getSupportFragmentManager());
+        ConnectManager.getInstance().executeTast(() -> {
+            Location location = null;//里面存放着定位的信息,经纬度,海拔等
+            if(!TextUtils.isEmpty(bestProvider)){
+                location = locationManager.getLastKnownLocation(bestProvider);
+                LogUtil.d(TAG, "location = " + location);
+            }else {//没有最好的定位方案则手动配置
+                if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+                    location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                else if(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
+                    location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+            }
+            LogUtil.d(TAG, "location = " + location);
+            final Location finalLocation = location;
+            runOnUiThread(() -> {
+                if(null == finalLocation){
+                    mLocatingDialog.dismiss();
+                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
+                    return;
+                }
+                Geocoder geocoder = new Geocoder(ChatActivity.this, Locale.getDefault());//地区编码,可以得到具体的地理位置
+                try {
+                    List<Address> addresses = geocoder.getFromLocation(finalLocation.getLatitude(), finalLocation.getLongitude(), 1);
+                    if(CommonUtil.isEmptyList(addresses)){
+                        mLocatingDialog.dismiss();
+                        ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
+                        return;
+                    }
+                    Address address = addresses.get(0);
+                    String country = address.getCountryName();
+                    String city = address.getLocality();
+                    String citySub = address.getSubLocality();
+                    String thoroughfare = address.getThoroughfare();
+                    LogUtil.d(TAG, "country = " + country
+                            + ", city = " + city
+                            + ", citySub = " + citySub
+                            + ", fare = " + thoroughfare);
+                    StringBuilder builder = new StringBuilder(32);
+                    builder.append("位置：").append(country).append(city);
+                    if(!TextUtils.isEmpty(citySub)) builder.append(citySub);
+                    if(!TextUtils.isEmpty(thoroughfare)) builder.append(thoroughfare);
+                    ConnectManager.getInstance().sendMessage(
+                            mTargetUser.getIp(),
+                            new Mes<String>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), builder.toString()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
+                    LogUtil.e(TAG, "定位失败， e = " + e.getMessage());
+                }
+                mLocatingDialog.dismiss();
+            });
+        });
+    }
 
     public static void startActiivty(Activity context, User user, int code) {
         Intent intent = new Intent(context, ChatActivity.class);

@@ -37,7 +37,7 @@ import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.utils.LogUtil;
 import com.example.p2p.utils.WifiUtil;
-import com.example.p2p.widget.WindowPopup;
+import com.example.p2p.widget.dialog.WindowPopup;
 import com.example.p2p.widget.dialog.ConnectingDialog;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
 import com.example.permission.PermissionHelper;

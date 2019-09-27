@@ -10,6 +10,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.config.Constant;
@@ -123,6 +125,35 @@ public class FileUtil {
         File file = new File(filePath);
         if(!file.isFile()) return "0k";
         return FileUtils.getFormatSize(file.length());
+    }
+
+    /**
+     * 获取文件扩展名
+     * @param filename 文件路径或文件名
+     */
+    public static String getExtensionName(String filename) {
+        if (filename != null && filename.length() > 0) {
+            int dot = filename.lastIndexOf('.');
+            if (dot > -1 && dot < filename.length() - 1) {
+                return filename.substring(dot + 1);
+            }
+        }
+        return "";
+    }
+
+    /**
+     * 根据文件路径，获取上一级文件夹名称
+     * @param path 文件路径
+     * @return 文件夹名称
+     */
+    public static String getParentFolder(String path) {
+        if (!TextUtils.isEmpty(path)) {
+            String[] strings = path.split(File.separator);
+            if (strings.length >= 2) {
+                return strings[strings.length - 2];
+            }
+        }
+        return "";
     }
 
     /**
