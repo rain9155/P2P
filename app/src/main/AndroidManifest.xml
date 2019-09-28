@@ -27,22 +27,22 @@
         <activity
             android:name=".PhotoActivity"
             android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name=".LoginActivity"
+            android:finishOnTaskLaunch="true"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name=".ChatActivity"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-        </activity>
-        <activity
-            android:name=".LoginActivity"
-            android:finishOnTaskLaunch="true"
-            android:screenOrientation="portrait"/>
-        <activity
-            android:name=".ChatActivity"
-            android:launchMode="singleTask"
-            android:screenOrientation="portrait">
 
         </activity>
         <activity

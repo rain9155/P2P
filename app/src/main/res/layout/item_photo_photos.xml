@@ -12,10 +12,11 @@
         tools:src="@drawable/ic_user_image"
         android:scaleType="centerCrop"/>
 
-    <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageButton
+        android:layout_width="@dimen/dp_16"
+        android:layout_height="@dimen/dp_16"
         android:layout_gravity="top|end"
-        android:buttonTint="@color/white"/>
+        android:layout_margin="@dimen/dp_5"
+        android:background="@drawable/select_item_square"/>
 
 </FrameLayout>

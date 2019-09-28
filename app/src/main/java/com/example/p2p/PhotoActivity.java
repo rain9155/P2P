@@ -1,6 +1,8 @@
 package com.example.p2p;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -40,7 +42,7 @@ public class PhotoActivity extends BaseActivity {
     RecyclerView rvPhotos;
 
     private RvPhotoAdapter mPhotoAdapter;
-    private List<Photo> mPhotos;
+    private List<Photo> mCurPhotos;
     private List<Folder> mFolders;
 
     @Override
@@ -53,9 +55,9 @@ public class PhotoActivity extends BaseActivity {
         ivBack.setOnClickListener(v -> finish());
         btnSend.setEnabled(false);
 
-        mPhotos = new ArrayList<>();
+        mCurPhotos = new ArrayList<>();
         mFolders = new ArrayList<>();
-        mPhotoAdapter = new RvPhotoAdapter(mPhotos, R.layout.item_photo);
+        mPhotoAdapter = new RvPhotoAdapter(mCurPhotos, R.layout.item_photo_photos);
 
         rvPhotos.setAdapter(mPhotoAdapter);
         rvPhotos.setLayoutManager(new GridLayoutManager(this, 4));
@@ -69,17 +71,15 @@ public class PhotoActivity extends BaseActivity {
                 new IPermissionCallback() {
             @Override
             public void onAccepted(Permission permission) {
-                PhotoUtil.loadPhotosFromExternal(App.getContext(), folders -> {
-                    runOnUiThread(() -> {
-                        if(!CommonUtil.isEmptyList(folders)){
-                            mPhotos.clear();
-                            mFolders.clear();
-                            mPhotos.addAll(folders.get(0).photos);
-                            mFolders.addAll(folders);
-                            mPhotoAdapter.notifyDataSetChanged();
-                        }
-                    });
-                });
+                PhotoUtil.loadPhotosFromExternal(App.getContext(), (folders, allPhotos) -> runOnUiThread(() -> {
+                    if(!CommonUtil.isEmptyList(folders)){
+                        mCurPhotos.clear();
+                        mFolders.clear();
+                        mCurPhotos.addAll(allPhotos);
+                        mFolders.addAll(folders);
+                        mPhotoAdapter.notifyDataSetChanged();
+                    }
+                }));
             }
 
             @Override
@@ -87,6 +87,11 @@ public class PhotoActivity extends BaseActivity {
                 ToastUtils.showToast(App.getContext(), getString(R.string.toast_permission_rejected));
             }
         });
+    }
+
+
+    public static void startActivity(Context context){
+        context.startActivity(new Intent(context, PhotoActivity.class));
     }
 
 }

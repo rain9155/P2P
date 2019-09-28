@@ -1,10 +1,6 @@
 package com.example.p2p;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -27,7 +23,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.LinearInterpolator;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -77,7 +72,6 @@ import com.example.permission.callback.IPermissionsCallback;
 import com.example.utils.CommonUtil;
 import com.example.utils.DisplayUtil;
 import com.example.utils.FileUtils;
-import com.example.utils.IntentUtils;
 import com.example.utils.KeyBoardUtils;
 import com.example.utils.ToastUtils;
 import com.example.utils.listener.TextWatchListener;
@@ -256,12 +250,12 @@ public class ChatActivity extends BaseActivity {
         List<View> views = new ArrayList<>();
         mEmojiAdapters = new ArrayList<>(emojiDeleteCount);
         for (int i = 0; i < emojiDeleteCount; i++) {
-            RecyclerView recyclerView = (RecyclerView) LayoutInflater.from(this).inflate(R.layout.item_emoji_vp, vpEmoji, false);
+            RecyclerView recyclerView = (RecyclerView) LayoutInflater.from(this).inflate(R.layout.item_chat_emoji_vp, vpEmoji, false);
             recyclerView.setLayoutManager(new GridLayoutManager(this, 7));
             if (i == emojiDeleteCount - 1) {
-                mEmojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, mEmojiBeans.size()), R.layout.item_emoji));
+                mEmojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, mEmojiBeans.size()), R.layout.item_chat_emoji));
             } else {
-                mEmojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, i * 21 + 21), R.layout.item_emoji));
+                mEmojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, i * 21 + 21), R.layout.item_chat_emoji));
             }
             recyclerView.setAdapter(mEmojiAdapters.get(i));
             views.add(recyclerView);
@@ -489,7 +483,8 @@ public class ChatActivity extends BaseActivity {
      * 选择照片
      */
     private void chooseImage() {
-        startActivityForResult(IntentUtils.getChooseImageIntent(), REQUEST_CODE_GET_IMAGE);
+        //startActivityForResult(IntentUtils.getChooseImageIntent(), REQUEST_CODE_GET_IMAGE);
+        PhotoActivity.startActivity(this);
     }
 
     /**

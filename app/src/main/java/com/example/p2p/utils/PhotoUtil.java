@@ -25,6 +25,8 @@ import java.util.Map;
  */
 public class PhotoUtil {
 
+    private static final String ALL_PHOTOS = "全部图片";
+
     /**
      * 从SDCard加载图片
      * @param context  context
@@ -32,6 +34,7 @@ public class PhotoUtil {
      */
     public static void loadPhotosFromExternal(final Context context, final IPhotosCallback callback) {
         ConnectManager.getInstance().executeTast(() -> {
+            if(callback == null) return;
             Uri photoUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             ContentResolver contentResolver = context.getContentResolver();
             Cursor cursor = contentResolver.query(photoUri, new String[]{
@@ -44,8 +47,8 @@ public class PhotoUtil {
                     MediaStore.Images.Media.DATE_ADDED);
             List<Photo> photos = new ArrayList<>();
             //读取扫描到的图片
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
+            if (cursor != null && cursor.moveToLast()) {
+                while (cursor.moveToPrevious()) {
                     // 获取图片的路径
                     String path = cursor.getString(
                             cursor.getColumnIndex(MediaStore.Images.Media.DATA));
@@ -62,10 +65,7 @@ public class PhotoUtil {
                 }
                 cursor.close();
             }
-            //Collections.reverse(images);
-            if(callback != null){
-                callback.onSuccess(splitPhotosByFolder(photos));
-            }
+            splitPhotosByFolder(photos, callback);
         });
     }
 
@@ -74,10 +74,9 @@ public class PhotoUtil {
      * @param photos 集合
      * @return 按文件拆分的图片集合
      */
-    private static List<Folder> splitPhotosByFolder(List<Photo> photos) {
-        ArrayList<Folder> folders = new ArrayList<>();
+    private static void splitPhotosByFolder(List<Photo> photos, IPhotosCallback callback) {
         Map<String, List<Photo>> cache = new HashMap<>();
-        cache.put("全部图片", photos);
+        cache.put(ALL_PHOTOS, photos);
         if(!CommonUtil.isEmptyList(photos)){
             int size = photos.size();
             for (int i = 0; i < size; i++) {
@@ -93,12 +92,24 @@ public class PhotoUtil {
                 cache.get(folderName).add(photos.get(i));
             }
         }
+        onPhotosCallback(cache, callback);
+    }
+
+    /**
+     * 执行展示照片回调
+     */
+    private static void onPhotosCallback(Map<String, List<Photo>> cache, IPhotosCallback callback){
+        List<Folder> folders = new ArrayList<>(cache.size());
+        List<Photo> allPhotos = new ArrayList<>();
         for(String folderName : cache.keySet()){
             Folder folder = new Folder(folderName, cache.get(folderName));
             folders.add(folder);
+            if(ALL_PHOTOS.equals(folderName)){
+                allPhotos = cache.get(folderName);
+            }
         }
+        callback.onSuccess(folders, allPhotos);
         cache.clear();
-        return folders;
     }
 
 

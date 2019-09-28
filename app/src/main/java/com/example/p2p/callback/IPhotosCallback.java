@@ -1,6 +1,7 @@
 package com.example.p2p.callback;
 
 import com.example.p2p.bean.Folder;
+import com.example.p2p.bean.Photo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.List;
  */
 public interface IPhotosCallback {
 
-    void onSuccess(List<Folder> folders);
+    void onSuccess(List<Folder> folders, List<Photo> allPhotos);
 
 
 }
