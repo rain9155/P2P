@@ -160,7 +160,7 @@ public class MainActivity extends BaseActivity {
                 .create();
         mOnlineUsers = new ArrayList<>();
         rvMain.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-        mRvMainAdapter = new RvUsersAdapter(mOnlineUsers, R.layout.item_user);
+        mRvMainAdapter = new RvUsersAdapter(mOnlineUsers, R.layout.item_main_user);
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         mConnectingDialog = new ConnectingDialog();

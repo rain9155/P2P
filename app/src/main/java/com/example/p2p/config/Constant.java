@@ -17,6 +17,8 @@ public class Constant {
     public static final String FILE_USER_IMAGE = FILE_PATH_USER + "userImage.png";
     public static final String FILE_PATH_ONLINE_USER = FileUtils.getFilePath(App.getContext(),  "/P2P/onlineUser/");
 
+    public static final int MAX_SELECTED_PHOTO = 9;
+
     public static final int WAITING_TIME = 3000;
 
 }

@@ -4,6 +4,6 @@
     android:id="@+id/rv_show_folders"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:showIn="@layout/item_photo_folders">
+    tools:listitem="@layout/item_photo_folders">
 
 </androidx.recyclerview.widget.RecyclerView>

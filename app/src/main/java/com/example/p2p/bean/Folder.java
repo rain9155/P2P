@@ -11,11 +11,19 @@ import java.util.List;
 public class Folder {
 
     public String name;
+    public String coverPath;//封面路径
+    public boolean isSelect;
     public List<Photo> photos;
 
-    public Folder(String name, List<Photo> photos) {
+    public Folder(String name, List<Photo> photos, String coverPath) {
+       this(name, photos, coverPath, false);
+    }
+
+    public Folder(String name, List<Photo> photos, String coverPath, boolean isSelect) {
         this.name = name;
         this.photos = photos;
+        this.coverPath = coverPath;
+        this.isSelect = isSelect;
     }
 
     @NonNull

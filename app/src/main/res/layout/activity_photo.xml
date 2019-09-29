@@ -78,6 +78,7 @@
             android:layout_height="wrap_content"
             android:background="@color/colorPhotoData"
             android:textColor="@color/white"
+            android:visibility="invisible"
             android:padding="@dimen/dp_2"
             tools:text="今天"/>
 
@@ -90,10 +91,10 @@
         android:padding="@dimen/dp_8">
 
         <TextView
-            android:id="@+id/tv_photo_video"
+            android:id="@+id/tv_photos"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/photo_tvPhotoVideo"
+            android:text="@string/photo_tvPhotos"
             android:textColor="@color/white"
             android:textSize="@dimen/sp_16"
             android:padding="@dimen/dp_5"
@@ -107,23 +108,36 @@
             android:layout_height="@dimen/dp_10"
             android:src="@drawable/ic_photo_indicator"
             android:tint="@color/white"
-            app:layout_constraintBottom_toBottomOf="@id/tv_photo_video"
+            app:layout_constraintBottom_toBottomOf="@id/tv_photos"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/tv_photo_video"/>
+            app:layout_constraintLeft_toRightOf="@id/tv_photos"/>
 
-        <RadioButton
-            android:id="@+id/rb_raw_photo"
+
+
+        <ImageButton
+            android:id="@+id/ib_select_raw"
+            android:layout_width="@dimen/dp_25"
+            android:layout_height="@dimen/dp_25"
+            android:background="@drawable/select_photo_raw"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toRightOf="@id/iv_photo"
+            app:layout_constraintRight_toLeftOf="@+id/tv_raw_photo"/>
+
+
+        <TextView
+            android:id="@+id/tv_raw_photo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/photo_tvRawPhoto"
             android:textColor="@color/white"
+            android:padding="@dimen/dp_5"
             android:textSize="@dimen/sp_16"
-            android:buttonTint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintRight_toLeftOf="@+id/tv_preview_photo"
-            app:layout_constraintLeft_toRightOf="@+id/tv_photo_video"/>
-
+            app:layout_constraintLeft_toRightOf="@id/ib_select_raw"
+            app:layout_constraintRight_toLeftOf="@+id/tv_preview_photo"/>
 
 
         <TextView

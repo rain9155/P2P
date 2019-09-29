@@ -6,14 +6,29 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:padding="@dimen/dp_10">
 
-    <com.example.p2p.widget.customView.SquareImageView
-        android:id="@+id/iv_photo"
-        android:layout_width="@dimen/dp_100"
-        android:layout_height="@dimen/dp_100"
+
+    <FrameLayout
+        android:id="@+id/fl_bg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_item_folder"
+        android:paddingBottom="@dimen/dp_4"
+        android:paddingEnd="@dimen/dp_5"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        tools:src="@drawable/ic_user_image"/>
+        tools:ignore="RtlSymmetry">
+
+        <com.example.p2p.widget.customView.SquareImageView
+            android:id="@+id/iv_photo"
+            android:layout_width="@dimen/dp_80"
+            android:layout_height="@dimen/dp_80"
+            android:scaleType="centerCrop"
+            android:paddingBottom="@dimen/dp_3"
+            tools:src="@drawable/ic_user_image"/>
+
+    </FrameLayout>
+
 
     <TextView
         android:id="@+id/tv_title"
@@ -23,7 +38,7 @@
         android:textColor="@color/colorPrimaryText"
         android:layout_marginStart="@dimen/dp_10"
         app:layout_constraintVertical_chainStyle="packed"
-        app:layout_constraintLeft_toRightOf="@id/iv_photo"
+        app:layout_constraintLeft_toRightOf="@id/fl_bg"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/tv_count"
         tools:text="所有照片"/>
@@ -33,20 +48,22 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="@dimen/sp_14"
-        android:textColor="@color/colorSecondText"
+        android:textColor="@color/colorThirdText"
         android:layout_marginStart="@dimen/dp_10"
-        app:layout_constraintLeft_toRightOf="@id/iv_photo"
+        app:layout_constraintLeft_toRightOf="@id/fl_bg"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_title"
         tools:text="824张"/>
 
-    <RadioButton
-        android:id="@+id/rb_select"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:buttonTint="@color/colorWhite"
+    <ImageButton
+        android:id="@+id/ib_select_folder"
+        android:layout_width="@dimen/dp_25"
+        android:layout_height="@dimen/dp_25"
+        android:background="@drawable/ic_circle_selected"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -9,12 +9,21 @@
         android:id="@+id/iv_photo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:src="@drawable/ic_user_image"
-        android:scaleType="centerCrop"/>
+        android:scaleType="centerCrop"
+        tools:src="@drawable/ic_user_image"/>
+
+    <com.example.p2p.widget.customView.SquareImageView
+        android:id="@+id/mark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        android:background="@color/colorMark"/>
 
     <ImageButton
-        android:layout_width="@dimen/dp_16"
-        android:layout_height="@dimen/dp_16"
+        android:id="@+id/ib_select_photo"
+        android:layout_width="@dimen/dp_18"
+        android:layout_height="@dimen/dp_18"
         android:layout_gravity="top|end"
         android:layout_margin="@dimen/dp_5"
         android:background="@drawable/select_item_square"/>

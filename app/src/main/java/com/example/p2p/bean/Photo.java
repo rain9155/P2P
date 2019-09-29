@@ -12,7 +12,7 @@ public class Photo {
     public long time;
     public String name;
     public int position;
-    public boolean isChecked;
+    public boolean isSelect;
 
     public Photo(String name, String path) {
         this.path = path;

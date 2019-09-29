@@ -44,7 +44,7 @@ public class PhotoUtil {
                             MediaStore.Images.Media._ID},
                     null,
                     null,
-                    MediaStore.Images.Media.DATE_ADDED);
+                   null);
             List<Photo> photos = new ArrayList<>();
             //读取扫描到的图片
             if (cursor != null && cursor.moveToLast()) {
@@ -59,7 +59,7 @@ public class PhotoUtil {
                     long time = cursor.getLong(
                             cursor.getColumnIndex(MediaStore.Images.Media.DATE_ADDED));
                     //过滤未下载完成的文件
-                    if (!"downloading".equals( FileUtil.getExtensionName(path))) {
+                    if (!"downloading".equals(FileUtil.getExtensionName(path))) {
                         photos.add(new Photo(name, path, time));
                     }
                 }
@@ -100,13 +100,20 @@ public class PhotoUtil {
      */
     private static void onPhotosCallback(Map<String, List<Photo>> cache, IPhotosCallback callback){
         List<Folder> folders = new ArrayList<>(cache.size());
-        List<Photo> allPhotos = new ArrayList<>();
+        List<Photo> allPhotos = cache.get(ALL_PHOTOS);
+        folders.add(new Folder(
+                ALL_PHOTOS,
+                allPhotos,
+                allPhotos.get(0).path,
+                true));
+        cache.remove(ALL_PHOTOS);
         for(String folderName : cache.keySet()){
-            Folder folder = new Folder(folderName, cache.get(folderName));
+            Folder folder = new Folder(
+                    folderName,
+                    cache.get(folderName),
+                    cache.get(folderName).get(0).path
+            );
             folders.add(folder);
-            if(ALL_PHOTOS.equals(folderName)){
-                allPhotos = cache.get(folderName);
-            }
         }
         callback.onSuccess(folders, allPhotos);
         cache.clear();
