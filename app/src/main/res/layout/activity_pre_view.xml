@@ -4,8 +4,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".PhotoActivity">
+    tools:context=".PreViewActivity">
+
+    <com.example.p2p.widget.helper.CustomHelper
+        android:id="@+id/helper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="tool_bar, rv_preView, divider, cl_bottom"
+        tools:ignore="MissingConstraints" />
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/vp_preView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorBlack">
+
+    </androidx.viewpager.widget.ViewPager>
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/tool_bar"
@@ -37,12 +51,12 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/colorBlack"
                 android:textSize="18sp"
-                android:text="@string/photo_tvTitle"
                 app:layout_goneMarginStart="@dimen/dp_15"
                 android:layout_marginStart="@dimen/dp_15"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@id/iv_back"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="1/4"/>
 
             <Button
                 android:id="@+id/btn_send"
@@ -62,54 +76,27 @@
     </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_photos"
+        android:id="@+id/rv_preView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/tool_bar">
+        android:padding="@dimen/dp_10"
+        android:background="@color/colorPreViewBottomBg"
+        app:layout_constraintBottom_toTopOf="@+id/divider"/>
 
-    </androidx.recyclerview.widget.RecyclerView>
-
-    <TextView
-        android:id="@+id/tv_photo_data"
+    <View
+        android:id="@+id/divider"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/colorPhotoData"
-        android:textColor="@color/white"
-        android:visibility="invisible"
-        android:padding="@dimen/dp_2"
-        app:layout_constraintTop_toBottomOf="@id/tool_bar"
-        tools:text="今天"/>
-
+        android:layout_height="0.5dp"
+        android:background="#3C3B3B"
+        app:layout_constraintBottom_toTopOf="@+id/cl_bottom"/>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPhotoBottomBg"
+        android:background="@color/colorPreViewBottomBg"
         android:padding="@dimen/dp_10"
         app:layout_constraintBottom_toBottomOf="parent">
-
-        <TextView
-            android:id="@+id/tv_photos"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/photo_tvPhotos"
-            android:textColor="@color/white"
-            android:textSize="@dimen/sp_16"
-            android:padding="@dimen/dp_5"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"/>
-
-        <ImageView
-            android:id="@+id/iv_photo"
-            android:layout_width="@dimen/dp_10"
-            android:layout_height="@dimen/dp_10"
-            android:src="@drawable/ic_photo_indicator"
-            android:tint="@color/white"
-            app:layout_constraintBottom_toBottomOf="@id/tv_photos"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/tv_photos"/>
-
 
 
         <ImageButton
@@ -120,8 +107,7 @@
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/iv_photo"
-            app:layout_constraintRight_toLeftOf="@+id/tv_raw_photo"/>
+            app:layout_constraintLeft_toLeftOf="parent"/>
 
 
         <TextView
@@ -134,8 +120,7 @@
             android:textSize="@dimen/sp_16"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/ib_select_raw"
-            app:layout_constraintRight_toLeftOf="@+id/tv_preview_photo"/>
+            app:layout_constraintLeft_toRightOf="@id/ib_select_raw"/>
 
 
         <TextView

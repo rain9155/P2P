@@ -48,5 +48,6 @@
     <string name="photo_tvPhotos">所有图片</string>
     <string name="photo_tvRawPhoto">原图</string>
     <string name="photo_tvPreviewPhoto">预览</string>
+    <string name="photo_tvTitle">图片</string>
 
 </resources>

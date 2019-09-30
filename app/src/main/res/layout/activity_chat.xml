@@ -13,7 +13,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0.5dp"
-        android:background="@color/colorDivide"/>
+        android:background="@color/colorDivider"/>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/srl_chat"
@@ -35,7 +35,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0.5dp"
-        android:background="@color/colorDivide"/>
+        android:background="@color/colorDivider"/>
 
     <include
         android:id="@+id/cl_edit"
@@ -44,7 +44,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0.5dp"
-        android:background="@color/colorDivide"/>
+        android:background="@color/colorDivider"/>
 
     <include
         android:id="@+id/cl_more"

@@ -36,7 +36,7 @@
     <View
         android:layout_width="0dp"
         android:layout_height="0.5dp"
-        android:background="@color/colorDivide"
+        android:background="@color/colorDivider"
         android:layout_marginStart="@dimen/dp_10"
         app:layout_constraintLeft_toRightOf="@id/iv_face"
         app:layout_constraintRight_toRightOf="parent"

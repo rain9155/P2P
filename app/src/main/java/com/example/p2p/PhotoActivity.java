@@ -16,6 +16,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.interpolator.view.animation.LinearOutSlowInInterpolator;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,6 +28,7 @@ import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Folder;
 import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
+import com.example.p2p.decoration.GridLayoutItemDivider;
 import com.example.p2p.utils.LogUtil;
 import com.example.p2p.utils.PhotoUtil;
 import com.example.p2p.utils.TimeUtil;
@@ -87,6 +89,7 @@ public class PhotoActivity extends BaseActivity {
     protected void initView() {
         ivBack.setOnClickListener(v -> finish());
         btnSend.setEnabled(false);
+        tvPreviewPhoto.setEnabled(false);
 
         //照片墙
         mPhotos = new ArrayList<>();
@@ -94,6 +97,7 @@ public class PhotoActivity extends BaseActivity {
         mPhotoLayoutManager = new GridLayoutManager(this, 4);
         rvPhotos.setAdapter(mPhotoAdapter);
         rvPhotos.setLayoutManager(mPhotoLayoutManager);
+        rvPhotos.addItemDecoration(new GridLayoutItemDivider(this));
 
         //底部Dialog
         mShowFoldersDialog = new BottomSheetDialog(this);
@@ -146,11 +150,15 @@ public class PhotoActivity extends BaseActivity {
             //更新之后的选择数量
             selectCount = mPhotoAdapter.getSelectPhotoCount();
             btnSend.setText("发送(" + selectCount + "/" + Constant.MAX_SELECTED_PHOTO + ")");
+            tvPreviewPhoto.setText("预览(" + selectCount  + ")");
             if (isSelected) {
                 btnSend.setEnabled(true);
+                tvPreviewPhoto.setEnabled(true);
             } else if (selectCount == 0) {
                 btnSend.setEnabled(false);
-                btnSend.setText("发送");
+                btnSend.setText(getString(R.string.chat_btnSend));
+                tvPreviewPhoto.setEnabled(false);
+                tvPreviewPhoto.setText(getString(R.string.photo_tvPreviewPhoto));
             }
         });
 
@@ -159,6 +167,7 @@ public class PhotoActivity extends BaseActivity {
             if (prePos == position) return;
             mFolderAdapter.updateFolderByPos(!mFolders.get(position).isSelect, position);
             mPhotoAdapter.setNewPhotos(mFolders.get(position).photos);
+            mShowFoldersDialog.dismiss();
         });
 
         rvPhotos.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -166,19 +175,17 @@ public class PhotoActivity extends BaseActivity {
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if(newState == RecyclerView.SCROLL_STATE_IDLE) hidePhotoTime();
-                LogUtil.d("rain", "onScrollStateChanged, state = " + newState);
             }
 
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                LogUtil.d("rain", "onScrolled, state = " + recyclerView.getScrollState() + ", dy = " + dy + ", scrollY = " + recyclerView.getScrollY());
                 changePhotoTime(recyclerView.getScrollState());
             }
         });
     }
 
-    @OnClick({R.id.tv_photos})
+    @OnClick({R.id.tv_photos, R.id.tv_preview_photo})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.tv_photos:
@@ -187,6 +194,9 @@ public class PhotoActivity extends BaseActivity {
                 } else {
                     mShowFoldersDialog.show();
                 }
+                break;
+            case R.id.tv_preview_photo:
+                PreViewActivity.startActivity(this);
                 break;
             default:
                 break;

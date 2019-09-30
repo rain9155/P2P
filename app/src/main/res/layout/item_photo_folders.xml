@@ -4,30 +4,32 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:padding="@dimen/dp_10">
+    android:paddingLeft="@dimen/dp_10"
+    android:paddingRight="@dimen/dp_10">
 
-
-    <FrameLayout
-        android:id="@+id/fl_bg"
+    <androidx.constraintlayout.helper.widget.Layer
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:constraint_referenced_ids="iv_photo"
         android:background="@drawable/bg_item_folder"
         android:paddingBottom="@dimen/dp_4"
         android:paddingEnd="@dimen/dp_5"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        tools:ignore="RtlSymmetry">
+        tools:ignore="RtlSymmetry" />
 
-        <com.example.p2p.widget.customView.SquareImageView
-            android:id="@+id/iv_photo"
-            android:layout_width="@dimen/dp_80"
-            android:layout_height="@dimen/dp_80"
-            android:scaleType="centerCrop"
-            android:paddingBottom="@dimen/dp_3"
-            tools:src="@drawable/ic_user_image"/>
 
-    </FrameLayout>
+    <com.example.p2p.widget.customView.SquareImageView
+        android:id="@+id/iv_photo"
+        android:layout_width="@dimen/dp_80"
+        android:layout_height="@dimen/dp_80"
+        android:scaleType="centerCrop"
+        android:paddingBottom="@dimen/dp_3"
+        tools:src="@drawable/ic_user_image"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"/>
 
 
     <TextView
@@ -38,7 +40,7 @@
         android:textColor="@color/colorPrimaryText"
         android:layout_marginStart="@dimen/dp_10"
         app:layout_constraintVertical_chainStyle="packed"
-        app:layout_constraintLeft_toRightOf="@id/fl_bg"
+        app:layout_constraintLeft_toRightOf="@id/iv_photo"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/tv_count"
         tools:text="所有照片"/>
@@ -50,7 +52,7 @@
         android:textSize="@dimen/sp_14"
         android:textColor="@color/colorThirdText"
         android:layout_marginStart="@dimen/dp_10"
-        app:layout_constraintLeft_toRightOf="@id/fl_bg"
+        app:layout_constraintLeft_toRightOf="@id/iv_photo"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_title"
         tools:text="824张"/>
@@ -65,5 +67,12 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider"
+        android:layout_marginTop="@dimen/dp_10"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_photo"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
