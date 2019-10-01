@@ -6,13 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".PreViewActivity">
 
-    <com.example.p2p.widget.helper.CustomHelper
-        android:id="@+id/helper"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:constraint_referenced_ids="tool_bar, rv_preView, divider, cl_bottom"
-        tools:ignore="MissingConstraints" />
-
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/vp_preView"
         android:layout_width="match_parent"
@@ -137,5 +130,11 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <com.example.p2p.widget.helper.PreActivityHelper
+        android:id="@+id/helper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="tool_bar,rv_preView,divider,cl_bottom"
+        tools:ignore="MissingConstraints" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

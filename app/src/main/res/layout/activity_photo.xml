@@ -80,6 +80,12 @@
         app:layout_constraintTop_toBottomOf="@id/tool_bar"
         tools:text="今天"/>
 
+    <com.example.p2p.widget.helper.PhotoActivityHelper
+        android:id="@+id/helper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="tv_photo_data"
+        tools:ignore="MissingConstraints" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -151,6 +157,5 @@
             app:layout_constraintRight_toRightOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

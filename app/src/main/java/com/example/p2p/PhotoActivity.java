@@ -32,6 +32,7 @@ import com.example.p2p.decoration.GridLayoutItemDivider;
 import com.example.p2p.utils.LogUtil;
 import com.example.p2p.utils.PhotoUtil;
 import com.example.p2p.utils.TimeUtil;
+import com.example.p2p.widget.helper.PhotoActivityHelper;
 import com.example.permission.PermissionHelper;
 import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
@@ -69,6 +70,8 @@ public class PhotoActivity extends BaseActivity {
     TextView tvRawPhoto;
     @BindView(R.id.tv_preview_photo)
     TextView tvPreviewPhoto;
+    @BindView(R.id.helper)
+    PhotoActivityHelper helper;
 
     private List<Photo> mPhotos;
     private List<Folder> mFolders;
@@ -77,8 +80,6 @@ public class PhotoActivity extends BaseActivity {
     private RvFolderAdapter mFolderAdapter;
     private GridLayoutManager mPhotoLayoutManager;
     private RecyclerView rvFolders;
-    private ObjectAnimator mHideTimeAnimator;
-    private ObjectAnimator mShowTimeAnimator;
 
     @Override
     protected int getLayoutId() {
@@ -87,7 +88,6 @@ public class PhotoActivity extends BaseActivity {
 
     @Override
     protected void initView() {
-        ivBack.setOnClickListener(v -> finish());
         btnSend.setEnabled(false);
         tvPreviewPhoto.setEnabled(false);
 
@@ -174,7 +174,7 @@ public class PhotoActivity extends BaseActivity {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if(newState == RecyclerView.SCROLL_STATE_IDLE) hidePhotoTime();
+                if(newState == RecyclerView.SCROLL_STATE_IDLE) helper.hidePhotoTime();
             }
 
             @Override
@@ -185,7 +185,7 @@ public class PhotoActivity extends BaseActivity {
         });
     }
 
-    @OnClick({R.id.tv_photos, R.id.tv_preview_photo})
+    @OnClick({R.id.tv_photos, R.id.tv_preview_photo, R.id.iv_back})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.tv_photos:
@@ -198,64 +198,11 @@ public class PhotoActivity extends BaseActivity {
             case R.id.tv_preview_photo:
                 PreViewActivity.startActivity(this);
                 break;
+            case R.id.iv_back:
+                finish();
+                break;
             default:
                 break;
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if(mHideTimeAnimator != null){
-            mHideTimeAnimator.cancel();
-            mHideTimeAnimator.removeAllListeners();
-        }
-       if(mShowTimeAnimator != null){
-           mShowTimeAnimator.cancel();
-       }
-        super.onDestroy();
-    }
-
-    /**
-     * 显示时间条
-     */
-    private void showPhotoTime(){
-        if(mShowTimeAnimator == null){
-            mShowTimeAnimator = ObjectAnimator.ofFloat(tvPhotoData, "alpha", 0, 1f);
-            mShowTimeAnimator.setDuration(500);
-            mShowTimeAnimator.setInterpolator(new LinearOutSlowInInterpolator());
-        }else {
-            mShowTimeAnimator.setFloatValues(0, 1f);
-        }
-        if(mShowTimeAnimator.isRunning()) return;
-        if(mHideTimeAnimator != null && mHideTimeAnimator.isRunning()) mHideTimeAnimator.cancel();
-        if(tvPhotoData.getVisibility() == View.INVISIBLE){
-            tvPhotoData.setVisibility(View.VISIBLE);
-            mShowTimeAnimator.start();
-
-        }
-    }
-
-    /**
-     * 隐藏时间条
-     */
-    private void hidePhotoTime(){
-        if(mHideTimeAnimator == null){
-            mHideTimeAnimator = ObjectAnimator.ofFloat(tvPhotoData, "alpha", 1f, 0f);
-            mHideTimeAnimator.setDuration(500);
-            mHideTimeAnimator.setInterpolator(new LinearOutSlowInInterpolator());
-        }else {
-            mHideTimeAnimator.setFloatValues(1f, 0);
-        }
-        if(mHideTimeAnimator.isRunning()) return;
-        if(mShowTimeAnimator != null && mShowTimeAnimator.isRunning()) mShowTimeAnimator.cancel();
-        if(tvPhotoData.getVisibility() == View.VISIBLE){
-            mHideTimeAnimator.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    tvPhotoData.setVisibility(View.INVISIBLE);
-                }
-            });
-            mHideTimeAnimator.start();
         }
     }
 
@@ -264,9 +211,9 @@ public class PhotoActivity extends BaseActivity {
      */
     private void changePhotoTime(int scrollState) {
         if(scrollState == RecyclerView.SCROLL_STATE_IDLE){
-            hidePhotoTime();
+            helper.hidePhotoTime();
         }else {
-            showPhotoTime();
+            helper.showPhotoTime();
             int firstVisibleItem = mPhotoLayoutManager.findFirstVisibleItemPosition();
             if (firstVisibleItem != RecyclerView.NO_POSITION) {
                 Photo photo = mPhotos.get(firstVisibleItem);
@@ -278,6 +225,5 @@ public class PhotoActivity extends BaseActivity {
     public static void startActivity(Context context) {
         context.startActivity(new Intent(context, PhotoActivity.class));
     }
-
 
 }

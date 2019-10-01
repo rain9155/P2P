@@ -3,27 +3,22 @@ package com.example.p2p;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
-import android.os.Bundle;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.p2p.base.activity.BaseActivity;
-import com.example.p2p.utils.LogUtil;
-import com.example.p2p.widget.helper.CustomHelper;
+import com.example.p2p.widget.helper.PreActivityHelper;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class PreViewActivity extends BaseActivity {
 
@@ -50,7 +45,7 @@ public class PreViewActivity extends BaseActivity {
     @BindView(R.id.cl_bottom)
     ConstraintLayout clBottom;
     @BindView(R.id.helper)
-    CustomHelper helper;
+    PreActivityHelper helper;
 
     @Override
     protected int getLayoutId() {
@@ -60,13 +55,14 @@ public class PreViewActivity extends BaseActivity {
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void initView() {
-
         vpPreView.setOnTouchListener((v, event) -> {
-            LogUtil.d("rain", "Click");
-            helper.hide();
+            if(helper.isShow()){
+                helper.hideTopBottom(this);
+            }else {
+                helper.showTopBottom(this);
+            }
             return false;
         });
-
 
     }
 
@@ -75,21 +71,14 @@ public class PreViewActivity extends BaseActivity {
 
     }
 
-    /**
-     * 显示和隐藏状态栏
-     *
-     * @param isShow 是否显示
-     */
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-    private void setStatusBarVisibility(boolean isShow) {
-        if (isShow) {
-            getWindow().getDecorView()
-                    .setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        } else {
-            getWindow().getDecorView()
-                    .setSystemUiVisibility(
-                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                                    View.SYSTEM_UI_FLAG_FULLSCREEN);
+    @OnClick({R.id.iv_back})
+    public void onViewClick(View view) {
+        switch (view.getId()) {
+            case R.id.iv_back:
+                finish();
+                break;
+            default:
+                break;
         }
     }
 
@@ -97,10 +86,4 @@ public class PreViewActivity extends BaseActivity {
         context.startActivity(new Intent(context, PreViewActivity.class));
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // TODO: add setContentView(...) invocation
-        ButterKnife.bind(this);
-    }
 }
