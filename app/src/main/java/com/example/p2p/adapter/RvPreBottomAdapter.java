@@ -12,12 +12,14 @@ import com.example.p2p.bean.Photo;
 import java.util.List;
 
 /**
- * 预览照片列表的Adapter
+ * 底部预览照片列表的Adapter
  * Created by 陈健宇 at 2019/9/30
  */
-public class RvPrePhotoAdapter extends BaseAdapter<Photo>{
+public class RvPreBottomAdapter extends BaseAdapter<Photo>{
 
-    public RvPrePhotoAdapter(List datas, int layoutId) {
+    private int mPrePosition;
+
+    public RvPreBottomAdapter(List datas, int layoutId) {
         super(datas, layoutId);
     }
 
@@ -32,5 +34,13 @@ public class RvPrePhotoAdapter extends BaseAdapter<Photo>{
         }else {
             mark.setVisibility(View.INVISIBLE);
         }
+    }
+
+    public void updatePhotoByPos(boolean isSelect, int pos){
+        if(pos == mPrePosition) return;
+        mDatas.get(mPrePosition).isSelect = !isSelect;
+        mDatas.get(pos).isSelect = isSelect;
+        notifyDataSetChanged();
+        mPrePosition = pos;
     }
 }

@@ -1,9 +1,6 @@
 package com.example.p2p;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -15,12 +12,11 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
-import androidx.interpolator.view.animation.LinearOutSlowInInterpolator;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.library.BaseAdapter;
 import com.example.p2p.adapter.RvFolderAdapter;
 import com.example.p2p.adapter.RvPhotoAdapter;
 import com.example.p2p.app.App;
@@ -29,7 +25,6 @@ import com.example.p2p.bean.Folder;
 import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
 import com.example.p2p.decoration.GridLayoutItemDivider;
-import com.example.p2p.utils.LogUtil;
 import com.example.p2p.utils.PhotoUtil;
 import com.example.p2p.utils.TimeUtil;
 import com.example.p2p.widget.helper.PhotoActivityHelper;
@@ -68,7 +63,7 @@ public class PhotoActivity extends BaseActivity {
     ImageButton ibSelectRaw;
     @BindView(R.id.tv_raw_photo)
     TextView tvRawPhoto;
-    @BindView(R.id.tv_preview_photo)
+    @BindView(R.id.tv_is_select)
     TextView tvPreviewPhoto;
     @BindView(R.id.helper)
     PhotoActivityHelper helper;
@@ -122,19 +117,27 @@ public class PhotoActivity extends BaseActivity {
                     @Override
                     public void onAccepted(Permission permission) {
                         PhotoUtil.loadPhotosFromExternal(App.getContext(), (folders, allPhotos) -> runOnUiThread(() -> {
-                            if (!CommonUtil.isEmptyList(folders)) {
-                                mPhotoAdapter.setNewPhotos(allPhotos);
-                                mFolderAdapter.setNewFolders(folders);
-                            }
+                            mPhotoAdapter.setNewPhotos(allPhotos);
+                            mFolderAdapter.setNewFolders(folders);
                         }));
                     }
 
                     @Override
                     public void onDenied(Permission permission) {
                         ToastUtils.showToast(App.getContext(), getString(R.string.toast_permission_rejected));
+                        finish();
                     }
                 });
 
+        mPhotoAdapter.setOnItemClickListener((adapter, view, position) -> {
+            PreViewActivity.startActivity(
+                    this,
+                    mPhotos,
+                    mPhotoAdapter.getSelectPhotos(),
+                    position,
+                    false
+            );
+        });
         mPhotoAdapter.setOnItemChildClickListener((adapter, view, position) -> {
             if (CommonUtil.isEmptyList(mPhotos)) return;
             int selectCount = mPhotoAdapter.getSelectPhotoCount();
@@ -183,9 +186,11 @@ public class PhotoActivity extends BaseActivity {
                 changePhotoTime(recyclerView.getScrollState());
             }
         });
+
+
     }
 
-    @OnClick({R.id.tv_photos, R.id.tv_preview_photo, R.id.iv_back})
+    @OnClick({R.id.tv_photos, R.id.tv_is_select, R.id.iv_back})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.tv_photos:
@@ -195,8 +200,13 @@ public class PhotoActivity extends BaseActivity {
                     mShowFoldersDialog.show();
                 }
                 break;
-            case R.id.tv_preview_photo:
-                PreViewActivity.startActivity(this);
+            case R.id.tv_is_select:
+                PreViewActivity.startActivity(
+                        this,
+                        mPhotoAdapter.getSelectPhotos(),
+                        mPhotoAdapter.getSelectPhotos(),
+                        0,
+                        true);
                 break;
             case R.id.iv_back:
                 finish();

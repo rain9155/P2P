@@ -36,6 +36,8 @@ public class RvPhotoAdapter extends BaseAdapter<Photo> {
                 .into((ImageView) holder.getView(R.id.iv_photo));
 
         holder.setChildClickListener(R.id.ib_select_photo);
+        int pos = holder.getAdapterPosition();
+        mDatas.get(pos).position = pos + 1;
 
         ImageButton ibSelect = holder.getItemView().findViewById(R.id.ib_select_photo);
         View mark = holder.getItemView().findViewById(R.id.mark);
@@ -50,6 +52,10 @@ public class RvPhotoAdapter extends BaseAdapter<Photo> {
 
     public int getSelectPhotoCount(){
         return mSelectPhotos.size();
+    }
+
+    public List<Photo> getSelectPhotos(){
+        return new LinkedList<>(mSelectPhotos);
     }
 
     public void updatePhotoByPos(boolean isSelect, int pos, Photo photo){

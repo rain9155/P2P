@@ -50,4 +50,7 @@
     <string name="photo_tvPreviewPhoto">预览</string>
     <string name="photo_tvTitle">图片</string>
 
+    <string name="pre_tvIsSelect">选择</string>
+
+
 </resources>

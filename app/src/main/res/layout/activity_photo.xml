@@ -141,11 +141,11 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toRightOf="@id/ib_select_raw"
-            app:layout_constraintRight_toLeftOf="@+id/tv_preview_photo"/>
+            app:layout_constraintRight_toLeftOf="@+id/tv_is_select"/>
 
 
         <TextView
-            android:id="@+id/tv_preview_photo"
+            android:id="@+id/tv_is_select"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/photo_tvPreviewPhoto"

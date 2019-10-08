@@ -6,13 +6,12 @@
     android:layout_height="match_parent"
     tools:context=".PreViewActivity">
 
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/vp_preView"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_preView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/colorBlack">
-
-    </androidx.viewpager.widget.ViewPager>
+        android:background="@color/colorBlack"
+        tools:listitem="@layout/item_pre"/>
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/tool_bar"
@@ -69,10 +68,10 @@
     </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_preView"
+        android:id="@+id/rv_bottom_preView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/dp_10"
+        android:padding="@dimen/dp_5"
         android:background="@color/colorPreViewBottomBg"
         app:layout_constraintBottom_toTopOf="@+id/divider"/>
 
@@ -115,12 +114,20 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toRightOf="@id/ib_select_raw"/>
 
-
-        <TextView
-            android:id="@+id/tv_preview_photo"
+        <ImageButton
+            android:id="@+id/ib_is_select"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/photo_tvPreviewPhoto"
+            android:background="@drawable/select_item_square"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/tv_is_select"/>
+
+        <TextView
+            android:id="@+id/tv_is_select"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pre_tvIsSelect"
             android:textColor="@color/white"
             android:padding="@dimen/dp_5"
             android:textSize="@dimen/sp_16"
@@ -134,7 +141,7 @@
         android:id="@+id/helper"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="tool_bar,rv_preView,divider,cl_bottom"
+        app:constraint_referenced_ids="tool_bar,rv_bottom_preView,divider,cl_bottom"
         tools:ignore="MissingConstraints" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

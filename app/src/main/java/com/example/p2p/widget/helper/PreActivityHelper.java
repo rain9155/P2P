@@ -24,7 +24,7 @@ public class PreActivityHelper extends ConstraintHelper {
     private final static String ANIM_PROPERTY_TRANSLATION = "translationY";
     private final static String ANIM_PROPERTY_ALPHA = "alpha";
     private ObjectAnimator mTopAnim;
-    private int mTopViewHeight, mStatusBarHeight;
+    private int mTopViewHeight;
     private View[] mViews;
     private Activity mActivity;
     private boolean isShow = true;
@@ -32,7 +32,6 @@ public class PreActivityHelper extends ConstraintHelper {
     public PreActivityHelper(Context context, AttributeSet attrs) {
         super(context, attrs);
         mTopAnim = ObjectAnimator.ofFloat(null, ANIM_PROPERTY_TRANSLATION, 0);
-        mStatusBarHeight = DisplayUtil.getStatusBarHeight(context);
     }
 
 
@@ -75,7 +74,7 @@ public class PreActivityHelper extends ConstraintHelper {
             if(view.getId() == R.id.tool_bar){
                 //等statusBar完全显示后再显示toolBar
                 postDelayed(
-                        () -> startTopAnim(view, -mTopViewHeight, mStatusBarHeight),
+                        () -> startTopAnim(view, -mTopViewHeight, 0),
                         DELAY
                 );
             }else {

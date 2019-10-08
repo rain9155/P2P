@@ -75,22 +75,21 @@ public class PhotoUtil {
      * @return 按文件拆分的图片集合
      */
     private static void splitPhotosByFolder(List<Photo> photos, IPhotosCallback callback) {
+        if(CommonUtil.isEmptyList(photos)) return;
         Map<String, List<Photo>> cache = new HashMap<>();
         cache.put(ALL_PHOTOS, photos);
-        if(!CommonUtil.isEmptyList(photos)){
-            int size = photos.size();
-            for (int i = 0; i < size; i++) {
-                //获得图片路径
-                String path = photos.get(i).path;
-                //获得图片所在文件夹
-                String folderName = FileUtil.getParentFolder(path);
-                if(TextUtils.isEmpty(folderName)) continue;
-                //把图片按文件夹名分类
-                if (!cache.containsKey(folderName)) {
-                    cache.put(folderName, new ArrayList<>());
-                }
-                cache.get(folderName).add(photos.get(i));
+        int size = photos.size();
+        for (int i = 0; i < size; i++) {
+            //获得图片路径
+            String path = photos.get(i).path;
+            //获得图片所在文件夹
+            String folderName = FileUtil.getParentFolder(path);
+            if(TextUtils.isEmpty(folderName)) continue;
+            //把图片按文件夹名分类
+            if (!cache.containsKey(folderName)) {
+                cache.put(folderName, new ArrayList<>());
             }
+            cache.get(folderName).add(photos.get(i));
         }
         onPhotosCallback(cache, callback);
     }
