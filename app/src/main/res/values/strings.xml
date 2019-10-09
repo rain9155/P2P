@@ -49,6 +49,9 @@
     <string name="photo_tvRawPhoto">原图</string>
     <string name="photo_tvPreviewPhoto">预览</string>
     <string name="photo_tvTitle">图片</string>
+    <string name="photo_tvPreviewPhoto2">预览(%d)</string>
+    <string name="photo_btnSend">发送(%d/%d)</string>
+    <string name="photo_max_btnSend">最多只能发送%d张图片</string>
 
     <string name="pre_tvIsSelect">选择</string>
 

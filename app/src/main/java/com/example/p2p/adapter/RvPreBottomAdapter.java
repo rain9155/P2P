@@ -17,10 +17,12 @@ import java.util.List;
  */
 public class RvPreBottomAdapter extends BaseAdapter<Photo>{
 
-    private int mPrePosition;
-
     public RvPreBottomAdapter(List datas, int layoutId) {
         super(datas, layoutId);
+        //清空所有选中照片的选择
+        for(Photo image : mDatas){
+            image.isSelect = false;
+        }
     }
 
     @Override
@@ -28,6 +30,9 @@ public class RvPreBottomAdapter extends BaseAdapter<Photo>{
         Glide.with(holder.getItemView().getContext())
                 .load(item.path)
                 .into((ImageView) holder.getView(R.id.iv_photo));
+
+        item.selectPos = holder.getAdapterPosition();
+
         View mark = holder.getView(R.id.iv_mark);
         if(item.isSelect){
             mark.setVisibility(View.VISIBLE);
@@ -36,11 +41,24 @@ public class RvPreBottomAdapter extends BaseAdapter<Photo>{
         }
     }
 
-    public void updatePhotoByPos(boolean isSelect, int pos){
-        if(pos == mPrePosition) return;
-        mDatas.get(mPrePosition).isSelect = !isSelect;
-        mDatas.get(pos).isSelect = isSelect;
+    public void setSelectPhoto(Photo photo){
+        for(Photo image : mDatas){
+            image.isSelect = false;
+            if(photo.equals(image)){
+                image.isSelect = true;
+            }
+        }
         notifyDataSetChanged();
-        mPrePosition = pos;
     }
+
+    public void updateSelectPhoto(boolean isSelect, Photo photo){
+        photo.isSelect = isSelect;
+        if(isSelect){
+            mDatas.add(photo);
+        }else {
+            mDatas.remove(photo);
+        }
+        notifyDataSetChanged();
+    }
+
 }

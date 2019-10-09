@@ -13,6 +13,7 @@ import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
 import com.example.utils.ToastUtils;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -36,8 +37,8 @@ public class RvPhotoAdapter extends BaseAdapter<Photo> {
                 .into((ImageView) holder.getView(R.id.iv_photo));
 
         holder.setChildClickListener(R.id.ib_select_photo);
-        int pos = holder.getAdapterPosition();
-        mDatas.get(pos).position = pos + 1;
+
+        item.position = holder.getAdapterPosition();
 
         ImageButton ibSelect = holder.getItemView().findViewById(R.id.ib_select_photo);
         View mark = holder.getItemView().findViewById(R.id.mark);
@@ -58,7 +59,7 @@ public class RvPhotoAdapter extends BaseAdapter<Photo> {
         return new LinkedList<>(mSelectPhotos);
     }
 
-    public void updatePhotoByPos(boolean isSelect, int pos, Photo photo){
+    public void setSelectPhotoByPos(boolean isSelect, int pos, Photo photo){
         if(isSelect){
             mSelectPhotos.add(photo);
         }else {

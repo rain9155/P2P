@@ -1,6 +1,7 @@
 package com.example.p2p;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,9 +27,7 @@ import com.example.p2p.widget.helper.PreActivityHelper;
 import com.example.utils.CommonUtil;
 import com.example.utils.StatusBarUtils;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import butterknife.BindView;
 import butterknife.OnClick;
@@ -65,7 +64,7 @@ public class PreViewActivity extends BaseActivity {
     private static List<Photo> mTempPreViewPhotos, mTempSelectPhotos;
     private static List<Photo> mPreViewPhotos, mSelectPhotos;
 
-    private RvPreBottomAdapter mPreBottomAdapter;
+    private RvPreBottomAdapter mBottomAdapter;
     private RvPreViewAdapter mPreViewAdapter;
     private int mPos;
     private boolean isJumpFromPreBtn;//从PhotoActivity点击列表跳转还是点击预览跳转
@@ -90,20 +89,31 @@ public class PreViewActivity extends BaseActivity {
 
     @Override
     protected void initView() {
-        if (CommonUtil.isEmptyList(mSelectPhotos)) {
-            rvBottomPreView.setVisibility(View.INVISIBLE);
-            divider.setVisibility(View.INVISIBLE);
-        }
-        updateTitle(mPos);
-
-        mPreBottomAdapter = new RvPreBottomAdapter(mSelectPhotos, R.layout.item_pre_bottom);
+        mBottomAdapter = new RvPreBottomAdapter(mSelectPhotos, R.layout.item_pre_bottom);
         rvBottomPreView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
-        rvBottomPreView.setAdapter(mPreBottomAdapter);
+        rvBottomPreView.setAdapter(mBottomAdapter);
+        mBottomAdapter.setSelectPhoto(mPreViewPhotos.get(mPos));
 
         mPreViewAdapter = new RvPreViewAdapter(mPreViewPhotos, R.layout.item_pre);
         rvPreView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         rvPreView.setAdapter(mPreViewAdapter);
         new PagerSnapHelper().attachToRecyclerView(rvPreView);
+        rvPreView.scrollToPosition(mPos);
+
+        updateBottom();
+        updateTitle(mPos);
+        updateSend(mSelectPhotos.size());
+        updateSelect(mPreViewPhotos.get(mPos).isSelect);
+    }
+
+    private void updateBottom() {
+        if (CommonUtil.isEmptyList(mSelectPhotos)) {
+            rvBottomPreView.setVisibility(View.INVISIBLE);
+            divider.setVisibility(View.INVISIBLE);
+        }else {
+            rvBottomPreView.setVisibility(View.VISIBLE);
+            divider.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -120,21 +130,33 @@ public class PreViewActivity extends BaseActivity {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                        int pos = layoutManager.findFirstVisibleItemPosition();
-                        if (pos == RecyclerView.NO_POSITION) return;
-                        rvBottomPreView.smoothScrollToPosition(pos);
-                        mPreBottomAdapter.updatePhotoByPos(true, pos);
-                        updateTitle(pos);
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    int pos = layoutManager.findFirstVisibleItemPosition();
+                    if (pos == RecyclerView.NO_POSITION) return;
+                    Photo selectPhoto = mPreViewPhotos.get(pos);
+                    //与底部列表联动
+                    mBottomAdapter.setSelectPhoto(selectPhoto);
+                    rvBottomPreView.smoothScrollToPosition(selectPhoto.selectPos);
+                    pos = isJumpFromPreBtn ? pos : selectPhoto.position;
+                    //更新其他属性
+                    updateTitle(pos);
+                    updateSelect(mPreViewPhotos.get(pos).isSelect);
+                    mPos = pos;
                 }
             }
         });
 
-        mPreBottomAdapter.setOnItemClickListener((adapter, view, position) -> {
-            boolean isSelect = mSelectPhotos.get(position).isSelect;
-            rvPreView.smoothScrollToPosition(position);
-            mPreBottomAdapter.updatePhotoByPos(!isSelect, position);
-            updateTitle(position);
+        mBottomAdapter.setOnItemClickListener((adapter, view, position) -> {
+            Photo selectPhoto = mSelectPhotos.get(position);
+            rvBottomPreView.smoothScrollToPosition(position);
+            //与预览列表联动
+            mBottomAdapter.setSelectPhoto(selectPhoto);
+            int pos = isJumpFromPreBtn ? position : selectPhoto.position;
+            rvPreView.scrollToPosition(pos);
+            //更新其他属性
+            updateTitle(pos);
+            updateSelect(true);
+            mPos = pos;
         });
 
     }
@@ -147,38 +169,53 @@ public class PreViewActivity extends BaseActivity {
                 break;
             case R.id.tv_is_select:
             case R.id.ib_is_select:
+                Photo photo = mPreViewPhotos.get(mPos);
+                boolean isSelect = !photo.isSelect;
+                mBottomAdapter.updateSelectPhoto(isSelect, photo);
+                updateBottom();
+                updateSend(mSelectPhotos.size());
+                updateSelect(isSelect);
                 break;
             default:
                 break;
         }
     }
 
+    @Override
+    public void finish() {
+        for(Photo photo : mSelectPhotos){
+            photo.isSelect = true;
+        }
+        setResult(RESULT_OK);
+        super.finish();
+    }
+
+    private void updateSelect(boolean isSelect) {
+        ibIsSelect.setSelected(isSelect);
+    }
+
 
     @SuppressLint("SetTextI18n")
     private void updateTitle(int position) {
-        int selectCount = mSelectPhotos.size();
         int preViewCount = mPreViewPhotos.size();
-        if(isJumpFromPreBtn){
-            tvTitle.setText((position + 1) + "/" + selectCount);
-        }else{
-            tvTitle.setText((position + 1) + "/" + preViewCount);
+        tvTitle.setText((position + 1) + "/" + preViewCount);
+    }
+
+    private void updateSend(int count) {
+        if(count == 0){
+            btnSend.setText(getString(R.string.chat_btnSend));
+        }else {
+            btnSend.setText(getString(R.string.photo_btnSend, count, Constant.MAX_SELECTED_PHOTO));
         }
     }
 
-    @SuppressLint("SetTextI18n")
-    private void updateSend(int count) {
-        btnSend.setText("发送(" + count + "/9");
-    }
-
-    public static void startActivity(Context context, List<Photo> preViewPhotos, List<Photo> selectPhotos, int clickPos, boolean mode) {
-        //清空所有选中照片的选择
-        for(Photo photo : selectPhotos) photo.isSelect = false;
+    public static void startActivity(Activity activity, List<Photo> preViewPhotos, List<Photo> selectPhotos, int clickPos, boolean mode) {
         mTempPreViewPhotos = preViewPhotos;
         mTempSelectPhotos = selectPhotos;
-        Intent intent = new Intent(context, PreViewActivity.class);
+        Intent intent = new Intent(activity, PreViewActivity.class);
         intent.putExtra(Constant.KEY_CLICK_POSITION, clickPos);
         intent.putExtra(Constant.KEY_MODE, mode);
-        context.startActivity(intent);
+        activity.startActivityForResult(intent, Constant.REQUEST_UPDATA_SELECT_PHOTOS);
     }
 
 }

@@ -20,7 +20,7 @@ public class Constant {
     public static final int MAX_SELECTED_PHOTO = 9;
     public static final String KEY_CLICK_POSITION = "clickPos";
     public static final String KEY_MODE = "mode";
-
+    public static final int REQUEST_UPDATA_SELECT_PHOTOS = 0;
 
     public static final int WAITING_TIME = 3000;
 

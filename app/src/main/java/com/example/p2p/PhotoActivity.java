@@ -1,7 +1,6 @@
 package com.example.p2p;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.view.View;
@@ -11,12 +10,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.library.BaseAdapter;
 import com.example.p2p.adapter.RvFolderAdapter;
 import com.example.p2p.adapter.RvPhotoAdapter;
 import com.example.p2p.app.App;
@@ -108,7 +107,6 @@ public class PhotoActivity extends BaseActivity {
 
     }
 
-    @SuppressLint("SetTextI18n")
     @Override
     protected void initCallback() {
         PermissionHelper.getInstance().with(this).requestPermission(
@@ -144,16 +142,16 @@ public class PhotoActivity extends BaseActivity {
             Photo photo = mPhotos.get(position);
             boolean isSelected = !photo.isSelect;
             if (selectCount < Constant.MAX_SELECTED_PHOTO) {
-                mPhotoAdapter.updatePhotoByPos(isSelected, position, photo);
+                mPhotoAdapter.setSelectPhotoByPos(isSelected, position, photo);
             } else if (!isSelected) {
-                mPhotoAdapter.updatePhotoByPos(false, position, photo);
+                mPhotoAdapter.setSelectPhotoByPos(false, position, photo);
             } else {
-                ToastUtils.showToast(App.getContext(), "最多只能发送" + Constant.MAX_SELECTED_PHOTO + "张图片");
+                ToastUtils.showToast(App.getContext(), getString(R.string.photo_max_btnSend, Constant.MAX_SELECTED_PHOTO));
             }
             //更新之后的选择数量
             selectCount = mPhotoAdapter.getSelectPhotoCount();
-            btnSend.setText("发送(" + selectCount + "/" + Constant.MAX_SELECTED_PHOTO + ")");
-            tvPreviewPhoto.setText("预览(" + selectCount  + ")");
+            btnSend.setText(getString(R.string.photo_btnSend, selectCount, Constant.MAX_SELECTED_PHOTO));
+            tvPreviewPhoto.setText(getString(R.string.photo_tvPreviewPhoto2, selectCount));
             if (isSelected) {
                 btnSend.setEnabled(true);
                 tvPreviewPhoto.setEnabled(true);
@@ -213,6 +211,27 @@ public class PhotoActivity extends BaseActivity {
                 break;
             default:
                 break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == RESULT_OK){
+            if(requestCode == Constant.REQUEST_UPDATA_SELECT_PHOTOS){
+                //定向刷新
+                int minPos = Integer.MAX_VALUE;
+                int maxPos = Integer.MIN_VALUE;
+                for(Photo photo : mPhotoAdapter.getSelectPhotos()){
+                    if(photo.position < minPos){
+                        minPos = photo.position;
+                    }
+                    if(photo.position > maxPos){
+                        maxPos = photo.position;
+                    }
+                }
+                mPhotoAdapter.notifyItemRangeChanged(minPos, maxPos - minPos + 1);
+            }
         }
     }
 
