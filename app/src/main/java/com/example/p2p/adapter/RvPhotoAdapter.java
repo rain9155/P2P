@@ -8,8 +8,8 @@ import com.bumptech.glide.Glide;
 import com.example.library.BaseAdapter;
 import com.example.library.BaseViewHolder;
 import com.example.p2p.R;
+import com.example.p2p.bean.Photo
 import com.example.p2p.app.App;
-import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
 import com.example.utils.ToastUtils;
 
@@ -56,9 +56,12 @@ public class RvPhotoAdapter extends BaseAdapter<Photo> {
     }
 
     public List<Photo> getSelectPhotos(){
-        return new LinkedList<>(mSelectPhotos);
+        return mSelectPhotos;
     }
 
+    /**
+     * 根据pos设置选中或取消照片，并添加或移除选中照片
+     */
     public void setSelectPhotoByPos(boolean isSelect, int pos, Photo photo){
         if(isSelect){
             mSelectPhotos.add(photo);

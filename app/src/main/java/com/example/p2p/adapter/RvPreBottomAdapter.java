@@ -7,8 +7,9 @@ import com.bumptech.glide.Glide;
 import com.example.library.BaseAdapter;
 import com.example.library.BaseViewHolder;
 import com.example.p2p.R;
-import com.example.p2p.bean.Photo;
+import com.example.utils.CommonUtil;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -17,8 +18,11 @@ import java.util.List;
  */
 public class RvPreBottomAdapter extends BaseAdapter<Photo>{
 
+    private List<Photo> mUnSelectedPhotos;
+
     public RvPreBottomAdapter(List datas, int layoutId) {
         super(datas, layoutId);
+        mUnSelectedPhotos = new LinkedList<>();
         //清空所有选中照片的选择
         for(Photo image : mDatas){
             image.isSelect = false;
@@ -41,6 +45,9 @@ public class RvPreBottomAdapter extends BaseAdapter<Photo>{
         }
     }
 
+    /**
+     * 设置选中的照片
+     */
     public void setSelectPhoto(Photo photo){
         for(Photo image : mDatas){
             image.isSelect = false;
@@ -51,14 +58,31 @@ public class RvPreBottomAdapter extends BaseAdapter<Photo>{
         notifyDataSetChanged();
     }
 
+    /**
+     * 选中照片或移除选中照片，并从列表中添加或移除
+     */
     public void updateSelectPhoto(boolean isSelect, Photo photo){
         photo.isSelect = isSelect;
         if(isSelect){
+            //如果添加的photo是来自删除列表中的，直接把它放回选择列表的原位
+            for(Photo image : mUnSelectedPhotos){
+                if(image.equals(photo)){
+                    mDatas.add(image.selectPos, photo);
+                    mUnSelectedPhotos.remove(image);
+                    notifyDataSetChanged();
+                    return;
+                }
+            }
             mDatas.add(photo);
         }else {
             mDatas.remove(photo);
+            mUnSelectedPhotos.add(new Photo(photo));
         }
         notifyDataSetChanged();
+    }
+
+    public List<Photo> getUnSelectedPhotos(){
+        return mUnSelectedPhotos;
     }
 
 }

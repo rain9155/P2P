@@ -16,6 +16,15 @@ public class Photo {
     public int position;//在预览列表中的下标
     public int selectPos;//在预览中底部列表的下标
 
+    public Photo(Photo photo){
+        this.path = photo.path;
+        this.time = photo.time;
+        this.name = photo.name;
+        this.isSelect = photo.isSelect;
+        this.position = photo.position;
+        this.selectPos = photo.selectPos;
+    }
+
     public Photo(String name, String path) {
         this.path = path;
         this.name = name;

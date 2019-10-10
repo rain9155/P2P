@@ -21,7 +21,6 @@ import com.example.p2p.adapter.RvPhotoAdapter;
 import com.example.p2p.app.App;
 import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Folder;
-import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
 import com.example.p2p.decoration.GridLayoutItemDivider;
 import com.example.p2p.utils.PhotoUtil;
@@ -35,6 +34,7 @@ import com.example.utils.ToastUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -54,8 +54,8 @@ public class PhotoActivity extends BaseActivity {
     RecyclerView rvPhotos;
     @BindView(R.id.tv_photo_data)
     TextView tvPhotoData;
-    @BindView(R.id.tv_photos)
-    TextView tvPhotos;
+    @BindView(R.id.tv_folder_name)
+    TextView tvFolderName;
     @BindView(R.id.iv_photo)
     ImageView ivPhoto;
     @BindView(R.id.ib_select_raw)
@@ -73,7 +73,6 @@ public class PhotoActivity extends BaseActivity {
     private RvPhotoAdapter mPhotoAdapter;
     private RvFolderAdapter mFolderAdapter;
     private GridLayoutManager mPhotoLayoutManager;
-    private RecyclerView rvFolders;
 
     @Override
     protected int getLayoutId() {
@@ -99,7 +98,7 @@ public class PhotoActivity extends BaseActivity {
         mShowFoldersDialog.setContentView(view);
 
         //文件夹列表
-        rvFolders = view.findViewById(R.id.rv_show_folders);
+        RecyclerView rvFolders = view.findViewById(R.id.rv_show_folders);
         mFolders = new ArrayList<>();
         mFolderAdapter = new RvFolderAdapter(mFolders, R.layout.item_photo_folders);
         rvFolders.setAdapter(mFolderAdapter);
@@ -138,29 +137,8 @@ public class PhotoActivity extends BaseActivity {
         });
         mPhotoAdapter.setOnItemChildClickListener((adapter, view, position) -> {
             if (CommonUtil.isEmptyList(mPhotos)) return;
-            int selectCount = mPhotoAdapter.getSelectPhotoCount();
-            Photo photo = mPhotos.get(position);
-            boolean isSelected = !photo.isSelect;
-            if (selectCount < Constant.MAX_SELECTED_PHOTO) {
-                mPhotoAdapter.setSelectPhotoByPos(isSelected, position, photo);
-            } else if (!isSelected) {
-                mPhotoAdapter.setSelectPhotoByPos(false, position, photo);
-            } else {
-                ToastUtils.showToast(App.getContext(), getString(R.string.photo_max_btnSend, Constant.MAX_SELECTED_PHOTO));
-            }
-            //更新之后的选择数量
-            selectCount = mPhotoAdapter.getSelectPhotoCount();
-            btnSend.setText(getString(R.string.photo_btnSend, selectCount, Constant.MAX_SELECTED_PHOTO));
-            tvPreviewPhoto.setText(getString(R.string.photo_tvPreviewPhoto2, selectCount));
-            if (isSelected) {
-                btnSend.setEnabled(true);
-                tvPreviewPhoto.setEnabled(true);
-            } else if (selectCount == 0) {
-                btnSend.setEnabled(false);
-                btnSend.setText(getString(R.string.chat_btnSend));
-                tvPreviewPhoto.setEnabled(false);
-                tvPreviewPhoto.setText(getString(R.string.photo_tvPreviewPhoto));
-            }
+            checkAndSelectPhoto(position);
+            updateSelectCount(mPhotoAdapter.getSelectPhotoCount());
         });
 
         mFolderAdapter.setOnItemClickListener((adapter, view, position) -> {
@@ -169,6 +147,7 @@ public class PhotoActivity extends BaseActivity {
             mFolderAdapter.updateFolderByPos(!mFolders.get(position).isSelect, position);
             mPhotoAdapter.setNewPhotos(mFolders.get(position).photos);
             mShowFoldersDialog.dismiss();
+            tvFolderName.setText(mFolders.get(position).name);
         });
 
         rvPhotos.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -188,10 +167,10 @@ public class PhotoActivity extends BaseActivity {
 
     }
 
-    @OnClick({R.id.tv_photos, R.id.tv_is_select, R.id.iv_back})
+    @OnClick({R.id.tv_folder_name, R.id.tv_is_select, R.id.iv_back})
     public void onViewClick(View view) {
         switch (view.getId()) {
-            case R.id.tv_photos:
+            case R.id.tv_folder_name:
                 if (mShowFoldersDialog.isShowing()) {
                     mShowFoldersDialog.dismiss();
                 } else {
@@ -201,7 +180,7 @@ public class PhotoActivity extends BaseActivity {
             case R.id.tv_is_select:
                 PreViewActivity.startActivity(
                         this,
-                        mPhotoAdapter.getSelectPhotos(),
+                        new LinkedList<>(mPhotoAdapter.getSelectPhotos()),
                         mPhotoAdapter.getSelectPhotos(),
                         0,
                         true);
@@ -218,19 +197,14 @@ public class PhotoActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == RESULT_OK){
-            if(requestCode == Constant.REQUEST_UPDATA_SELECT_PHOTOS){
-                //定向刷新
-                int minPos = Integer.MAX_VALUE;
-                int maxPos = Integer.MIN_VALUE;
-                for(Photo photo : mPhotoAdapter.getSelectPhotos()){
-                    if(photo.position < minPos){
-                        minPos = photo.position;
-                    }
-                    if(photo.position > maxPos){
-                        maxPos = photo.position;
-                    }
+            if(requestCode == Constant.REQUEST_UPDATE_SELECT_PHOTOS){
+                int[] rang = data.getIntArrayExtra(Constant.KEY_MIN_MAX_UPDATE_POS);
+                if(rang == null){
+                    mPhotoAdapter.notifyDataSetChanged();
+                }else {
+                    mPhotoAdapter.notifyItemRangeChanged(rang[0], rang[1] - rang[0] + 1);
                 }
-                mPhotoAdapter.notifyItemRangeChanged(minPos, maxPos - minPos + 1);
+                updateSelectCount(mPhotoAdapter.getSelectPhotoCount());
             }
         }
     }
@@ -248,6 +222,39 @@ public class PhotoActivity extends BaseActivity {
                 Photo photo = mPhotos.get(firstVisibleItem);
                 tvPhotoData.setText(TimeUtil.getTime(photo.time * 1000));
             }
+        }
+    }
+
+    /**
+     * 选择或取消选择照片
+     */
+    private void checkAndSelectPhoto(int position) {
+        int selectCount = mPhotoAdapter.getSelectPhotoCount();
+        Photo photo = mPhotos.get(position);
+        boolean isSelected = !photo.isSelect;
+        if (selectCount < Constant.MAX_SELECTED_PHOTO) {
+            mPhotoAdapter.setSelectPhotoByPos(isSelected, position, photo);
+        } else if (!isSelected) {
+            mPhotoAdapter.setSelectPhotoByPos(false, position, photo);
+        } else {
+            ToastUtils.showToast(App.getContext(), getString(R.string.photo_max_btnSend, Constant.MAX_SELECTED_PHOTO));
+        }
+    }
+
+    /**
+     * 更新控价的照片选择数量
+     */
+    private void updateSelectCount(int selectCount) {
+        if(selectCount == 0){
+            btnSend.setEnabled(false);
+            tvPreviewPhoto.setEnabled(false);
+            btnSend.setText(getString(R.string.chat_btnSend));
+            tvPreviewPhoto.setText(getString(R.string.photo_tvPreviewPhoto));
+        }else {
+            btnSend.setEnabled(true);
+            tvPreviewPhoto.setEnabled(true);
+            btnSend.setText(getString(R.string.photo_btnSend, selectCount, Constant.MAX_SELECTED_PHOTO));
+            tvPreviewPhoto.setText(getString(R.string.photo_tvPreviewPhoto2, selectCount));
         }
     }
 
