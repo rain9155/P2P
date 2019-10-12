@@ -59,7 +59,6 @@ import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.db.EmojiDao;
 import com.example.p2p.utils.FileUtil;
 import com.example.p2p.utils.ImageUtil;
-import com.example.p2p.utils.LogUtil;
 import com.example.p2p.widget.customView.AudioTextView;
 import com.example.p2p.widget.customView.IndicatorView;
 import com.example.p2p.widget.customView.SendButton;
@@ -73,6 +72,7 @@ import com.example.utils.CommonUtil;
 import com.example.utils.DisplayUtil;
 import com.example.utils.FileUtils;
 import com.example.utils.KeyBoardUtils;
+import com.example.utils.LogUtils;
 import com.example.utils.ToastUtils;
 import com.example.utils.listener.TextWatchListener;
 import com.nbsp.materialfilepicker.MaterialFilePicker;
@@ -701,13 +701,13 @@ public class ChatActivity extends BaseActivity {
         criteria.setCostAllowed(false);//不需要成本
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         String bestProvider = locationManager.getBestProvider(criteria, true);//得到最好的位置提供者，如GPS，netWork等
-        LogUtil.d(TAG, "provider = " + bestProvider);
+        LogUtils.d(TAG, "provider = " + bestProvider);
         mLocatingDialog.show(getSupportFragmentManager());
         ConnectManager.getInstance().executeTast(() -> {
             Location location = null;//里面存放着定位的信息,经纬度,海拔等
             if(!TextUtils.isEmpty(bestProvider)){
                 location = locationManager.getLastKnownLocation(bestProvider);
-                LogUtil.d(TAG, "location = " + location);
+                LogUtils.d(TAG, "location = " + location);
             }else {//没有最好的定位方案则手动配置
                 if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
                     location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -716,7 +716,7 @@ public class ChatActivity extends BaseActivity {
                 else if(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
                     location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
             }
-            LogUtil.d(TAG, "location = " + location);
+            LogUtils.d(TAG, "location = " + location);
             final Location finalLocation = location;
             runOnUiThread(() -> {
                 if(null == finalLocation){
@@ -737,7 +737,7 @@ public class ChatActivity extends BaseActivity {
                     String city = address.getLocality();
                     String citySub = address.getSubLocality();
                     String thoroughfare = address.getThoroughfare();
-                    LogUtil.d(TAG, "country = " + country
+                    LogUtils.d(TAG, "country = " + country
                             + ", city = " + city
                             + ", citySub = " + citySub
                             + ", fare = " + thoroughfare);
@@ -751,7 +751,7 @@ public class ChatActivity extends BaseActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                     ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
-                    LogUtil.e(TAG, "定位失败， e = " + e.getMessage());
+                    LogUtils.e(TAG, "定位失败， e = " + e.getMessage());
                 }
                 mLocatingDialog.dismiss();
             });

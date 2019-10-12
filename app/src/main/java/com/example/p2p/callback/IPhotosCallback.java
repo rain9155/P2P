@@ -3,7 +3,6 @@ package com.example.p2p.callback;
 import com.example.p2p.bean.Folder;
 import com.example.p2p.bean.Photo;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

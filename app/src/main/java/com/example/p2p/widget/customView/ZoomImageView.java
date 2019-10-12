@@ -1,358 +1,397 @@
 package com.example.p2p.widget.customView;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewParent;
 import android.view.ViewTreeObserver;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 
+import com.example.p2p.utils.LogUtils;
 
 
 /**
  * 可自由缩放的图片控件
+ * 使用ScaleGestureDetector监听缩放手势
+ * 使用GestureDetector监听双击手势
  * Create by 陈健宇 at 2018/8/14
  */
 public class ZoomImageView extends AppCompatImageView
         implements
         ViewTreeObserver.OnGlobalLayoutListener,
-        ScaleGestureDetector.OnScaleGestureListener,
         View.OnTouchListener {
 
     private final String TAG = ZoomImageView.class.getSimpleName();
-    private static final float SCALE_MAX = 3.5f;//最大缩放比例
-    private static final float SCALE_MAX_BORDER = 3.0f;//最大缩放边界
-    private float mInitScale = 1.0f;//初始化缩放比例
-    private static final float SCALE_MIN_BORDER = 0.5f;//最小缩放边界
-    private final float[] mMatrixValues = new float[9];//用于存放矩阵的9个值
-    private final Matrix mScaleMatrix = new Matrix();//缩放矩阵
-    private ScaleGestureDetector mScaleGestureDetector = null;//缩放的手势检测
-    private GestureDetector mGestureDetector = null;//双击手势检测
-    private int mLastX, mLastY;//上次触摸点坐标平均值
-    private int mLastPointerConut;//上次触摸点个数
-    private int mIntrinsicWidth, mIntrinsicHeight;
-    private boolean isCanDrag;//是否在拖动图片
-    private boolean isCheckLeftAndRight, isCheckTopAndBottom;//是否检查了边界
-    private boolean isAutoScale;//是否在双击缩放图片
-    private boolean isFirst = true;
+    private final static int EDGE_NONE = 0x000;
+    private final static int EDGE_BOTH = 0x001;
+    private final static int EDGE_RIGHT = 0x002;
+    private final static int EDGE_LEFT = 0x003;
+    private static final float MAX_SCALE = 2.0f;
+    private static final int DELAY = 10;
+
+
+    private final float[] mMatrixValues = new float[9];//用于存放图片矩阵的9个值
+    private final Matrix mImageMatrix = new Matrix();//控制图片缩放和位置的矩阵
+    private boolean isDragging;
+    private boolean isScaling;
+    private float mInitScale = 1.0f;//初始化缩放比例,等比例缩放
+    private int mImageEdge = EDGE_BOTH;//用于判断图片是否到达父容器的左右边界
+    private boolean isFirstLayout = true;
+    private View.OnClickListener mOnClickListener;
+    private ScaleGestureDetector mScaleGestureDetector;
+    private GestureDetector mGestureDetector;
+    private int mLastX, mLastY;
+    private int mLastPointerCount;
+    private int mScaledTouchSlop;
 
     public ZoomImageView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        init();
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void init() {
         setScaleType(ScaleType.MATRIX);
-        mScaleGestureDetector = new ScaleGestureDetector(getContext(), this);
-        /* 双击 */
-        mGestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+        mScaledTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
+        this.setOnTouchListener(this);
+        getViewTreeObserver().addOnGlobalLayoutListener(this);
+        mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.OnScaleGestureListener() {
+
+            /**
+             * 这里进行图片的缩放
+             */
             @Override
-            public boolean onDoubleTap(MotionEvent e) {
-                if (isAutoScale) {
+            public boolean onScale(ScaleGestureDetector detector) {
+                if (getDrawable() == null) {
                     return true;
                 }
-                Log.d(TAG, "onDoubleTap，scale：" + getScale() + " initScale: " + mInitScale);
-                if (getScale() < SCALE_MAX ) {//放大
-                    isAutoScale = true;
-                    ZoomImageView.this.postDelayed(new AutoRunnableScale(SCALE_MAX, e.getX(), e.getY()), 15);
+
+                float curImageScale = getCurImageScale();
+                float scaleFactor = detector.getScaleFactor();
+                LogUtils.d(TAG, "onScale, scaleFactor = " + scaleFactor);
+                if ((curImageScale < MAX_SCALE && scaleFactor > 1.0f) //正在放大
+                        || (curImageScale > mInitScale && scaleFactor < 1.0f)//正在缩小
+                ) {
+                    //缩放的范围控制
+                    if (scaleFactor * curImageScale < mInitScale)
+                    {
+                        scaleFactor = mInitScale / curImageScale;
+                    }
+                    if (scaleFactor * curImageScale > MAX_SCALE)
+                    {
+                        scaleFactor = MAX_SCALE / curImageScale;
+                    }
+                    //设置缩放比例
+                    mImageMatrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
+                    checkImageBounds();
+                    setImageMatrix(mImageMatrix);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onScaleBegin(ScaleGestureDetector detector) {
+                LogUtils.d(TAG, "onScaleBegin");
+                isScaling = true;
+                return true;
+            }
+
+            @Override
+            public void onScaleEnd(ScaleGestureDetector detector) {
+                LogUtils.d(TAG, "onScaleEnd");
+                isScaling = false;
+            }
+        });
+        mGestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+
+            //onSingleTapConfirmed和onDoubleTap只会回调一个，即双击的同时不会触发两次单击事件
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                LogUtils.d(TAG, "onSingleTapConfirmed");
+                if(mOnClickListener != null){
+                    mOnClickListener.onClick(ZoomImageView.this);
+                }
+                final RectF displayRect = getImageMatrixRect();
+                return displayRect.contains(e.getX(), e.getY());
+            }
+
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                LogUtils.d(TAG, "onDoubleTap");
+                if (isScaling) {
+                    return true;
+                }
+                LogUtils.d(TAG, "onDoubleTap，scale：" + getCurImageScale() + " initScale: " + mInitScale);
+                if (getCurImageScale() < MAX_SCALE) {//放大
+                    isScaling = true;
+                    ZoomImageView.this.postDelayed(
+                            new AutoScaleRunnable(MAX_SCALE, e.getX(), e.getY()),
+                            DELAY);
                 }else{//缩小
-                    isAutoScale = true;
-                    ZoomImageView.this.postDelayed(new AutoRunnableScale(mInitScale, e.getX(), e.getY()), 15);
+                    isScaling = true;
+                    ZoomImageView.this.postDelayed(
+                            new AutoScaleRunnable(mInitScale, e.getX(), e.getY()),
+                            DELAY);
                 }
                 return true;
             }
         });
-        this.setOnTouchListener(this);
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        getViewTreeObserver().addOnGlobalLayoutListener(this);
-    }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            getViewTreeObserver().removeOnGlobalLayoutListener(this);
-        }
+        getViewTreeObserver().removeOnGlobalLayoutListener(this);
     }
 
     /**
-     * 这里进行图片的初始化
+     * 这里进行图片的初始化，居中图片
+     * onGlobalLayout会在onLayout后回调
      */
     @Override
     public void onGlobalLayout() {
-        /* onLayout后回调 */
-        /* 进行图片初始化 */
-        if (isFirst) {
-            Drawable drawable = getDrawable();
-            if (drawable == null) {
-                return;
-            }
-            isFirst = false;
-            Log.d(TAG, "onGlobalLayout: " + drawable.getIntrinsicWidth() + " " + drawable.getIntrinsicHeight());
-            Log.d(TAG, "onGlobalLayout: " + getWidth() + " " + getHeight());
-            int width = getWidth();
-            int height = getWidth();
-            int dw = drawable.getIntrinsicWidth();
-            int dh = drawable.getIntrinsicHeight();
-            float scale = 1.0f;
-            /* 如果图片的宽或者高大于屏幕，则缩放至屏幕的宽或者高 */
-            if (dw > width && dh <= height)
-            {
-                scale = width * 1.0f / dw;
-            }
-            if (dh > height && dw <= width)
-            {
-                scale = height * 1.0f / dh;
-            }
-            /* 如果宽和高都大于屏幕，则让其按按比例适应屏幕大小 */
-            if (dw > width && dh > height)
-            {
-                scale = Math.min(dw * 1.0f / width, dh * 1.0f / height);
-            }
-            mInitScale = scale;
-            Log.d(TAG, "onGlobalLayout，mInitScale：" + mInitScale);
-            /* 图片移动至屏幕中心 */
-            mScaleMatrix.postTranslate((width - dw) / 2, (height - dh) / 2);
-            mScaleMatrix.postScale(mInitScale, mInitScale, getWidth() / 2, getHeight() / 2);
-            setImageMatrix(mScaleMatrix);
+        LogUtils.d(TAG, "onGlobalLayout");
+        Drawable drawable = getDrawable();
+        if (drawable == null){
+            return;
         }
+        if(isFirstLayout){
+            isFirstLayout = false;
+        }else {
+            return;
+        }
+        int width = getWidth();
+        int height = getHeight();
+        int imageWidth = drawable.getIntrinsicWidth();
+        int imageHeight = drawable.getIntrinsicHeight();
+        LogUtils.d(TAG, "onGlobalLayout: imageIntrinsicWidth = " + imageWidth + " ,imageIntrinsicHeight = " + imageHeight);
+        LogUtils.d(TAG, "onGlobalLayout: viewWidth = " + width + " ,viewHeight = " + height);
+        mInitScale = computeInitScale(imageWidth, imageHeight, width, height);
+        // 图片移动至屏幕中心
+        mImageMatrix.postTranslate((width - imageWidth) / 2f, (height - imageHeight) / 2f);
+        //图片等比例缩放
+        mImageMatrix.postScale(mInitScale, mInitScale, width / 2f, height / 2f);
+        setImageMatrix(mImageMatrix);
     }
 
-    /**
-     * 这里进行图片的缩放
-     */
-    @Override
-    public boolean onScale(ScaleGestureDetector detector) {
-        if (getDrawable() == null) {
-            return true;
-        }
-        float scale = getScale();
-        float scaleFactor = detector.getScaleFactor();
-        Log.d(TAG, "onScale, scale: " + scale + " scaleFactor: " + scaleFactor);
-        /* 缩放的范围控制 */
-        if ((scale < SCALE_MAX && scaleFactor > 1.0f) || (scale > mInitScale && scaleFactor < 1.0f))
-        {
-            /* 最大值最小值判断 */
-            if (scaleFactor * scale < mInitScale)
-            {
-                scaleFactor = mInitScale / scale;
-            }
-            if (scaleFactor * scale > SCALE_MAX)
-            {
-                scaleFactor = SCALE_MAX / scale;
-            }
-            /* 设置缩放比例 */
-            mScaleMatrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
-            checkBorderAndCenterWhenScale();
-            setImageMatrix(mScaleMatrix);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onScaleBegin(ScaleGestureDetector detector) {
-        return true;
-    }
-
-    @Override
-    public void onScaleEnd(ScaleGestureDetector detector) {
-    }
 
     /**
      * 这里进行多点触摸判断
      */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        /* 把事件分发给给GestureDetector处理 */
-        if (mGestureDetector.onTouchEvent(event)) {
+        if(getDrawable() == null) return false;
+
+        //把事件分发给给GestureDetector处理
+        if (mGestureDetector != null && mGestureDetector.onTouchEvent(event)) {
             return true;
         }
-        /* 把事件交给ScaleGestureDetector处理 */
-        mScaleGestureDetector.onTouchEvent(event);
+        //把事件交给ScaleGestureDetector处理
+        if(mScaleGestureDetector != null){
+            mScaleGestureDetector.onTouchEvent(event);
+        }
 
-        int x = 0;
-        int y = 0;
-        /* 拿到触摸点个数 */
+        boolean handle = false;
+        int touchX = 0;
+        int touchY = 0;
+
+        //拿到触摸点个数
         final int pointerCount = event.getPointerCount();
-        /* 计算出每个触摸点x，y坐标的平均值 */
+        //计算出每个触摸点x，y坐标的平均值
         for (int i = 0; i < pointerCount; i++) {
-            x += event.getX(i);
-            y += event.getY(i);
+            touchX += event.getX(i);
+            touchY += event.getY(i);
         }
-        x = x / pointerCount;
-        y = y / pointerCount;
-        /* 每当触摸点发生变化时，重置mLasX , mLastY */
-        if (mLastPointerConut != pointerCount) {
-            isCanDrag = false;
-            mLastX = x;
-            mLastY = y;
+        touchX = touchX / pointerCount;
+        touchY = touchY / pointerCount;
+
+        //每当触摸点发生变化时，重置mLasX , mLastY
+        if (mLastPointerCount != pointerCount) {
+            isDragging = false;
+            mLastX = touchX;
+            mLastY = touchY;
         }
-        mLastPointerConut = pointerCount;
-        /* 进行平移图片 */
+        mLastPointerCount = pointerCount;
+
+        //进行平移图片
+        ViewParent parent;
         switch (event.getAction()) {
-            case MotionEvent.ACTION_MOVE:
-                Log.d(TAG, "onTouch: ACTION_MOVE");
-                float deltaX = x - mLastX;
-                float deltaY = y - mLastY;
-                Log.d(TAG, "onTouch，deltaX：" + deltaX + " deltaY：" + deltaY);
-                if (!isCanDrag) {
-                    isCanDrag = Math.sqrt(deltaX * deltaX + deltaY * deltaY) >= ViewConfiguration.getTouchSlop();//判断用户是否在拖动图片
+            case MotionEvent.ACTION_DOWN:
+                LogUtils.d(TAG, "onTouch: ACTION_DOWN");
+                //首先父容器不能拦截接下来的事件，子控件要消耗ACTION_DOWN事件，这样才能保证接下来子控件能收到事件
+                 parent = v.getParent();
+                if(parent != null){
+                    parent.requestDisallowInterceptTouchEvent(true);
                 }
-                if (isCanDrag) {//如果在拖动图片
-                    RectF rect = getMatrixRectF();
-                    Log.d(TAG, "getMatrixRectF: rect.top " + rect.top + " rect.left：" + rect.left);
-                    if (getDrawable() != null) {
-                        isCheckLeftAndRight = isCheckTopAndBottom = true;
-                        if (rect.width() < getWidth()) {//如果图片宽度小于屏幕宽度，禁止左右移动
-                            deltaX = 0;
-                            isCheckLeftAndRight = false;
-                        }
-                        if (rect.height() < getHeight()) {//如果图片高度小于屏幕高度度，禁止上下移动
-                            deltaY = 0;
-                            isCheckTopAndBottom = false;
-                        }
-                        mScaleMatrix.postTranslate(deltaX, deltaY);
-                        checkMatrixBounds();
-                        setImageMatrix(mScaleMatrix);
-                    }
-                }
-                mLastX = x;
-                mLastY = y;
+                handle = true;
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                Log.d(TAG, "onTouch: ACTION_UP");
-                mLastPointerConut = 0;
+                LogUtils.d(TAG, "onTouch: ACTION_UP");
+                mLastPointerCount = 0;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                LogUtils.d(TAG, "onTouch: ACTION_MOVE");
+                float dX = touchX - mLastX;
+                float dY = touchY - mLastY;
+                if (!isDragging) {
+                    isDragging = Math.sqrt(dX * dX + dY * dY) >= mScaledTouchSlop;//判断用户是否在拖动图片
+                }
+                if (isDragging) {//如果在拖动图片
+                    mImageMatrix.postTranslate(dX, dY);
+                    checkImageBounds();
+                    setImageMatrix(mImageMatrix);
+                    handle = true;
+                }
+                //判断图片是否拖动到父容器边界，如果是，把下一个事件交给父容器
+                parent = getParent();
+                LogUtils.d(TAG, "onTouch: ACTION_MOVE, mImageEdge = " + mImageEdge + ", isDragging = " + isDragging + ", isScaling = " + isScaling);
+                if(!isScaling && !isDragging){
+                    if(mImageEdge == EDGE_BOTH
+                            || (mImageEdge == EDGE_RIGHT && dX <= -1f)
+                            || (mImageEdge == EDGE_LEFT && dX >= 1f)){
+                        if(parent != null){
+                            parent.requestDisallowInterceptTouchEvent(false);
+                        }
+                    }
+                }else {
+                    if(parent != null){
+                        parent.requestDisallowInterceptTouchEvent(true);
+                    }
+                }
+                mLastX = touchX;
+                mLastY = touchY;
                 break;
             default:
                 break;
         }
-        return true;
+
+        return handle;
     }
 
 
     /**
-     * 拖动图片时进行边界检查, 判断移动或缩放后，图片显示是否超出屏幕边界
+     * 在缩放和拖动时，进行图片显示范围的控制
      */
-    private void checkMatrixBounds() {
-        RectF rect = getMatrixRectF();
-        float deltaX = 0;
-        float deltaY = 0;
-        if (rect.top > 0 && isCheckTopAndBottom) {//顶部有空隙，上移
-            deltaY = -rect.top;
-        }
-        if (rect.bottom < getHeight() && isCheckTopAndBottom) {//底部有空隙，下移
-            deltaY = getHeight() - rect.bottom;
-        }
-        if (rect.left > 0 && isCheckLeftAndRight) {//左边有空隙，左移
-            deltaX = -rect.left;
-        }
-        if (rect.right < getWidth() && isCheckLeftAndRight) {//右边有空隙，右移
-            deltaX = getWidth() - rect.right;
-        }
-        mScaleMatrix.postTranslate(deltaX, deltaY);
-    }
-
-    /**
-     * 在缩放时，进行图片显示范围的控制
-     */
-    private void checkBorderAndCenterWhenScale() {
-        RectF rect = getMatrixRectF();
+    private void checkImageBounds() {
+        RectF rect = getImageMatrixRect();
         float deltaX = 0;
         float deltaY = 0;
         int width = getWidth();
         int height = getHeight();
-        /* 如果宽或高大于屏幕，则控制范围 */
-        if (rect.width() >= width) {
-            if (rect.left > 0)//如果左边有空隙，左移
-            {
-                deltaX = -rect.left;
-            }
-            if (rect.right < width)//如果右边有空隙，右移
-            {
-                deltaX = width - rect.right;
-            }
-        }
-        if (rect.height() >= height) {
-            if (rect.top > 0)//如果顶部有空隙，上移
-            {
-                deltaY = -rect.top;
-            }
-            if (rect.bottom < height)//如果底部有空隙，下移
-            {
-                deltaY = height - rect.bottom;
-            }
-        }
-        /* 如果宽或高小于屏幕，则让其居中 */
+        //如果图片缩放的宽或高小于屏幕，则让其居中
         if (rect.width() < width) {
+            mImageEdge = EDGE_BOTH;
             deltaX = width * 0.5f - rect.right + 0.5f * rect.width();
         }
         if (rect.height() < height) {
             deltaY = height * 0.5f - rect.bottom + 0.5f * rect.height();
         }
-        Log.d(TAG, "deltaX = " + deltaX + " , deltaY = " + deltaY);
-        mScaleMatrix.postTranslate(deltaX, deltaY);
+        //如果图片缩放的宽或高大于屏幕，则控制范围，哪里有空隙就往哪边移动
+        if (rect.width() >= width) {
+            mImageEdge = EDGE_NONE;
+            if (rect.left > 0) {//如果左边有空隙，左移
+                mImageEdge = EDGE_LEFT;
+                deltaX = -rect.left;
+            }
+            if (rect.right < width) {//如果右边有空隙，右移
+                mImageEdge = EDGE_RIGHT;
+                deltaX = width - rect.right;
+            }
+        }
+        if (rect.height() >= height) {
+            if (rect.top > 0) {//如果顶部有空隙，上移
+                deltaY = -rect.top;
+            }
+            if (rect.bottom < height) {//如果底部有空隙，下移
+                deltaY = height - rect.bottom;
+            }
+        }
+        mImageMatrix.postTranslate(deltaX, deltaY);
+    }
+
+    /**
+     * 计算初始化缩放比例，等比例缩放
+     */
+    private float computeInitScale(int imageWidth, int imageHeight, int width, int height) {
+        float scale = 1.0f;
+        if (imageWidth > width && imageHeight > height) { // 如果图片宽和高都大于屏幕，则让其按比例适应屏幕大小
+
+            scale = Math.min(width * 1.0f / imageWidth, height * 1.0f / imageHeight);
+
+        }else if(imageWidth > width){//如果图片只是宽大于屏幕
+
+            scale = width * 1.0f / imageWidth;
+
+        }else if(imageHeight > height){//如果图片只是高大于屏幕
+
+            scale = height * 1.0f / imageHeight;
+
+        }
+        return scale;
     }
 
     /**
      * 根据当前图片的Matrix获得图片的范围
-     *
-     * @return
      */
-    private RectF getMatrixRectF() {
-        Matrix matrix = mScaleMatrix;
+    private RectF getImageMatrixRect() {
         RectF rect = new RectF();
         Drawable d = getDrawable();
         if (null != d) {
             rect.set(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
-            matrix.mapRect(rect);//Matrix 的值映射到RecF中
+            mImageMatrix.mapRect(rect);//Matrix 的值映射到RecF中
         }
         return rect;
     }
 
     /**
-     * 获得图形的缩放比例
-     *
-     * @return
+     * 获得当前图形的缩放比例
      */
-    private final float getScale() {
-        mScaleMatrix.getValues(mMatrixValues);
+    private float getCurImageScale() {
+        mImageMatrix.getValues(mMatrixValues);
         return mMatrixValues[Matrix.MSCALE_X];
+    }
+
+    @Override
+    public void setOnClickListener(@Nullable OnClickListener l) {
+        mOnClickListener = l;
     }
 
     /**
      * 双击时处理图片的缩放
      */
-    class AutoRunnableScale implements Runnable {
+    class AutoScaleRunnable implements Runnable {
 
         static final float BIGGER = 1.07f;
         static final float SMALLER = 0.93f;
         private float mTargetScale;
-        private float tmpScale;
+        private float mTempScale;
         private float x;
         private float y;
 
         /**
          * 传入目标缩放值，根据目标值与当前值，判断应该放大还是缩小
          */
-        public AutoRunnableScale(float targetScale, float x, float y) {
+        public AutoScaleRunnable(float targetScale, float x, float y) {
             this.mTargetScale = targetScale;
             this.x = x;
             this.y = y;
-            if (getScale() < mTargetScale) {
-                tmpScale = BIGGER;
+            if (getCurImageScale() < mTargetScale) {
+                mTempScale = BIGGER;
             } else {
-                tmpScale = SMALLER;
+                mTempScale = SMALLER;
             }
         }
 
@@ -360,22 +399,21 @@ public class ZoomImageView extends AppCompatImageView
         public void run()
         {
             // 进行缩放
-            mScaleMatrix.postScale(tmpScale, tmpScale, x, y);
-            checkBorderAndCenterWhenScale();
-            setImageMatrix(mScaleMatrix);
-            final float currentScale = getScale();
-            //如果值在合法范围内，继续缩放
-            if (((tmpScale > 1f) && (currentScale < mTargetScale))
-                    || ((tmpScale < 1f) && (mTargetScale < currentScale)))
-            {
-                ZoomImageView.this.postDelayed(this, 15);
-            } else//设置为目标的缩放比例
-            {
+            mImageMatrix.postScale(mTempScale, mTempScale, x, y);
+            checkImageBounds();
+            setImageMatrix(mImageMatrix);
+            final float currentScale = getCurImageScale();
+            if (
+                    ((mTempScale > 1f) && (currentScale < mTargetScale)) ||
+                    ((mTempScale < 1f) && (mTargetScale < currentScale))
+            ) { //如果值在合法范围内，继续缩放
+                ZoomImageView.this.postDelayed(this, DELAY);
+            } else{//设置为目标的缩放比例
                 final float deltaScale = mTargetScale / currentScale;
-                mScaleMatrix.postScale(deltaScale, deltaScale, x, y);
-                checkBorderAndCenterWhenScale();
-                setImageMatrix(mScaleMatrix);
-                isAutoScale = false;
+                mImageMatrix.postScale(deltaScale, deltaScale, x, y);
+                checkImageBounds();
+                setImageMatrix(mImageMatrix);
+                isScaling = false;
             }
         }
     }

@@ -21,6 +21,7 @@ import com.example.p2p.adapter.RvPhotoAdapter;
 import com.example.p2p.app.App;
 import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Folder;
+import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
 import com.example.p2p.decoration.GridLayoutItemDivider;
 import com.example.p2p.utils.PhotoUtil;
@@ -108,6 +109,7 @@ public class PhotoActivity extends BaseActivity {
 
     @Override
     protected void initCallback() {
+        //加载图片
         PermissionHelper.getInstance().with(this).requestPermission(
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 new IPermissionCallback() {
@@ -126,6 +128,20 @@ public class PhotoActivity extends BaseActivity {
                     }
                 });
 
+        //照片墙
+        rvPhotos.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if(newState == RecyclerView.SCROLL_STATE_IDLE) helper.hidePhotoTime();
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                changePhotoTime(recyclerView.getScrollState());
+            }
+        });
         mPhotoAdapter.setOnItemClickListener((adapter, view, position) -> {
             PreViewActivity.startActivity(
                     this,
@@ -141,6 +157,7 @@ public class PhotoActivity extends BaseActivity {
             updateSelectCount(mPhotoAdapter.getSelectPhotoCount());
         });
 
+        //文件夹列表
         mFolderAdapter.setOnItemClickListener((adapter, view, position) -> {
             int prePos = mFolderAdapter.getPrePosition();
             if (prePos == position) return;
@@ -150,26 +167,13 @@ public class PhotoActivity extends BaseActivity {
             tvFolderName.setText(mFolders.get(position).name);
         });
 
-        rvPhotos.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                if(newState == RecyclerView.SCROLL_STATE_IDLE) helper.hidePhotoTime();
-            }
-
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                changePhotoTime(recyclerView.getScrollState());
-            }
-        });
-
 
     }
 
-    @OnClick({R.id.tv_folder_name, R.id.tv_is_select, R.id.iv_back})
+    @OnClick({R.id.tv_folder_name, R.id.tv_is_select, R.id.iv_back, R.id.iv_photo})
     public void onViewClick(View view) {
         switch (view.getId()) {
+            case R.id.iv_photo:
             case R.id.tv_folder_name:
                 if (mShowFoldersDialog.isShowing()) {
                     mShowFoldersDialog.dismiss();

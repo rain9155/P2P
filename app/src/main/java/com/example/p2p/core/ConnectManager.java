@@ -15,8 +15,8 @@ import com.example.p2p.callback.IProgressCallback;
 import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.callback.IImageReceiveCallback;
-import com.example.p2p.utils.LogUtil;
 import com.example.utils.FileUtils;
+import com.example.utils.LogUtils;
 
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
@@ -33,9 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -114,10 +112,10 @@ public class ConnectManager {
             try {
                 //创建ServerSocket监听，并绑定端口号
                 mServerSocket = new ServerSocket(PORT);
-                LogUtil.d(TAG, "开启服务端监听，端口号 = " + PORT);
+                LogUtils.d(TAG, "开启服务端监听，端口号 = " + PORT);
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtil.e(TAG, "绑定端口号失败，e = " + e.getMessage());
+                LogUtils.e(TAG, "绑定端口号失败，e = " + e.getMessage());
             }
             while (true){
                 try {
@@ -125,20 +123,20 @@ public class ConnectManager {
                     Socket socket = mServerSocket.accept();
                     String ipAddress = socket.getInetAddress().getHostAddress();
                     if(isClose(ipAddress)){
-                        LogUtil.d(TAG, "一个用户加入聊天，socket = " + socket);
+                        LogUtils.d(TAG, "一个用户加入聊天，socket = " + socket);
                         //每个客户端连接用一个线程不断的读
                         ReceiveThread receiveThread = new ReceiveThread(socket);
                         //缓存客户端的连接
                         mClients.put(ipAddress, socket);
                         //放到线程池中执行
                         mExecutor.execute(receiveThread);
-                        LogUtil.d(TAG, "已连接的客户端数量：" + mClients.size());
+                        LogUtils.d(TAG, "已连接的客户端数量：" + mClients.size());
                         //简单的心跳机制
                         heartBeat(ipAddress);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    LogUtil.e(TAG, "调用accept()监听失败， e = " + e.getMessage());
+                    LogUtils.e(TAG, "调用accept()监听失败， e = " + e.getMessage());
                     break;
                 }
             }
@@ -147,7 +145,7 @@ public class ConnectManager {
                 mServerSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtil.e(TAG, "关闭端口号失败， e = " + e.getMessage());
+                LogUtils.e(TAG, "关闭端口号失败， e = " + e.getMessage());
             }
         });
     }
@@ -159,7 +157,7 @@ public class ConnectManager {
      */
     public void connect(String targetIp, IConnectCallback callback){
         if(isContains(targetIp)){
-            LogUtil.d(TAG, "客户端连接已经存在");
+            LogUtils.d(TAG, "客户端连接已经存在");
             if(callback != null){
                 callback.onConnectSuccess(targetIp);
             }
@@ -201,7 +199,7 @@ public class ConnectManager {
     public void sendMessage(String targetIp, Mes<?> mes, IProgressCallback callback){
         Mes<?> message = mes.clone();
         if(!isContains(targetIp)){
-            LogUtil.d(TAG, "客户端连接已经断开");
+            LogUtils.d(TAG, "客户端连接已经断开");
             //重连
             connect(targetIp, new IConnectCallback() {
                 @Override
@@ -267,10 +265,10 @@ public class ConnectManager {
         if(socket != null){
             try {
                 socket.close();
-                LogUtil.d(TAG, "一个用户退出聊天，socket = " + socket);
+                LogUtils.d(TAG, "一个用户退出聊天，socket = " + socket);
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtil.d(TAG, "关闭移除的Socket连接出现错误， e = " + e.getMessage());
+                LogUtils.d(TAG, "关闭移除的Socket连接出现错误， e = " + e.getMessage());
             }
         }
     }
@@ -502,7 +500,7 @@ public class ConnectManager {
             end += MAX_SEND_DATA;
             if(end >= maxSendLen) end = maxSendLen;
             os.write(bytes, start, end - start);
-            LogUtil.d(TAG, "传送数据中，offet = " + (end - start) + ", 长度， len = " + maxSendLen);
+            LogUtils.d(TAG, "传送数据中，offet = " + (end - start) + ", 长度， len = " + maxSendLen);
             start = end;
             if(callback != null){
                 double num = (preSendLen + start) / (fileLen * 1.0);

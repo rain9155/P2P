@@ -4,8 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
- * 在照片墙展示的照片实体类
- * Created by 陈健宇 at 2019/9/27
+ * Created by 陈健宇 at 2019/10/10
  */
 public class Photo {
 
@@ -53,4 +52,5 @@ public class Photo {
                 "name = " + name +
                 "path = " + path + "]";
     }
+
 }

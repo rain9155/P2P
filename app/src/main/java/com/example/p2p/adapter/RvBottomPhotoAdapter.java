@@ -7,6 +7,7 @@ import com.bumptech.glide.Glide;
 import com.example.library.BaseAdapter;
 import com.example.library.BaseViewHolder;
 import com.example.p2p.R;
+import com.example.p2p.bean.Photo;
 import com.example.utils.CommonUtil;
 
 import java.util.LinkedList;
@@ -16,11 +17,11 @@ import java.util.List;
  * 底部预览照片列表的Adapter
  * Created by 陈健宇 at 2019/9/30
  */
-public class RvPreBottomAdapter extends BaseAdapter<Photo>{
+public class RvBottomPhotoAdapter extends BaseAdapter<Photo>{
 
     private List<Photo> mUnSelectedPhotos;
 
-    public RvPreBottomAdapter(List datas, int layoutId) {
+    public RvBottomPhotoAdapter(List datas, int layoutId) {
         super(datas, layoutId);
         mUnSelectedPhotos = new LinkedList<>();
         //清空所有选中照片的选择

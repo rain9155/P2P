@@ -10,6 +10,7 @@ import com.example.p2p.R;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.config.FileType;
 import com.example.utils.FileProvider7;
+import com.example.utils.LogUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -51,7 +52,7 @@ public class ImageUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        LogUtil.e(TAG, "保存图片失败");
+        LogUtils.e(TAG, "保存图片失败");
         return "";
     }
 

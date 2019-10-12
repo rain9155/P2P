@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory;
 
 import com.example.library.BaseViewHolder;
 import com.example.library.multiple.IMultiItemDelegate;
-import com.example.library.multiple.MultiItemDelegateManager;
 import com.example.p2p.R;
 import com.example.p2p.bean.Mes;
 import com.example.p2p.bean.User;

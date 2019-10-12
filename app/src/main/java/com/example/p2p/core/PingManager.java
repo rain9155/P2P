@@ -7,8 +7,8 @@ import android.os.Message;
 import com.example.p2p.app.App;
 import com.example.p2p.callback.IScanCallback;
 import com.example.p2p.utils.IpUtil;
-import com.example.p2p.utils.LogUtil;
 import com.example.p2p.utils.WifiUtil;
+import com.example.utils.LogUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,7 +54,7 @@ public class PingManager {
 
     private PingManager(){
         mRuntime = Runtime.getRuntime();
-        mExecutor = new ThreadPoolExecutor(
+        mExecutor =  new ThreadPoolExecutor(
                 mRuntime.availableProcessors() * 2,
                 200,
                 60L,
@@ -120,18 +120,18 @@ public class PingManager {
             process = mRuntime.exec(pingArgs + ipAddress);
             exit = process.waitFor();
             if(exit == 0){
-                LogUtil.d(TAG, "ping Ip成功， userIp = " + ipAddress);
+                LogUtils.d(TAG, "ping Ip成功， userIp = " + ipAddress);
             }else if(exit == 1){
-                LogUtil.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
+                LogUtils.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
             }else if(exit == 2){
-                LogUtil.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
+                LogUtils.d(TAG, "ping Ip失败， userIp = " + ipAddress + ", exit = " + exit);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-            LogUtil.e(TAG, "等待ping命令返回出错，" + e.getMessage());
+            LogUtils.e(TAG, "等待ping命令返回出错，" + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
-            LogUtil.e(TAG, "执行ping命令出错, " + e.getMessage());
+            LogUtils.e(TAG, "执行ping命令出错, " + e.getMessage());
         }finally {
             if(process != null) process.destroy();
         }
@@ -169,7 +169,7 @@ public class PingManager {
             try {
                 mCountDownLatch.await();
             } catch (InterruptedException e) {
-                LogUtil.d(TAG, "等待ping任务执行完毕出错， e = " + e.getMessage());
+                LogUtils.d(TAG, "等待ping任务执行完毕出错， e = " + e.getMessage());
                 e.printStackTrace();
             }
             if(mScanCallback != null){

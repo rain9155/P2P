@@ -9,7 +9,6 @@ import com.example.library.BaseAdapter;
 import com.example.library.BaseViewHolder;
 import com.example.p2p.R;
 import com.example.p2p.bean.Folder;
-import com.example.p2p.bean.Photo;
 
 import java.util.List;
 

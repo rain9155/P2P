@@ -6,6 +6,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
 import com.example.p2p.app.App;
+import com.example.utils.LogUtils;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -37,18 +38,18 @@ public class IpUtil {
                     //当address是IPV4并且不是环回测试地址时
                     if(address instanceof Inet4Address && !address.isLoopbackAddress()){
                         ip = address.getHostAddress();
-                        LogUtil.d(TAG,
+                        LogUtils.d(TAG,
                                 "网卡接口名称 = " + networkInterface.getName() +
                                 "ip地址 = " + address.getHostAddress());
                     }
                 }
             }
         } catch (SocketException e) {
-            LogUtil.e(TAG, "获取本地Ip地址失败");
+            LogUtils.e(TAG, "获取本地Ip地址失败");
             e.printStackTrace();
         }
-        if("".equals(ip)) LogUtil.d(TAG, "获取本地IP地址为空");
-        else LogUtil.d(TAG, "获取本地IP地址成功，userIp = " + ip);
+        if("".equals(ip)) LogUtils.d(TAG, "获取本地IP地址为空");
+        else LogUtils.d(TAG, "获取本地IP地址成功，userIp = " + ip);
         return ip;
     }
 
@@ -67,7 +68,7 @@ public class IpUtil {
                 (ipAddress >> 16 & 0xff),
                 (ipAddress >> 24 & 0xff)
         );
-        LogUtil.d(TAG, "获取本机ip地址， userIp = " + ip);
+        LogUtils.d(TAG, "获取本机ip地址， userIp = " + ip);
         return ip;
     }
 
@@ -77,7 +78,7 @@ public class IpUtil {
     public static String getLocIpAddressPrefix(){
         String ip = getLocIpAddress();
         String prefix = ip.substring(0, ip.lastIndexOf(".") + 1);
-        LogUtil.d(TAG, "本机ip地址的前缀为， ipPrefix = " + prefix);
+        LogUtils.d(TAG, "本机ip地址的前缀为， ipPrefix = " + prefix);
         return prefix;
     }
 

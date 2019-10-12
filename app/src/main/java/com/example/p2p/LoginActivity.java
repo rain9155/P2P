@@ -20,9 +20,7 @@ import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.utils.CommonUtil;
 import com.example.p2p.utils.FileUtil;
-import com.example.p2p.utils.ImageUtil;
 import com.example.p2p.utils.IpUtil;
-import com.example.p2p.utils.LogUtil;
 import com.example.p2p.utils.WifiUtil;
 import com.example.p2p.widget.customView.ScrollEditText;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
@@ -31,6 +29,7 @@ import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
 import com.example.utils.FileUtils;
 import com.example.utils.ImageUtils;
+import com.example.utils.LogUtils;
 import com.example.utils.ToastUtils;
 import com.example.utils.listener.TextWatchListener;
 import com.theartofdev.edmodo.cropper.CropImage;
@@ -147,7 +146,7 @@ public class LoginActivity extends AppCompatActivity {
                     ivIcon.setImageBitmap(mUserBitmap);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    LogUtil.e(TAG, "获取图片失败， e = " + e.getMessage());
+                    LogUtils.e(TAG, "获取图片失败， e = " + e.getMessage());
                     ToastUtils.showToast(App.getContext(), getString(R.string.toast_open_image_fail));
                 }
             }

@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorBlack"
-        tools:listitem="@layout/item_pre"/>
+        tools:listitem="@layout/item_pre_view"/>
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/tool_bar"
@@ -43,8 +43,6 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/colorBlack"
                 android:textSize="18sp"
-                app:layout_goneMarginStart="@dimen/dp_15"
-                android:layout_marginStart="@dimen/dp_15"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@id/iv_back"
                 app:layout_constraintTop_toTopOf="parent"

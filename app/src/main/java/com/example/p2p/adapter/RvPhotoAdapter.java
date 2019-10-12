@@ -8,12 +8,8 @@ import com.bumptech.glide.Glide;
 import com.example.library.BaseAdapter;
 import com.example.library.BaseViewHolder;
 import com.example.p2p.R;
-import com.example.p2p.bean.Photo
-import com.example.p2p.app.App;
-import com.example.p2p.config.Constant;
-import com.example.utils.ToastUtils;
+import com.example.p2p.bean.Photo;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 

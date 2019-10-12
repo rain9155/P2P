@@ -17,9 +17,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.p2p.adapter.RvBottomPhotoAdapter;
 import com.example.p2p.adapter.RvPreViewAdapter;
 import com.example.p2p.app.App;
 import com.example.p2p.base.activity.BaseActivity;
+import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
 import com.example.p2p.widget.helper.PreActivityHelper;
 import com.example.utils.CommonUtil;
@@ -63,7 +65,7 @@ public class PreViewActivity extends BaseActivity {
     private static List<Photo> mTempPreViewPhotos, mTempSelectPhotos;
     private static List<Photo> mPreViewPhotos, mSelectPhotos;//依次为预览照片列表，底部的已选择照片列表
 
-    private RvPreBottomAdapter mBottomAdapter;
+    private RvBottomPhotoAdapter mBottomAdapter;
     private RvPreViewAdapter mPreViewAdapter;
     private int mPos;
     private boolean isJumpFromPreBtn;//从PhotoActivity点击列表跳转还是点击预览跳转
@@ -88,35 +90,29 @@ public class PreViewActivity extends BaseActivity {
 
     @Override
     protected void initView() {
-        mBottomAdapter = new RvPreBottomAdapter(mSelectPhotos, R.layout.item_pre_bottom);
-        rvBottomPreView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
-        rvBottomPreView.setAdapter(mBottomAdapter);
-        mBottomAdapter.setSelectPhoto(mPreViewPhotos.get(mPos));
-
-        mPreViewAdapter = new RvPreViewAdapter(mPreViewPhotos, R.layout.item_pre);
+        //预览照片列表
+        mPreViewAdapter = new RvPreViewAdapter(mPreViewPhotos, R.layout.item_pre_view);
         rvPreView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         rvPreView.setAdapter(mPreViewAdapter);
         new PagerSnapHelper().attachToRecyclerView(rvPreView);
         rvPreView.scrollToPosition(mPos);
 
+        //底部已选择照片列表
+        mBottomAdapter = new RvBottomPhotoAdapter(mSelectPhotos, R.layout.item_pre_bottom);
+        rvBottomPreView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+        rvBottomPreView.setAdapter(mBottomAdapter);
+        mBottomAdapter.setSelectPhoto(mPreViewPhotos.get(mPos));
+
+        //初始化控件
         setBottomVisibility();
         updateTitle(mPos);
         updateSend(mSelectPhotos.size());
         ibIsSelect.setSelected(mPreViewPhotos.get(mPos).isSelect);
     }
 
-    private void setBottomVisibility() {
-        if (CommonUtil.isEmptyList(mSelectPhotos)) {
-            rvBottomPreView.setVisibility(View.INVISIBLE);
-            divider.setVisibility(View.INVISIBLE);
-        }else {
-            rvBottomPreView.setVisibility(View.VISIBLE);
-            divider.setVisibility(View.VISIBLE);
-        }
-    }
-
     @Override
     protected void initCallback() {
+        //预览照片列表
         mPreViewAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (helper.isShow()) {
                 helper.hideTopBottom(this);
@@ -124,7 +120,6 @@ public class PreViewActivity extends BaseActivity {
                 helper.showTopBottom(this);
             }
         });
-
         rvPreView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -145,6 +140,7 @@ public class PreViewActivity extends BaseActivity {
             }
         });
 
+        //底部已选择照片列表
         mBottomAdapter.setOnItemClickListener((adapter, view, position) -> {
             Photo selectPhoto = mSelectPhotos.get(position);
             rvBottomPreView.smoothScrollToPosition(position);
@@ -198,6 +194,19 @@ public class PreViewActivity extends BaseActivity {
             btnSend.setText(getString(R.string.chat_btnSend));
         }else {
             btnSend.setText(getString(R.string.photo_btnSend, count, Constant.MAX_SELECTED_PHOTO));
+        }
+    }
+
+    /**
+     * Bottom的RecyclerView
+     */
+    private void setBottomVisibility() {
+        if (CommonUtil.isEmptyList(mSelectPhotos)) {
+            rvBottomPreView.setVisibility(View.INVISIBLE);
+            divider.setVisibility(View.INVISIBLE);
+        }else {
+            rvBottomPreView.setVisibility(View.VISIBLE);
+            divider.setVisibility(View.VISIBLE);
         }
     }
 

@@ -14,8 +14,8 @@ import com.example.p2p.callback.IReceiveMessageCallback;
 import com.example.p2p.callback.IImageReceiveCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.utils.FileUtil;
-import com.example.p2p.utils.LogUtil;
 import com.example.utils.FileUtils;
+import com.example.utils.LogUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -75,7 +75,7 @@ public class ReceiveThread implements Runnable{
             try{
                 InputStream in = mSocket.getInputStream();
                 mes = receiveMessageByType(in);
-                LogUtil.d(TAG, "收到来自客户端的信息，message = " + mes);
+                LogUtils.d(TAG, "收到来自客户端的信息，message = " + mes);
                 if(mes.itemType == ItemType.OTHER){
                     if(hasImageReceviceCallback(mClientIp)){
                         mHandler.obtainMessage(TYPE_RECEIVE_USER_IMAGE, mes).sendToTarget();
@@ -90,7 +90,7 @@ public class ReceiveThread implements Runnable{
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                LogUtil.e(TAG, "获取客户端消息失败，e = " + e.getMessage());
+                LogUtils.e(TAG, "获取客户端消息失败，e = " + e.getMessage());
                 //两端的Socker连接都要关闭
                 ConnectManager.getInstance().removeConnect(mClientIp);
                 ConnectManager.getInstance().removeReceiveCallback(mClientIp);
@@ -238,7 +238,7 @@ public class ReceiveThread implements Runnable{
             in.readFully(tempBytes);
             os.write(tempBytes, 0, tempBytes.length);
             bytes = os.toByteArray();
-            LogUtil.d(TAG, "接收中，目前长度 = " + bytes.length);
+            LogUtils.d(TAG, "接收中，目前长度 = " + bytes.length);
         }
         os.close();
         return bytes;
