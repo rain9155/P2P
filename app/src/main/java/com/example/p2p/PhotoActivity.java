@@ -213,6 +213,7 @@ public class PhotoActivity extends BaseActivity {
         }
     }
 
+
     /**
      * 更新时间条时间
      */

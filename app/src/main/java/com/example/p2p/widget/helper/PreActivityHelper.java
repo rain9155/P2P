@@ -103,7 +103,7 @@ public class PreActivityHelper extends ConstraintHelper {
         bottomAnim.start();
     }
 
-    private void setStatusBarVisibility(boolean isShow) {
+    public void setStatusBarVisibility(boolean isShow) {
         if (isShow) {
             mActivity.getWindow().getDecorView()
                     .setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);

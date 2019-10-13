@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -12,7 +13,7 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewParent;
-import android.view.ViewTreeObserver;
+import android.widget.Scroller;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
@@ -23,12 +24,12 @@ import com.example.p2p.utils.LogUtils;
 /**
  * 可自由缩放的图片控件
  * 使用ScaleGestureDetector监听缩放手势
- * 使用GestureDetector监听双击手势
+ * 使用GestureDetector监听双击、单击、fling手势
  * Create by 陈健宇 at 2018/8/14
  */
 public class ZoomImageView extends AppCompatImageView
         implements
-        ViewTreeObserver.OnGlobalLayoutListener,
+        View.OnLayoutChangeListener,
         View.OnTouchListener {
 
     private final String TAG = ZoomImageView.class.getSimpleName();
@@ -37,7 +38,7 @@ public class ZoomImageView extends AppCompatImageView
     private final static int EDGE_RIGHT = 0x002;
     private final static int EDGE_LEFT = 0x003;
     private static final float MAX_SCALE = 2.0f;
-    private static final int DELAY = 10;
+    private static final int AUTO_SCALE_INTERVAL = 10;
 
 
     private final float[] mMatrixValues = new float[9];//用于存放图片矩阵的9个值
@@ -46,13 +47,14 @@ public class ZoomImageView extends AppCompatImageView
     private boolean isScaling;
     private float mInitScale = 1.0f;//初始化缩放比例,等比例缩放
     private int mImageEdge = EDGE_BOTH;//用于判断图片是否到达父容器的左右边界
-    private boolean isFirstLayout = true;
     private View.OnClickListener mOnClickListener;
     private ScaleGestureDetector mScaleGestureDetector;
     private GestureDetector mGestureDetector;
+    private Scroller mFlingScroller;
     private int mLastX, mLastY;
     private int mLastPointerCount;
-    private int mScaledTouchSlop;
+    private float mScaledTouchSlop;
+    private float mMinFlingVelocity;
 
     public ZoomImageView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -63,10 +65,13 @@ public class ZoomImageView extends AppCompatImageView
     private void init() {
         setScaleType(ScaleType.MATRIX);
         mScaledTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
-        this.setOnTouchListener(this);
-        getViewTreeObserver().addOnGlobalLayoutListener(this);
-        mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.OnScaleGestureListener() {
+        mMinFlingVelocity = ViewConfiguration.get(getContext()).getScaledMinimumFlingVelocity();
+        mFlingScroller = new Scroller(getContext());
 
+        this.setOnTouchListener(this);
+        this.addOnLayoutChangeListener(this);
+
+        mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.OnScaleGestureListener() {
             /**
              * 这里进行图片的缩放
              */
@@ -83,18 +88,15 @@ public class ZoomImageView extends AppCompatImageView
                         || (curImageScale > mInitScale && scaleFactor < 1.0f)//正在缩小
                 ) {
                     //缩放的范围控制
-                    if (scaleFactor * curImageScale < mInitScale)
-                    {
+                    if (scaleFactor * curImageScale < mInitScale) {
                         scaleFactor = mInitScale / curImageScale;
                     }
-                    if (scaleFactor * curImageScale > MAX_SCALE)
-                    {
+                    if (scaleFactor * curImageScale > MAX_SCALE){
                         scaleFactor = MAX_SCALE / curImageScale;
                     }
                     //设置缩放比例
                     mImageMatrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
-                    checkImageBounds();
-                    setImageMatrix(mImageMatrix);
+                    checkAndSetImageMatrix();
                 }
                 return true;
             }
@@ -112,6 +114,7 @@ public class ZoomImageView extends AppCompatImageView
                 isScaling = false;
             }
         });
+
         mGestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
 
             //onSingleTapConfirmed和onDoubleTap只会回调一个，即双击的同时不会触发两次单击事件
@@ -132,60 +135,55 @@ public class ZoomImageView extends AppCompatImageView
                 if (isScaling) {
                     return true;
                 }
-                LogUtils.d(TAG, "onDoubleTap，scale：" + getCurImageScale() + " initScale: " + mInitScale);
                 if (getCurImageScale() < MAX_SCALE) {//放大
                     isScaling = true;
                     ZoomImageView.this.postDelayed(
                             new AutoScaleRunnable(MAX_SCALE, e.getX(), e.getY()),
-                            DELAY);
+                            AUTO_SCALE_INTERVAL);
                 }else{//缩小
                     isScaling = true;
                     ZoomImageView.this.postDelayed(
                             new AutoScaleRunnable(mInitScale, e.getX(), e.getY()),
-                            DELAY);
+                            AUTO_SCALE_INTERVAL);
                 }
                 return true;
             }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                LogUtils.d(TAG, "onFling,  velocityX = " + velocityX + ", velocityY = " + velocityY);
+                if(Math.max(velocityX, velocityY) >= mMinFlingVelocity){
+                    ZoomImageView.this.post(new AutoFlingRunnable(e2.getX(), e2.getY(), velocityX, velocityY));
+                }
+                return false;
+            }
+
         });
-    }
-
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        getViewTreeObserver().removeOnGlobalLayoutListener(this);
     }
 
     /**
      * 这里进行图片的初始化，居中图片
-     * onGlobalLayout会在onLayout后回调
+     * onSizeChanged会在onLayout后回调
      */
     @Override
-    public void onGlobalLayout() {
-        LogUtils.d(TAG, "onGlobalLayout");
-        Drawable drawable = getDrawable();
-        if (drawable == null){
-            return;
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        LogUtils.d(TAG, "onSizeChanged，w = " + w + ", ow = " + oldw);
+        if(w != oldw || h != oldh){
+            resetImageMatrix(getDrawable());
         }
-        if(isFirstLayout){
-            isFirstLayout = false;
-        }else {
-            return;
-        }
-        int width = getWidth();
-        int height = getHeight();
-        int imageWidth = drawable.getIntrinsicWidth();
-        int imageHeight = drawable.getIntrinsicHeight();
-        LogUtils.d(TAG, "onGlobalLayout: imageIntrinsicWidth = " + imageWidth + " ,imageIntrinsicHeight = " + imageHeight);
-        LogUtils.d(TAG, "onGlobalLayout: viewWidth = " + width + " ,viewHeight = " + height);
-        mInitScale = computeInitScale(imageWidth, imageHeight, width, height);
-        // 图片移动至屏幕中心
-        mImageMatrix.postTranslate((width - imageWidth) / 2f, (height - imageHeight) / 2f);
-        //图片等比例缩放
-        mImageMatrix.postScale(mInitScale, mInitScale, width / 2f, height / 2f);
-        setImageMatrix(mImageMatrix);
     }
 
+    /**
+     * 当前控件的边界坐标改变时，会调用，此时要重置图片
+     */
+    @Override
+    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        LogUtils.d(TAG, "onLayoutChange, left = " + left + ", oLeft = " + oldLeft);
+        if(left != oldLeft || right != oldRight || bottom != oldBottom || top != oldTop){
+            resetImageMatrix(getDrawable());
+        }
+    }
 
     /**
      * 这里进行多点触摸判断
@@ -219,7 +217,6 @@ public class ZoomImageView extends AppCompatImageView
 
         //每当触摸点发生变化时，重置mLasX , mLastY
         if (mLastPointerCount != pointerCount) {
-            isDragging = false;
             mLastX = touchX;
             mLastY = touchY;
         }
@@ -229,47 +226,43 @@ public class ZoomImageView extends AppCompatImageView
         ViewParent parent;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                LogUtils.d(TAG, "onTouch: ACTION_DOWN");
                 //首先父容器不能拦截接下来的事件，子控件要消耗ACTION_DOWN事件，这样才能保证接下来子控件能收到事件
                  parent = v.getParent();
                 if(parent != null){
                     parent.requestDisallowInterceptTouchEvent(true);
                 }
                 handle = true;
+                isDragging = false;
+                mFlingScroller.forceFinished(true);
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                LogUtils.d(TAG, "onTouch: ACTION_UP");
+                //触摸点数置零
                 mLastPointerCount = 0;
                 break;
             case MotionEvent.ACTION_MOVE:
-                LogUtils.d(TAG, "onTouch: ACTION_MOVE");
                 float dX = touchX - mLastX;
                 float dY = touchY - mLastY;
                 if (!isDragging) {
                     isDragging = Math.sqrt(dX * dX + dY * dY) >= mScaledTouchSlop;//判断用户是否在拖动图片
                 }
-                if (isDragging) {//如果在拖动图片
+                if(isDragging && !isScaling) {
                     mImageMatrix.postTranslate(dX, dY);
-                    checkImageBounds();
-                    setImageMatrix(mImageMatrix);
-                    handle = true;
-                }
-                //判断图片是否拖动到父容器边界，如果是，把下一个事件交给父容器
-                parent = getParent();
-                LogUtils.d(TAG, "onTouch: ACTION_MOVE, mImageEdge = " + mImageEdge + ", isDragging = " + isDragging + ", isScaling = " + isScaling);
-                if(!isScaling && !isDragging){
+                    checkAndSetImageMatrix();
+                    parent = getParent();
+                    //判断图片是否拖动到父容器边界，如果是，把下一个事件交给父容器
                     if(mImageEdge == EDGE_BOTH
                             || (mImageEdge == EDGE_RIGHT && dX <= -1f)
                             || (mImageEdge == EDGE_LEFT && dX >= 1f)){
                         if(parent != null){
                             parent.requestDisallowInterceptTouchEvent(false);
                         }
+                    }else {
+                        if(parent != null){
+                            parent.requestDisallowInterceptTouchEvent(true);
+                        }
                     }
-                }else {
-                    if(parent != null){
-                        parent.requestDisallowInterceptTouchEvent(true);
-                    }
+                    handle = true;
                 }
                 mLastX = touchX;
                 mLastY = touchY;
@@ -277,10 +270,45 @@ public class ZoomImageView extends AppCompatImageView
             default:
                 break;
         }
-
         return handle;
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        removeOnLayoutChangeListener(this);
+    }
+
+    @Override
+    public void setImageDrawable(Drawable drawable) {
+        super.setImageDrawable(drawable);
+        resetImageMatrix(drawable);
+    }
+
+    @Override
+    public void setImageResource(int resId) {
+        super.setImageResource(resId);
+        resetImageMatrix(getDrawable());
+    }
+
+    @Override
+    public void setImageURI(Uri uri) {
+        super.setImageURI(uri);
+        resetImageMatrix(getDrawable());
+    }
+
+    @Override
+    public void setOnClickListener(@Nullable OnClickListener l) {
+        mOnClickListener = l;
+    }
+
+    /**
+     * 检查边界并设置图片的Matrix
+     */
+    private void checkAndSetImageMatrix() {
+        checkImageBounds();
+        setImageMatrix(mImageMatrix);
+    }
 
     /**
      * 在缩放和拖动时，进行图片显示范围的控制
@@ -321,6 +349,25 @@ public class ZoomImageView extends AppCompatImageView
         }
         mImageMatrix.postTranslate(deltaX, deltaY);
     }
+
+    /**
+     * 重置ImageMatrix
+     */
+    private void resetImageMatrix(Drawable drawable) {
+        if(drawable == null) return;
+        mImageMatrix.reset();
+        int width = getWidth();
+        int height = getHeight();
+        int imageWidth = drawable.getIntrinsicWidth();
+        int imageHeight = drawable.getIntrinsicHeight();
+        mInitScale = computeInitScale(imageWidth, imageHeight, width, height);
+        // 图片移动至屏幕中心
+        mImageMatrix.postTranslate((width - imageWidth) / 2f, (height - imageHeight) / 2f);
+        //图片等比例缩放
+        mImageMatrix.postScale(mInitScale, mInitScale, width / 2f, height / 2f);
+        setImageMatrix(mImageMatrix);
+    }
+
 
     /**
      * 计算初始化缩放比例，等比例缩放
@@ -364,13 +411,73 @@ public class ZoomImageView extends AppCompatImageView
         return mMatrixValues[Matrix.MSCALE_X];
     }
 
-    @Override
-    public void setOnClickListener(@Nullable OnClickListener l) {
-        mOnClickListener = l;
+    /**
+     * fling时处理图片移动
+     */
+    class AutoFlingRunnable implements Runnable{
+
+        private int mLastX;
+        private int mLastY;
+
+        public AutoFlingRunnable(float x, float y, float velocityX, float velocityY){
+            fling(x, y, velocityX, velocityY);
+        }
+
+        private void fling(float x, float y, float velocityX, float velocityY){
+
+            RectF displayRect = getImageMatrixRect();
+            float imageWidth = displayRect.width();
+            float imageHeight = displayRect.height();
+            float width = getWidth();
+            float height = getHeight();
+
+            int startX = Math.round(x);
+            int startY = Math.round(y);
+            int vX = Math.round(velocityX);
+            int vY = Math.round(velocityY);
+            int maxX, maxY;
+
+            if(imageWidth <= width){
+                maxX = startX;
+            }else {
+                maxX = Math.round(imageWidth - width);
+            }
+
+            if(imageHeight <= height){
+                maxY = startY;
+            }else {
+                maxY = Math.round(imageHeight - height);
+            }
+
+            if(startX != maxX || startY != maxY){
+                mFlingScroller.fling(startX, startY, vX, vY, 0, maxX, 0, maxY);
+            }
+            LogUtils.d(TAG,
+                    "mFlingScroller, startX = " + mFlingScroller.getStartX() + ", startY = " + mFlingScroller.getStartY()
+                            + ", finalX = " + mFlingScroller.getFinalX() + ", finalY = " + mFlingScroller.getFinalY());
+            mLastX = startX;
+            mLastY = startY;
+        }
+
+        @Override
+        public void run() {
+            if(mFlingScroller.isFinished()) return;
+            if(mFlingScroller.computeScrollOffset()){
+                int curX = mFlingScroller.getCurrX();
+                int curY = mFlingScroller.getCurrY();
+                int dX = curX - mLastX;
+                int dY = curY - mLastY;
+                mImageMatrix.postTranslate(dX, dY);
+                checkAndSetImageMatrix();
+                mLastX = curX;
+                mLastY = curY;
+                ZoomImageView.this.post(this);
+            }
+        }
     }
 
     /**
-     * 双击时处理图片的缩放
+     * 双击时处理图片缩放
      */
     class AutoScaleRunnable implements Runnable {
 
@@ -400,19 +507,17 @@ public class ZoomImageView extends AppCompatImageView
         {
             // 进行缩放
             mImageMatrix.postScale(mTempScale, mTempScale, x, y);
-            checkImageBounds();
-            setImageMatrix(mImageMatrix);
+            checkAndSetImageMatrix();
             final float currentScale = getCurImageScale();
             if (
                     ((mTempScale > 1f) && (currentScale < mTargetScale)) ||
                     ((mTempScale < 1f) && (mTargetScale < currentScale))
             ) { //如果值在合法范围内，继续缩放
-                ZoomImageView.this.postDelayed(this, DELAY);
+                ZoomImageView.this.postDelayed(this, AUTO_SCALE_INTERVAL);
             } else{//设置为目标的缩放比例
                 final float deltaScale = mTargetScale / currentScale;
                 mImageMatrix.postScale(deltaScale, deltaScale, x, y);
-                checkImageBounds();
-                setImageMatrix(mImageMatrix);
+                checkAndSetImageMatrix();
                 isScaling = false;
             }
         }

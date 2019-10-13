@@ -42,7 +42,7 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".ChatActivity"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

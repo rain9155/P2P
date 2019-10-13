@@ -172,6 +172,16 @@ public class PreViewActivity extends BaseActivity {
     }
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if(hasFocus){
+            if(!helper.isShow()){
+                helper.setStatusBarVisibility(false);
+            }
+        }
+    }
+
+    @Override
     public void finish() {
         setResultOk();
         super.finish();
