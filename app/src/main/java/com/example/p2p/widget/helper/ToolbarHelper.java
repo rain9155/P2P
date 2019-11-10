@@ -12,12 +12,13 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.example.p2p.R;
 import com.example.p2p.utils.CommonUtil;
 import com.example.utils.DisplayUtil;
+import com.example.utils.StatusBarUtils;
 
 /**
  * PreActivity界面用来控制显示和隐藏toolBar和bottom的ConstraintHelper
  * Created by 陈健宇 at 2019/9/30
  */
-public class PreActivityHelper extends ConstraintHelper {
+public class ToolbarHelper extends ConstraintHelper {
 
     private final static int ANIM_TIME = 300;
     private final static int DELAY = 100;
@@ -29,7 +30,7 @@ public class PreActivityHelper extends ConstraintHelper {
     private Activity mActivity;
     private boolean isShow = true;
 
-    public PreActivityHelper(Context context, AttributeSet attrs) {
+    public ToolbarHelper(Context context, AttributeSet attrs) {
         super(context, attrs);
         mTopAnim = ObjectAnimator.ofFloat(null, ANIM_PROPERTY_TRANSLATION, 0);
     }

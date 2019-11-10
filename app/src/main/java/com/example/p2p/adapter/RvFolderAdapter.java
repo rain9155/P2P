@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.example.library.BaseAdapter;
 import com.example.library.BaseViewHolder;
+import com.example.myglide.MyGlide;
 import com.example.p2p.R;
 import com.example.p2p.bean.Folder;
 
@@ -26,11 +27,15 @@ public class RvFolderAdapter extends BaseAdapter<Folder>{
 
     @Override
     protected void onBindView(BaseViewHolder holder, Folder item) {
-        Glide.with(holder.getItemView())
-                .load(item.coverPath)
-                .into((ImageView) holder.getView(R.id.iv_photo));
+//        Glide.with(holder.getItemView())
+//                .load(item.coverPath)
+//                .into((ImageView) holder.getView(R.id.iv_photo));
 
-        holder.setText(R.id.tv_count, String.valueOf(item.photos.size()))
+        MyGlide.with(holder.getItemView().getContext())
+                .load(item.coverPath)
+                .into(holder.getView(R.id.iv_photo));
+
+        holder.setText(R.id.tv_count, "("  + item.photos.size() + ")")
                 .setText(R.id.tv_title, item.name);
 
         ImageButton ibSelect = holder.getView(R.id.ib_select_folder);

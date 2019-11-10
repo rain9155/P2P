@@ -30,4 +30,9 @@
 
     </style>
 
+    <style name="PopupWindowAnim">
+        <item name="android:windowEnterAnimation">@anim/popup_folders_enter</item>
+
+    </style>
+
 </resources>

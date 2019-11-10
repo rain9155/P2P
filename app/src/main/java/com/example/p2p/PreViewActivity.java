@@ -23,7 +23,7 @@ import com.example.p2p.app.App;
 import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
-import com.example.p2p.widget.helper.PreActivityHelper;
+import com.example.p2p.widget.helper.ToolbarHelper;
 import com.example.utils.CommonUtil;
 import com.example.utils.StatusBarUtils;
 import com.example.utils.ToastUtils;
@@ -55,8 +55,8 @@ public class PreViewActivity extends BaseActivity {
     TextView tvIsSelect;
     @BindView(R.id.cl_bottom)
     ConstraintLayout clBottom;
-    @BindView(R.id.helper)
-    PreActivityHelper helper;
+    @BindView(R.id.helper_change_time)
+    ToolbarHelper helper;
     @BindView(R.id.rv_preView)
     RecyclerView rvPreView;
     @BindView(R.id.ib_is_select)

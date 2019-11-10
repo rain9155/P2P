@@ -14,7 +14,7 @@
     <color name="colorGreenSelected">#81C784</color>
     <color name="colorGreenEnabled">#D2F3D2</color>
     <color name="colorGreenSend">#6AEC6A</color>
-    <color name="colorDisEnable">#B3FFFFFF</color>
+    <color name="colorDisable">#B3FFFFFF</color>
     <color name="colorDivider">#CBD9D9D9</color>
     <color name="colorIndicator">#6DB6B6B6</color>
     <color name="colorIndicatorSelected">#FF888888</color>
@@ -23,6 +23,9 @@
     <color name="colorPopupBg">#616161</color>
     <color name="colorAudioCancel">#83D83E3E</color>
     <color name="colorPhotoData">#9e111212</color>
-    <color name="colorPhotoBottomBg">#424242</color>
+    <color name="colorPhotoBg">#424242</color>
     <color name="colorPreViewBottomBg">#B4424242</color>
+    <color name="colorPhotoGroupBg">#616161</color>
+    <color name="colorFoldersPress">#353434</color>
+    <color name="colorBackPress">#41D9D9D9</color>
 </resources>

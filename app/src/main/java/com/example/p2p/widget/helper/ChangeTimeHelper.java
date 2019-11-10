@@ -15,14 +15,14 @@ import androidx.interpolator.view.animation.LinearOutSlowInInterpolator;
  * PhotoActivity界面控制时间条显示和隐藏的ConstraintHelper
  * Created by 陈健宇 at 2019/10/1
  */
-public class PhotoActivityHelper extends ConstraintHelper {
+public class ChangeTimeHelper extends ConstraintHelper {
 
     private final static String ANIM_PROPERTY_ALPHA = "alpha";
     private ObjectAnimator mHideTimeAnimator;
     private ObjectAnimator mShowTimeAnimator;
     private View mTimeView;
 
-    public PhotoActivityHelper(Context context, AttributeSet attrs) {
+    public ChangeTimeHelper(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 

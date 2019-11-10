@@ -5,13 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/colorPhotoBg"
     tools:context=".PhotoActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/tool_bar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorPrimary"
+        android:background="@color/colorPhotoBg"
         app:contentInsetStart="@dimen/dp_0"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -19,28 +20,59 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <ImageView
+            <ImageButton
                 android:id="@+id/iv_back"
                 android:layout_width="@dimen/dp_40"
                 android:layout_height="@dimen/dp_40"
-                android:src="@drawable/ic_back"
-                android:padding="@dimen/dp_10"
-                android:background="@drawable/select_bar_iv"
+                android:src="@drawable/ic_done"
+                android:padding="@dimen/dp_5"
+                android:background="@drawable/select_photo_back"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toLeftOf="@+id/tv_title"/>
 
+            <androidx.constraintlayout.helper.widget.Layer
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/dp_10"
+                android:background="@drawable/bg_photo_group"
+                app:constraint_referenced_ids="iv_arrow, tv_title"
+                tools:ignore="MissingConstraints" />
+
             <TextView
                 android:id="@+id/tv_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/colorBlack"
-                android:textSize="18sp"
+                android:textColor="@color/colorWhite"
+                android:textSize="@dimen/sp_16"
                 android:text="@string/photo_tvTitle"
+                android:maxLines="1"
+                android:maxWidth="@dimen/dp_100"
+                android:ellipsize="end"
+                android:layout_marginStart="@dimen/dp_10"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@id/iv_back"
                 app:layout_constraintTop_toTopOf="parent" />
+
+
+            <com.example.p2p.widget.helper.ChangeArrowHelper
+                android:id="@+id/helper_change_arrow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:constraint_referenced_ids="iv_arrow"
+                tools:ignore="MissingConstraints" />
+
+
+            <ImageButton
+                android:id="@+id/iv_arrow"
+                android:layout_width="@dimen/dp_30"
+                android:layout_height="@dimen/dp_30"
+                android:src="@drawable/ic_arrow"
+                android:background="@null"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/tv_title"/>
 
             <Button
                 android:id="@+id/btn_send"
@@ -78,54 +110,41 @@
         app:layout_constraintTop_toBottomOf="@id/tool_bar"
         tools:text="今天"/>
 
-    <com.example.p2p.widget.helper.PhotoActivityHelper
-        android:id="@+id/helper"
+    <com.example.p2p.widget.helper.ChangeTimeHelper
+        android:id="@+id/helper_change_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:constraint_referenced_ids="tv_photo_data"
         tools:ignore="MissingConstraints" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_photo_bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPhotoBottomBg"
+        android:background="@color/colorPhotoBg"
         android:padding="@dimen/dp_10"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <TextView
-            android:id="@+id/tv_folder_name"
+            android:id="@+id/tv_is_select"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/photo_tvPhotos"
+            android:text="@string/photo_tvPreviewPhoto"
             android:textColor="@color/white"
-            android:textSize="@dimen/sp_16"
             android:padding="@dimen/dp_5"
+            android:textSize="@dimen/sp_16"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"/>
-
-        <ImageView
-            android:id="@+id/iv_photo"
-            android:layout_width="@dimen/dp_10"
-            android:layout_height="@dimen/dp_10"
-            android:src="@drawable/ic_photo_indicator"
-            android:tint="@color/white"
-            app:layout_constraintBottom_toBottomOf="@id/tv_folder_name"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/tv_folder_name"/>
-
-
 
         <ImageButton
             android:id="@+id/ib_select_raw"
             android:layout_width="@dimen/dp_25"
             android:layout_height="@dimen/dp_25"
             android:background="@drawable/select_photo_raw"
-            app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/iv_photo"
-            app:layout_constraintRight_toLeftOf="@+id/tv_raw_photo"/>
+            app:layout_constraintRight_toRightOf="parent" />
 
 
         <TextView
@@ -138,21 +157,8 @@
             android:textSize="@dimen/sp_16"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/ib_select_raw"
-            app:layout_constraintRight_toLeftOf="@+id/tv_is_select"/>
+            app:layout_constraintRight_toLeftOf="@id/ib_select_raw" />
 
-
-        <TextView
-            android:id="@+id/tv_is_select"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/photo_tvPreviewPhoto"
-            android:textColor="@color/white"
-            android:padding="@dimen/dp_5"
-            android:textSize="@dimen/sp_16"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintRight_toRightOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

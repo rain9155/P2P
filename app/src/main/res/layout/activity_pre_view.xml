@@ -17,7 +17,7 @@
         android:id="@+id/tool_bar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorPrimary"
+        android:background="@color/colorPhotoBg"
         app:contentInsetStart="@dimen/dp_0"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -29,9 +29,9 @@
                 android:id="@+id/iv_back"
                 android:layout_width="@dimen/dp_40"
                 android:layout_height="@dimen/dp_40"
-                android:src="@drawable/ic_back"
+                android:src="@drawable/ic_back_white"
                 android:padding="@dimen/dp_10"
-                android:background="@drawable/select_bar_iv"
+                android:background="@drawable/select_photo_back"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
@@ -41,7 +41,7 @@
                 android:id="@+id/tv_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/colorBlack"
+                android:textColor="@color/colorWhite"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toRightOf="@id/iv_back"
@@ -135,8 +135,8 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.example.p2p.widget.helper.PreActivityHelper
-        android:id="@+id/helper"
+    <com.example.p2p.widget.helper.ToolbarHelper
+        android:id="@+id/helper_change_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:constraint_referenced_ids="tool_bar,rv_bottom_preView,divider,cl_bottom"

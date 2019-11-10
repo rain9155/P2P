@@ -36,7 +36,7 @@ import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.utils.WifiUtil;
-import com.example.p2p.widget.dialog.WindowPopup;
+import com.example.p2p.widget.dialog.MenuPopup;
 import com.example.p2p.widget.dialog.ConnectingDialog;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
 import com.example.permission.PermissionHelper;
@@ -75,7 +75,7 @@ public class MainActivity extends BaseActivity {
     private ConnectingDialog mConnectingDialog;
     private List<User> mOnlineUsers;
     private WifiConnectionReceiver mNetWorkConnectionReceiver;
-    private WindowPopup mWindowPopup;
+    private MenuPopup mWindowPopup;
     private int mPosition;
     private long mLastPressTime;
 
@@ -164,7 +164,7 @@ public class MainActivity extends BaseActivity {
         rvMain.setAdapter(mRvMainAdapter);
         mGotoWifiSettingsDialog = new GotoWifiSettingsDialog();
         mConnectingDialog = new ConnectingDialog();
-        mWindowPopup = new WindowPopup(this);
+        mWindowPopup = new MenuPopup(this);
         PermissionHelper.getInstance().with(this).requestPermission(
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 new IPermissionCallback() {
