@@ -18,7 +18,7 @@ import android.widget.Scroller;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 
-import com.example.p2p.utils.LogUtils;
+import com.example.p2p.utils.Log;
 
 
 /**
@@ -83,7 +83,7 @@ public class ZoomImageView extends AppCompatImageView
 
                 float curImageScale = getCurImageScale();
                 float scaleFactor = detector.getScaleFactor();
-                LogUtils.d(TAG, "onScale, scaleFactor = " + scaleFactor);
+                Log.d(TAG, "onScale, scaleFactor = " + scaleFactor);
                 if ((curImageScale < MAX_SCALE && scaleFactor > 1.0f) //正在放大
                         || (curImageScale > mInitScale && scaleFactor < 1.0f)//正在缩小
                 ) {
@@ -103,14 +103,14 @@ public class ZoomImageView extends AppCompatImageView
 
             @Override
             public boolean onScaleBegin(ScaleGestureDetector detector) {
-                LogUtils.d(TAG, "onScaleBegin");
+                Log.d(TAG, "onScaleBegin");
                 isScaling = true;
                 return true;
             }
 
             @Override
             public void onScaleEnd(ScaleGestureDetector detector) {
-                LogUtils.d(TAG, "onScaleEnd");
+                Log.d(TAG, "onScaleEnd");
                 isScaling = false;
             }
         });
@@ -121,7 +121,7 @@ public class ZoomImageView extends AppCompatImageView
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
-                LogUtils.d(TAG, "onSingleTapConfirmed");
+                Log.d(TAG, "onSingleTapConfirmed");
                 if(mOnClickListener != null){
                     mOnClickListener.onClick(ZoomImageView.this);
                 }
@@ -131,7 +131,7 @@ public class ZoomImageView extends AppCompatImageView
 
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                LogUtils.d(TAG, "onDoubleTap");
+                Log.d(TAG, "onDoubleTap");
                 if (isScaling) {
                     return true;
                 }
@@ -151,7 +151,7 @@ public class ZoomImageView extends AppCompatImageView
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                LogUtils.d(TAG, "onFling,  velocityX = " + velocityX + ", velocityY = " + velocityY);
+                Log.d(TAG, "onFling,  velocityX = " + velocityX + ", velocityY = " + velocityY);
                 if(Math.max(velocityX, velocityY) >= mMinFlingVelocity){
                     ZoomImageView.this.post(new AutoFlingRunnable(e2.getX(), e2.getY(), velocityX, velocityY));
                 }
@@ -168,7 +168,7 @@ public class ZoomImageView extends AppCompatImageView
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        LogUtils.d(TAG, "onSizeChanged，w = " + w + ", ow = " + oldw);
+        Log.d(TAG, "onSizeChanged，w = " + w + ", ow = " + oldw);
         if(w != oldw || h != oldh){
             resetImageMatrix(getDrawable());
         }
@@ -179,7 +179,7 @@ public class ZoomImageView extends AppCompatImageView
      */
     @Override
     public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        LogUtils.d(TAG, "onLayoutChange, left = " + left + ", oLeft = " + oldLeft);
+        Log.d(TAG, "onLayoutChange, left = " + left + ", oLeft = " + oldLeft);
         if(left != oldLeft || right != oldRight || bottom != oldBottom || top != oldTop){
             resetImageMatrix(getDrawable());
         }
@@ -452,7 +452,7 @@ public class ZoomImageView extends AppCompatImageView
             if(startX != maxX || startY != maxY){
                 mFlingScroller.fling(startX, startY, vX, vY, 0, maxX, 0, maxY);
             }
-            LogUtils.d(TAG,
+            Log.d(TAG,
                     "mFlingScroller, startX = " + mFlingScroller.getStartX() + ", startY = " + mFlingScroller.getStartY()
                             + ", finalX = " + mFlingScroller.getFinalX() + ", finalY = " + mFlingScroller.getFinalY());
             mLastX = startX;

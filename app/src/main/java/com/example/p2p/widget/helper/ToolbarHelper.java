@@ -6,11 +6,14 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintHelper;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 
 import com.example.p2p.R;
 import com.example.p2p.utils.CommonUtil;
+import com.example.p2p.utils.StatusBarUtil;
 import com.example.utils.DisplayUtil;
 import com.example.utils.StatusBarUtils;
 
@@ -106,9 +109,9 @@ public class ToolbarHelper extends ConstraintHelper {
 
     public void setStatusBarVisibility(boolean isShow) {
         if (isShow) {
-            mActivity.getWindow().getDecorView()
-                    .setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-            CommonUtil.darkMode(mActivity, true);
+            StatusBarUtil.immersive(
+                    (AppCompatActivity)getContext(),
+                    ContextCompat.getColor(getContext(), R.color.colorPhotoBg));
         } else {
             mActivity.getWindow().getDecorView()
                     .setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN);

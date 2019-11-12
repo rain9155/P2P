@@ -36,15 +36,17 @@ import com.example.permission.PermissionHelper;
 import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
 import com.example.utils.CommonUtil;
+import com.example.utils.DisplayUtil;
 import com.example.utils.StatusBarUtils;
 import com.example.utils.ToastUtils;
+import com.lxj.xpopup.XPopup;
+import com.lxj.xpopup.enums.PopupAnimation;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class PhotoActivity extends BaseActivity {
@@ -86,7 +88,7 @@ public class PhotoActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        StatusBarUtils.immersive(getWindow(), R.color.colorPhotoBg);
+        StatusBarUtils.immersive(getWindow(), ContextCompat.getColor(this, R.color.colorPhotoBg));
     }
 
     @Override
@@ -106,13 +108,14 @@ public class PhotoActivity extends BaseActivity {
         rvPhotos.setLayoutManager(mPhotoLayoutManager);
         rvPhotos.addItemDecoration(new GridLayoutItemDivider(this));
 
-        //底部Dialog
-        View view = getLayoutInflater().inflate(R.layout.popup_show_folders, null);
-        mShowFoldersPopup = new ShowFoldersPopup(this, helperChangeArrow);
-        mShowFoldersPopup.setContentView(view);
-
         //文件夹列表
-        RecyclerView rvFolders = view.findViewById(R.id.rv_show_folders);
+        int height = (int) (DisplayUtil.getScreenHeight(this) / 1.2);
+        mShowFoldersPopup = (ShowFoldersPopup) new XPopup.Builder(this)
+                .atView(toolBar)
+                .maxHeight(height)
+                .customAnimator(new ShowFoldersPopup.ScrollFromTopAnim())
+                .asCustom(new ShowFoldersPopup(this, helperChangeArrow));
+        RecyclerView rvFolders = mShowFoldersPopup.findViewById(R.id.rv_show_folders);
         mFolders = new ArrayList<>();
         mFolderAdapter = new RvFolderAdapter(mFolders, R.layout.item_photo_folders);
         rvFolders.setAdapter(mFolderAdapter);
@@ -198,10 +201,10 @@ public class PhotoActivity extends BaseActivity {
                 break;
             case R.id.tv_title:
             case R.id.iv_arrow:
-                if (mShowFoldersPopup.isShowing()) {
+                if (mShowFoldersPopup.isShow()) {
                     mShowFoldersPopup.dismiss();
                 } else {
-                    mShowFoldersPopup.showAsDropDown(toolBar);
+                    mShowFoldersPopup.show();
                 }
                 break;
             default:

@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +24,7 @@ import com.example.p2p.app.App;
 import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
+import com.example.p2p.utils.StatusBarUtil;
 import com.example.p2p.widget.helper.ToolbarHelper;
 import com.example.utils.CommonUtil;
 import com.example.utils.StatusBarUtils;
@@ -78,9 +80,8 @@ public class PreViewActivity extends BaseActivity {
         mTempSelectPhotos = null;
         mPos = getIntent().getIntExtra(Constant.KEY_CLICK_POSITION, 0);
         isJumpFromPreBtn = getIntent().getBooleanExtra(Constant.KEY_MODE, true);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         super.onCreate(savedInstanceState);
-        StatusBarUtils.setHeightAndPadding(this, toolBar);
+        StatusBarUtil.immersive(this, ContextCompat.getColor(this, R.color.colorPhotoBg));
     }
 
     @Override

@@ -33,3 +33,7 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+ext{
+    isMyGlideApplication = true //false，myglide作为lib组件存在，true，myglide作为Application存在
+}

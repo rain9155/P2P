@@ -1,16 +1,22 @@
-apply plugin: 'com.android.library'
+if(rootProject.ext.isMyGlideApplication){
+    apply plugin: 'com.android.application'
+}else{
+    apply plugin: 'com.android.library'
+}
+
 
 android {
     compileSdkVersion 28
 
 
     defaultConfig {
+        if(rootProject.ext.isMyGlideApplication){
+            applicationId 'com.example.myglide'
+        }
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        versionCode 2
+        versionName "1.1"
 
     }
 
@@ -18,6 +24,16 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets{
+        main{
+            if(rootProject.ext.isMyGlideApplication){
+                manifest.srcFile 'src/main/module/AndroidManifest.xml'
+            }else{
+                manifest.srcFile 'src/main/AndroidManifest.xml'
+            }
         }
     }
 
@@ -29,7 +45,4 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.jakewharton:disklrucache:2.0.2'
     implementation 'com.jianyu:utils:1.0.1'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }

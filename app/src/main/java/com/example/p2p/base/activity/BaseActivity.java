@@ -1,13 +1,13 @@
 package com.example.p2p.base.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.os.Bundle;
 
 import com.example.p2p.R;
 import com.example.p2p.utils.CommonUtil;
-import com.example.p2p.utils.StatusbarUtils;
-import com.example.utils.StatusBarUtils;
+import com.example.p2p.utils.StatusBarUtil;
 
 import butterknife.ButterKnife;
 
@@ -23,8 +23,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutId());
         ButterKnife.bind(this);
-        StatusbarUtils.immersive(getWindow(), R.color.colorPrimary);
-        //CommonUtil.darkMode(this, true);
+        StatusBarUtil.immersiveAndDark(this, ContextCompat.getColor(this, R.color.colorPrimary));
         initView();
         initCallback();
     }
