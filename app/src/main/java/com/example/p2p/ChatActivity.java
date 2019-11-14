@@ -24,6 +24,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -59,25 +60,27 @@ import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.db.EmojiDao;
 import com.example.p2p.utils.FileUtil;
 import com.example.p2p.utils.ImageUtil;
+import com.example.p2p.utils.Log;
 import com.example.p2p.widget.customView.AudioTextView;
 import com.example.p2p.widget.customView.IndicatorView;
 import com.example.p2p.widget.customView.SendButton;
 import com.example.p2p.widget.customView.WrapViewPager;
 import com.example.p2p.widget.dialog.LocatingDialog;
+import com.example.p2p.widget.helper.TranslationHelper;
 import com.example.permission.PermissionHelper;
 import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
 import com.example.permission.callback.IPermissionsCallback;
-import com.example.utils.CommonUtil;
-import com.example.utils.DisplayUtil;
+import com.example.utils.CommonUtils;
+import com.example.utils.DisplayUtils;
 import com.example.utils.FileUtils;
 import com.example.utils.KeyBoardUtils;
-import com.example.utils.LogUtils;
 import com.example.utils.ToastUtils;
 import com.example.utils.listener.TextWatchListener;
 import com.nbsp.materialfilepicker.MaterialFilePicker;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,10 +138,14 @@ public class ChatActivity extends BaseActivity {
     AudioTextView tvAudio;
     @BindView(R.id.cl_edit)
     ConstraintLayout clEdit;
+    @BindView(R.id.fl_bottom)
+    FrameLayout flBottom;
+    @BindView(R.id.helper_translation)
+    TranslationHelper helperTranslation;
 
 
     private final String TAG = this.getClass().getSimpleName();
-    private final static int REQUEST_CODE_GET_IMAGE= 0x000;
+    private final static int REQUEST_CODE_GET_IMAGE = 0x000;
     private final static int REQUEST_CODE_TAKE_IMAGE = 0x001;
     private final static int REQUEST_CODE_GET_FILE = 0x002;
     private boolean isKeyboardShowing;
@@ -184,7 +191,7 @@ public class ChatActivity extends BaseActivity {
     protected void onDestroy() {
         ConnectManager.getInstance().release();
         mMessageList.clear();
-        if(mLocatingDialog != null) mLocatingDialog = null;
+        if (mLocatingDialog != null) mLocatingDialog = null;
         super.onDestroy();
     }
 
@@ -223,7 +230,7 @@ public class ChatActivity extends BaseActivity {
                     }
                 }
         );
-        screenHeight = DisplayUtil.getScreenHeight(ChatActivity.this);
+        screenHeight = DisplayUtils.getScreenHeight(ChatActivity.this);
         mContentView = getWindow().getDecorView().findViewById(android.R.id.content);
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             //当前窗口可见区域的大小
@@ -289,7 +296,7 @@ public class ChatActivity extends BaseActivity {
         //下拉刷新监听
         srlChat.setOnRefreshListener(() ->
                 new Handler().postDelayed(() ->
-                srlChat.setRefreshing(false), 2000)
+                        srlChat.setRefreshing(false), 2000)
         );
         //editText文本变化监听
         edEdit.addTextChangedListener(new TextWatchListener() {
@@ -301,9 +308,8 @@ public class ChatActivity extends BaseActivity {
         });
         //editText触摸监听
         edEdit.setOnTouchListener((view, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_UP && isButtomLayoutShown()) {
-                if (clMore.isShown()) clMore.setVisibility(View.GONE);
-                if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+            if (event.getAction() == MotionEvent.ACTION_UP && helperTranslation.isButtomLayoutShown()) {
+                helperTranslation.hideEmojiLayout();
             }
             return false;
         });
@@ -317,21 +323,22 @@ public class ChatActivity extends BaseActivity {
         //聊天列表触摸监听
         rvChat.setOnTouchListener((view, event) -> {
             edEdit.clearFocus();
-            if(isKeyboardShowing) KeyBoardUtils.closeKeyBoard(ChatActivity.this, edEdit);
-            if (clMore.isShown()) clMore.setVisibility(View.GONE);
-            if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+            if (isKeyboardShowing) KeyBoardUtils.closeKeyBoard(ChatActivity.this, edEdit);
+//            if (clMore.isShown()) clMore.setVisibility(View.GONE);
+//            if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+            helperTranslation.hideEmojiLayout();
             return false;
         });
         //底部布局弹出,聊天列表上滑
         rvChat.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-            if(bottom < oldBottom){
-                if(mMessageList.isEmpty()) return;
+            if (bottom < oldBottom) {
+                if (mMessageList.isEmpty()) return;
                 rvChat.post(() -> rvChat.smoothScrollToPosition(mMessageList.size() - 1));
             }
         });
         //接收消息回调监听
         ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), message -> {
-            if(message.mesType == MesType.ERROR){
+            if (message.mesType == MesType.ERROR) {
                 return;
             }
             addMessage(message);
@@ -340,7 +347,7 @@ public class ChatActivity extends BaseActivity {
         ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
             @Override
             public void onSendSuccess(Mes<?> message) {
-                if(message.mesType == MesType.IMAGE || message.mesType == MesType.FILE || message.mesType == MesType.ERROR){
+                if (message.mesType == MesType.IMAGE || message.mesType == MesType.FILE || message.mesType == MesType.ERROR) {
                     return;
                 }
                 addMessage(message);
@@ -366,36 +373,36 @@ public class ChatActivity extends BaseActivity {
         //聊天列表的item点击回调
         mRvChatAdapter.setOnItemClickListener((adapter, view, position) -> {
             Mes message = mMessageList.get(position);
-            if(message.mesType == MesType.AUDIO){
+            if (message.mesType == MesType.AUDIO) {
                 Audio audio = (Audio) message.data;
                 ImageView imageView = view.findViewById(R.id.iv_message);
                 Drawable drawable = imageView.getBackground();
                 int audioBg = message.itemType == ItemType.SEND_AUDIO ? R.drawable.ic_audio_right_3 : R.drawable.ic_audio_left_3;
-                int audioBgAnim =  message.itemType == ItemType.SEND_AUDIO ? R.drawable.anim_item_audio_right : R.drawable.anim_item_audio_left;
-                if(drawable instanceof AnimationDrawable){
+                int audioBgAnim = message.itemType == ItemType.SEND_AUDIO ? R.drawable.anim_item_audio_right : R.drawable.anim_item_audio_left;
+                if (drawable instanceof AnimationDrawable) {
                     MediaPlayerManager.getInstance().stopPlayAudio();
                     imageView.setBackgroundResource(audioBg);
-                }else {
-                    if(mLastPosition != -1 && position != mLastPosition){
+                } else {
+                    if (mLastPosition != -1 && position != mLastPosition) {
                         Mes lastMessage = mMessageList.get(mLastPosition);
                         int lastAudioBg = lastMessage.itemType == ItemType.SEND_AUDIO ? R.drawable.ic_audio_right_3 : R.drawable.ic_audio_left_3;
                         LinearLayoutManager manager = (LinearLayoutManager) rvChat.getLayoutManager();
                         View lastView = manager.findViewByPosition(mLastPosition);
-                        if(lastView != null){
+                        if (lastView != null) {
                             lastView.findViewById(R.id.iv_message).setBackgroundResource(lastAudioBg);
                         }
                     }
                     imageView.setBackgroundResource(audioBgAnim);
-                    AnimationDrawable audioAnimDrawable = (AnimationDrawable)imageView.getBackground();
+                    AnimationDrawable audioAnimDrawable = (AnimationDrawable) imageView.getBackground();
                     audioAnimDrawable.start();
                     MediaPlayerManager.getInstance().startPlayAudio(audio.audioPath, mp -> imageView.setBackgroundResource(audioBg));
                 }
             }
-            if(message.mesType == MesType.IMAGE && !isSendingImage){
+            if (message.mesType == MesType.IMAGE && !isSendingImage) {
                 Image image = (Image) message.data;
                 FileUtils.openFile(ChatActivity.this, image.imagePath);
             }
-            if(message.mesType == MesType.FILE && !isSendingFile){
+            if (message.mesType == MesType.FILE && !isSendingFile) {
                 Document file = (Document) message.data;
                 FileUtils.openFile(ChatActivity.this, file.filePath);
             }
@@ -517,13 +524,14 @@ public class ChatActivity extends BaseActivity {
         addMessage(message);
         final int sendingImagePostion = mMessageList.indexOf(message);
         ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
-            if(progress >= 100){
+            if (progress >= 100) {
                 isSendingImage = false;
             }
-            if(mMessageList.isEmpty()){
+            if (mMessageList.isEmpty()) {
                 isSendingImage = false;
                 return;
-            }            Image sendingImage = (Image) mMessageList.get(sendingImagePostion).data;
+            }
+            Image sendingImage = (Image) mMessageList.get(sendingImagePostion).data;
             sendingImage.progress = progress;
             mRvChatAdapter.notifyItemChanged(sendingImagePostion);
         });
@@ -557,16 +565,16 @@ public class ChatActivity extends BaseActivity {
         isSendingFile = true;
         String fileType = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase(Locale.getDefault());
         String size = FileUtil.getFileSize(filePath);
-        String name = filePath.substring(filePath.lastIndexOf(java.io.File.separator) + 1, filePath.lastIndexOf("."));
+        String name = filePath.substring(filePath.lastIndexOf(File.separator) + 1, filePath.lastIndexOf("."));
         Document file = new Document(filePath, name, size, fileType);
         Mes<Document> message = new Mes<>(ItemType.SEND_FILE, MesType.FILE, mUser.getIp(), file);
         addMessage(message);
         final int sendingFilePosition = mMessageList.indexOf(message);
         ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
-            if(progress >= 100){
+            if (progress >= 100) {
                 isSendingFile = false;
             }
-            if(mMessageList.isEmpty()){
+            if (mMessageList.isEmpty()) {
                 isSendingFile = false;
                 return;
             }
@@ -591,9 +599,9 @@ public class ChatActivity extends BaseActivity {
     private void changeEditLayout() {
         ivKeyborad.setVisibility(View.INVISIBLE);
         ivAudio.setVisibility(View.VISIBLE);
-        if(clMore.isShown()) clMore.setVisibility(View.GONE);
-        if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
-        if(!isKeyboardShowing) KeyBoardUtils.openKeyBoard(this, edEdit);
+        if (clMore.isShown()) clMore.setVisibility(View.GONE);
+        if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+        if (!isKeyboardShowing) KeyBoardUtils.openKeyBoard(this, edEdit);
         edEdit.setVisibility(View.VISIBLE);
         tvAudio.setVisibility(View.INVISIBLE);
         edEdit.requestFocus();
@@ -606,9 +614,9 @@ public class ChatActivity extends BaseActivity {
         edEdit.clearFocus();
         ivAudio.setVisibility(View.INVISIBLE);
         ivKeyborad.setVisibility(View.VISIBLE);
-        if(clMore.isShown()) clMore.setVisibility(View.GONE);
-        if(llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
-        if(isKeyboardShowing) KeyBoardUtils.closeKeyBoard(this, edEdit);
+        if (clMore.isShown()) clMore.setVisibility(View.GONE);
+        if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
+        if (isKeyboardShowing) KeyBoardUtils.closeKeyBoard(this, edEdit);
         edEdit.setVisibility(View.INVISIBLE);
         tvAudio.setVisibility(View.VISIBLE);
     }
@@ -619,23 +627,27 @@ public class ChatActivity extends BaseActivity {
      */
     private void changeMoreLayout() {
         edEdit.clearFocus();
-        if (!clMore.isShown() && !isKeyboardShowing) {//如果键盘没有显示，且更多布局也没有显示，只显示更多布局
-            clMore.setVisibility(View.VISIBLE);
+        if (!helperTranslation.isMoreLayoutShown() && !isKeyboardShowing) {//如果键盘没有显示，且更多布局也没有显示，只显示更多布局
+//            clMore.setVisibility(View.VISIBLE);
+//            if (llEmoji.isShown())
+//                llEmoji.setVisibility(View.GONE);
+//            helperTranslation.hideEmojiLayout();
+            helperTranslation.showMoreLayout();
             edEdit.setVisibility(View.VISIBLE);
             ivAudio.setVisibility(View.VISIBLE);
             tvAudio.setVisibility(View.INVISIBLE);
             ivKeyborad.setVisibility(View.INVISIBLE);
-            if (llEmoji.isShown())
-                llEmoji.setVisibility(View.GONE);
-        } else if (clMore.isShown() && !isKeyboardShowing) {//如果键盘没有显示，但更多布局显示，隐藏更多布局，显示键盘
-            clMore.setVisibility(View.GONE);
+        } else if (helperTranslation.isMoreLayoutShown() && !isKeyboardShowing) {//如果键盘没有显示，但更多布局显示，隐藏更多布局，显示键盘
+//            clMore.setVisibility(View.GONE);
+            helperTranslation.hideMoreLayout();
             KeyBoardUtils.openKeyBoard(this, edEdit);
-        } else if (!clMore.isShown() && isKeyboardShowing) {//如果只有键盘显示，就隐藏键盘，显示更多布局
+        } else if (!helperTranslation.isMoreLayoutShown() && isKeyboardShowing) {//如果只有键盘显示，就隐藏键盘，显示更多布局
             lockContentHeight();
             KeyBoardUtils.closeKeyBoard(this, edEdit);
             edEdit.postDelayed(() -> {
                 unlockContentHeightDelayed();
-                clMore.setVisibility(View.VISIBLE);
+//                clMore.setVisibility(View.VISIBLE);
+                helperTranslation.showMoreLayout();
 
             }, 200);
         }
@@ -647,14 +659,16 @@ public class ChatActivity extends BaseActivity {
     private void changeEmojiLayout() {
         if (!llEmoji.isShown() && !isKeyboardShowing) {
             llEmoji.setVisibility(View.VISIBLE);
+            if (clMore.isShown())
+                clMore.setVisibility(View.GONE);
             tvAudio.setVisibility(View.INVISIBLE);
             edEdit.setVisibility(View.VISIBLE);
             edEdit.requestFocus();
             ivAudio.setVisibility(View.VISIBLE);
             ivKeyborad.setVisibility(View.INVISIBLE);
-            if (clMore.isShown()) clMore.setVisibility(View.GONE);
+
         } else if (llEmoji.isShown() && !isKeyboardShowing) {
-            llEmoji.setVisibility( View.GONE);
+            llEmoji.setVisibility(View.GONE);
             KeyBoardUtils.openKeyBoard(this, edEdit);
         } else if (!llEmoji.isShown() && isKeyboardShowing) {
             lockContentHeight();
@@ -683,12 +697,7 @@ public class ChatActivity extends BaseActivity {
         ((LinearLayout.LayoutParams) mContentView.getLayoutParams()).weight = 1.0F;
     }
 
-    /**
-     * 底部表情布局或底部更多布局是否显示
-     */
-    private boolean isButtomLayoutShown() {
-        return clMore.isShown() || llEmoji.isShown();
-    }
+
 
     @SuppressLint("MissingPermission")
     private void getLocation() {
@@ -701,25 +710,25 @@ public class ChatActivity extends BaseActivity {
         criteria.setCostAllowed(false);//不需要成本
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         String bestProvider = locationManager.getBestProvider(criteria, true);//得到最好的位置提供者，如GPS，netWork等
-        LogUtils.d(TAG, "provider = " + bestProvider);
+        Log.d(TAG, "provider = " + bestProvider);
         mLocatingDialog.show(getSupportFragmentManager());
         ConnectManager.getInstance().executeTast(() -> {
             Location location = null;//里面存放着定位的信息,经纬度,海拔等
-            if(!TextUtils.isEmpty(bestProvider)){
+            if (!TextUtils.isEmpty(bestProvider)) {
                 location = locationManager.getLastKnownLocation(bestProvider);
-                LogUtils.d(TAG, "location = " + location);
-            }else {//没有最好的定位方案则手动配置
-                if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                Log.d(TAG, "location = " + location);
+            } else {//没有最好的定位方案则手动配置
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
                     location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+                else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
                     location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                else if(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
+                else if (locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
                     location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
             }
-            LogUtils.d(TAG, "location = " + location);
+            Log.d(TAG, "location = " + location);
             final Location finalLocation = location;
             runOnUiThread(() -> {
-                if(null == finalLocation){
+                if (null == finalLocation) {
                     mLocatingDialog.dismiss();
                     ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
                     return;
@@ -727,7 +736,7 @@ public class ChatActivity extends BaseActivity {
                 Geocoder geocoder = new Geocoder(ChatActivity.this, Locale.getDefault());//地区编码,可以得到具体的地理位置
                 try {
                     List<Address> addresses = geocoder.getFromLocation(finalLocation.getLatitude(), finalLocation.getLongitude(), 1);
-                    if(CommonUtil.isEmptyList(addresses)){
+                    if (CommonUtils.isEmptyList(addresses)) {
                         mLocatingDialog.dismiss();
                         ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
                         return;
@@ -737,21 +746,21 @@ public class ChatActivity extends BaseActivity {
                     String city = address.getLocality();
                     String citySub = address.getSubLocality();
                     String thoroughfare = address.getThoroughfare();
-                    LogUtils.d(TAG, "country = " + country
+                    Log.d(TAG, "country = " + country
                             + ", city = " + city
                             + ", citySub = " + citySub
                             + ", fare = " + thoroughfare);
                     StringBuilder builder = new StringBuilder(32);
                     builder.append("位置：").append(country).append(city);
-                    if(!TextUtils.isEmpty(citySub)) builder.append(citySub);
-                    if(!TextUtils.isEmpty(thoroughfare)) builder.append(thoroughfare);
+                    if (!TextUtils.isEmpty(citySub)) builder.append(citySub);
+                    if (!TextUtils.isEmpty(thoroughfare)) builder.append(thoroughfare);
                     ConnectManager.getInstance().sendMessage(
                             mTargetUser.getIp(),
                             new Mes<String>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), builder.toString()));
                 } catch (IOException e) {
                     e.printStackTrace();
                     ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
-                    LogUtils.e(TAG, "定位失败， e = " + e.getMessage());
+                    Log.e(TAG, "定位失败， e = " + e.getMessage());
                 }
                 mLocatingDialog.dismiss();
             });

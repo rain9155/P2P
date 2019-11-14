@@ -24,12 +24,12 @@ import com.example.p2p.app.App;
 import com.example.p2p.base.activity.BaseActivity;
 import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
-import com.example.p2p.utils.StatusBarUtil;
 import com.example.p2p.widget.helper.ToolbarHelper;
-import com.example.utils.CommonUtil;
+import com.example.utils.CommonUtils;
 import com.example.utils.StatusBarUtils;
 import com.example.utils.ToastUtils;
 
+import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
@@ -81,7 +81,7 @@ public class PreViewActivity extends BaseActivity {
         mPos = getIntent().getIntExtra(Constant.KEY_CLICK_POSITION, 0);
         isJumpFromPreBtn = getIntent().getBooleanExtra(Constant.KEY_MODE, true);
         super.onCreate(savedInstanceState);
-        StatusBarUtil.immersive(this, ContextCompat.getColor(this, R.color.colorPhotoBg));
+        StatusBarUtils.immersive(this, ContextCompat.getColor(this, R.color.colorPhotoBg));
     }
 
     @Override
@@ -212,7 +212,7 @@ public class PreViewActivity extends BaseActivity {
      * Bottom的RecyclerView
      */
     private void setBottomVisibility() {
-        if (CommonUtil.isEmptyList(mSelectPhotos)) {
+        if (CommonUtils.isEmptyList(mSelectPhotos)) {
             rvBottomPreView.setVisibility(View.INVISIBLE);
             divider.setVisibility(View.INVISIBLE);
         }else {

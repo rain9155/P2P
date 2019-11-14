@@ -44,5 +44,5 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.jakewharton:disklrucache:2.0.2'
-    implementation 'com.jianyu:utils:1.0.1'
+    implementation 'com.jianyu:utils:1.0.5'
 }

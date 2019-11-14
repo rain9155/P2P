@@ -13,20 +13,20 @@ public interface DiskCache {
      * @param key 图片的唯一标识
      * @param inputStream 要写入硬盘的图片流
      */
-    void put(String key, InputStream inputStream);
+    void put(Key key, InputStream inputStream);
 
     /**
      * 从硬盘缓存中获取一张图片，如果不存在就返回null
      * @param key 图片的唯一标识
      * @return 如果找到就返回图片，否则返回null
      */
-    InputStream get(String key);
+    InputStream get(Key key);
 
     /**
      * 从硬盘缓存中删除一张图片
      * @param key 图片的唯一标识
      */
-    void remove(String key);
+    void remove(Key key);
 
     /**
      * 用于清理所有硬盘缓存

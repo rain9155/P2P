@@ -168,7 +168,7 @@ public class ZoomImageView extends AppCompatImageView
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        Log.d(TAG, "onSizeChanged，w = " + w + ", ow = " + oldw);
+        Log.d(TAG, "onSizeChanged，w = " + w + ", h = " + h);
         if(w != oldw || h != oldh){
             resetImageMatrix(getDrawable());
         }

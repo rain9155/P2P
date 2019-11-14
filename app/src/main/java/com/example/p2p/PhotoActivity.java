@@ -35,13 +35,11 @@ import com.example.p2p.widget.helper.ChangeTimeHelper;
 import com.example.permission.PermissionHelper;
 import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
-import com.example.utils.CommonUtil;
-import com.example.utils.DisplayUtil;
+import com.example.utils.CommonUtils;
+import com.example.utils.DisplayUtils;
 import com.example.utils.StatusBarUtils;
 import com.example.utils.ToastUtils;
 import com.lxj.xpopup.XPopup;
-import com.lxj.xpopup.enums.PopupAnimation;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -109,7 +107,7 @@ public class PhotoActivity extends BaseActivity {
         rvPhotos.addItemDecoration(new GridLayoutItemDivider(this));
 
         //文件夹列表
-        int height = (int) (DisplayUtil.getScreenHeight(this) / 1.2);
+        int height = (int) (DisplayUtils.getScreenHeight(this) / 1.2);
         mShowFoldersPopup = (ShowFoldersPopup) new XPopup.Builder(this)
                 .atView(toolBar)
                 .maxHeight(height)
@@ -167,7 +165,7 @@ public class PhotoActivity extends BaseActivity {
             );
         });
         mPhotoAdapter.setOnItemChildClickListener((adapter, view, position) -> {
-            if (CommonUtil.isEmptyList(mPhotos)) return;
+            if (CommonUtils.isEmptyList(mPhotos)) return;
             checkAndSelectPhoto(position);
             updateSelectCount(mPhotoAdapter.getSelectPhotoCount());
         });

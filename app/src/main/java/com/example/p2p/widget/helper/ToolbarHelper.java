@@ -12,9 +12,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import com.example.p2p.R;
-import com.example.p2p.utils.CommonUtil;
-import com.example.p2p.utils.StatusBarUtil;
-import com.example.utils.DisplayUtil;
 import com.example.utils.StatusBarUtils;
 
 /**
@@ -109,7 +106,7 @@ public class ToolbarHelper extends ConstraintHelper {
 
     public void setStatusBarVisibility(boolean isShow) {
         if (isShow) {
-            StatusBarUtil.immersive(
+            StatusBarUtils.immersive(
                     (AppCompatActivity)getContext(),
                     ContextCompat.getColor(getContext(), R.color.colorPhotoBg));
         } else {

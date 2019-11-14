@@ -6,8 +6,7 @@ import androidx.core.content.ContextCompat;
 import android.os.Bundle;
 
 import com.example.p2p.R;
-import com.example.p2p.utils.CommonUtil;
-import com.example.p2p.utils.StatusBarUtil;
+import com.example.utils.StatusBarUtils;
 
 import butterknife.ButterKnife;
 
@@ -23,7 +22,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutId());
         ButterKnife.bind(this);
-        StatusBarUtil.immersiveAndDark(this, ContextCompat.getColor(this, R.color.colorPrimary));
+        StatusBarUtils.immersiveAndDark(this, ContextCompat.getColor(this, R.color.colorPrimary));
         initView();
         initCallback();
     }

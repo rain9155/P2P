@@ -17,11 +17,9 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import com.example.p2p.R;
 import com.example.p2p.widget.helper.ChangeArrowHelper;
-import com.example.utils.DisplayUtil;
 import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.animator.PopupAnimator;
 import com.lxj.xpopup.core.BasePopupView;
-import com.lxj.xpopup.enums.PopupAnimation;
 import com.lxj.xpopup.impl.PartShadowPopupView;
 
 /**

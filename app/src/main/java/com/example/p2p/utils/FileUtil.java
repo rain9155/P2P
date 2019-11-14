@@ -16,8 +16,6 @@ import androidx.annotation.NonNull;
 import com.example.p2p.bean.ItemType;
 import com.example.p2p.config.Constant;
 import com.example.utils.FileUtils;
-import com.example.utils.LogUtils;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -206,7 +204,7 @@ public class FileUtil {
             }
         }catch (Exception e){
             e.printStackTrace();
-            LogUtils.e(TAG, "无法获取文件真实路径，请使用url获取图片，e = " + e.getMessage());
+            Log.e(TAG, "无法获取文件真实路径，请使用url获取图片，e = " + e.getMessage());
             return null;
         }
         return path;
@@ -238,7 +236,7 @@ public class FileUtil {
                 file.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "创建文件失败， e = " + e.getMessage());
+                Log.e(TAG, "创建文件失败， e = " + e.getMessage());
             }
         }
         try {

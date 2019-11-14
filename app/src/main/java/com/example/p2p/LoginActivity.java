@@ -13,14 +13,15 @@ import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.p2p.app.App;
 import com.example.p2p.bean.User;
 import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.config.Constant;
-import com.example.p2p.utils.CommonUtil;
 import com.example.p2p.utils.FileUtil;
 import com.example.p2p.utils.IpUtil;
+import com.example.p2p.utils.Log;
 import com.example.p2p.utils.WifiUtil;
 import com.example.p2p.widget.customView.ScrollEditText;
 import com.example.p2p.widget.dialog.GotoWifiSettingsDialog;
@@ -29,7 +30,7 @@ import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
 import com.example.utils.FileUtils;
 import com.example.utils.ImageUtils;
-import com.example.utils.LogUtils;
+import com.example.utils.StatusBarUtils;
 import com.example.utils.ToastUtils;
 import com.example.utils.listener.TextWatchListener;
 import com.theartofdev.edmodo.cropper.CropImage;
@@ -60,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
-        CommonUtil.darkMode(this, true);
+        StatusBarUtils.immersiveAndDark(this, ContextCompat.getColor(this, R.color.colorPrimary));
 
         User restoreUser = (User) FileUtils.restoreObject(LoginActivity.this, Constant.FILE_NAME_USER);
         if (restoreUser != null) {
@@ -146,7 +147,7 @@ public class LoginActivity extends AppCompatActivity {
                     ivIcon.setImageBitmap(mUserBitmap);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    LogUtils.e(TAG, "获取图片失败， e = " + e.getMessage());
+                    Log.e(TAG, "获取图片失败， e = " + e.getMessage());
                     ToastUtils.showToast(App.getContext(), getString(R.string.toast_open_image_fail));
                 }
             }

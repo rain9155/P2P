@@ -3,7 +3,7 @@ package com.example.p2p.core;
 import android.media.MediaPlayer;
 
 import com.example.p2p.callback.IMediaPlayCompleteCallback;
-import com.example.utils.LogUtils;
+import com.example.p2p.utils.Log;
 
 import java.io.IOException;
 
@@ -120,7 +120,7 @@ public class MediaPlayerManager {
             mMediaPlayer.prepare();
         } catch (IOException e) {
             e.printStackTrace();
-            LogUtils.e(TAG, "设置音频文件或准备错误，imagePath = " + path);
+            Log.e(TAG, "设置音频文件或准备错误，imagePath = " + path);
         }
     }
 }

@@ -25,9 +25,9 @@ import com.example.p2p.bean.User;
 import com.example.p2p.callback.IRecordedCallback;
 import com.example.p2p.core.MediaPlayerManager;
 import com.example.p2p.utils.FileUtil;
-import com.example.utils.DisplayUtil;
+import com.example.p2p.utils.Log;
+import com.example.utils.DisplayUtils;
 import com.example.utils.FileUtils;
-import com.example.utils.LogUtils;
 import com.example.utils.VibrateUtils;
 
 import java.io.File;
@@ -90,7 +90,7 @@ public class AudioTextView extends AppCompatTextView {
         mDialog.getWindow().setAttributes(lp);
         mAudioTextView = view.findViewById(R.id.tv_toast);
         mAudioImage = view.findViewById(R.id.iv_audio).getBackground();
-        int screenHeight = DisplayUtil.getScreenHeight(getContext());
+        int screenHeight = DisplayUtils.getScreenHeight(getContext());
         mBoundary =  screenHeight - screenHeight / 6;
         //初始化按钮资源
         mPressBg = ContextCompat.getDrawable(getContext(), R.drawable.bg_chat_audio_selected);
@@ -121,7 +121,7 @@ public class AudioTextView extends AppCompatTextView {
                         if(index >= 8) index = 7;
                         mAudioImage.setLevel(index);
                     }
-                    LogUtils.d(TAG, "MaxAmplitude = " + mMediaRecorder.getMaxAmplitude());
+                    Log.d(TAG, "MaxAmplitude = " + mMediaRecorder.getMaxAmplitude());
                 }
                 return true;
             case MotionEvent.ACTION_UP:
@@ -171,7 +171,7 @@ public class AudioTextView extends AppCompatTextView {
         mFileName = audioPath + System.currentTimeMillis() + ".mp3";
         new File(mFileName);
         mMediaRecorder.setOutputFile(mFileName);
-        LogUtils.d(TAG, "初始化录音");
+        Log.d(TAG, "初始化录音");
     }
 
     /**
@@ -181,13 +181,13 @@ public class AudioTextView extends AppCompatTextView {
         if(mMediaRecorder == null) return;
         try {
             mMediaRecorder.prepare();
-            LogUtils.d(TAG, "准备录音");
+            Log.d(TAG, "准备录音");
         } catch (IOException e) {
             e.printStackTrace();
             if(mRecordedCallback != null){
                 mRecordedCallback.onError();
             }
-            LogUtils.d(TAG, "准备录制音频失败， e = " + e.getMessage());
+            Log.d(TAG, "准备录制音频失败， e = " + e.getMessage());
         }
     }
 
@@ -200,7 +200,7 @@ public class AudioTextView extends AppCompatTextView {
         if(!isRecording){
             mMediaRecorder.start();
             isRecording = true;
-            LogUtils.d(TAG, "开始录音");
+            Log.d(TAG, "开始录音");
         }
     }
 
@@ -210,7 +210,7 @@ public class AudioTextView extends AppCompatTextView {
     private void cancelRecord(){
         stopRecord();
         FileUtils.deleteFiles(new File(mFileName));
-        LogUtils.d(TAG, "取消录音");
+        Log.d(TAG, "取消录音");
         mDialog.dismiss();
     }
 
@@ -230,13 +230,13 @@ public class AudioTextView extends AppCompatTextView {
                 }
                 return;
             }
-            LogUtils.d(TAG, "音频文件位置，imagePath = " + mFileName + ", 音频时长，duration = " + duration + "秒");
+            Log.d(TAG, "音频文件位置，imagePath = " + mFileName + ", 音频时长，duration = " + duration + "秒");
             if(mRecordedCallback != null){
                 mRecordedCallback.onFinish(mFileName, duration);
             }
             mDialog.dismiss();
         }
-        LogUtils.d(TAG, "录音完成");
+        Log.d(TAG, "录音完成");
     }
 
     /**
@@ -261,9 +261,9 @@ public class AudioTextView extends AppCompatTextView {
         if(isRecording){
             try{
                 mMediaRecorder.stop();
-                LogUtils.d(TAG, "结束录音");
+                Log.d(TAG, "结束录音");
             }catch (Exception e){
-                LogUtils.d(TAG, "结束录音失败， e = " + e.getMessage());
+                Log.d(TAG, "结束录音失败， e = " + e.getMessage());
                 cancelStartRecord();
             }
             isRecording = false;
@@ -280,7 +280,7 @@ public class AudioTextView extends AppCompatTextView {
             isRecording = false;
         }
         MediaPlayerManager.getInstance().release();
-        LogUtils.d(TAG, "释放资源");
+        Log.d(TAG, "释放资源");
     }
 
     public void setRecordedCallback(User user, IRecordedCallback callback){

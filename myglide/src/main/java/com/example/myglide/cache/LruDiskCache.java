@@ -61,11 +61,11 @@ public class LruDiskCache implements DiskCache{
     }
 
     @Override
-    public void put(String key, InputStream inputStream) {
+    public void put(Key key, InputStream inputStream) {
         BufferedInputStream in = null;
         BufferedOutputStream os = null;
         try {
-            DiskLruCache.Editor editor = mDiskLruCache.edit(key);
+            DiskLruCache.Editor editor = mDiskLruCache.edit(getSafeKey(key));
             if(editor != null){
                 in = new BufferedInputStream(inputStream, IO_BUFFER_SIZE);
                 os = new BufferedOutputStream(editor.newOutputStream(DISK_CACHE_INDEX));
@@ -86,9 +86,9 @@ public class LruDiskCache implements DiskCache{
     }
 
     @Override
-    public InputStream get(String key) {
+    public InputStream get(Key key) {
         try {
-            DiskLruCache.Snapshot snapshot = mDiskLruCache.get(key);
+            DiskLruCache.Snapshot snapshot = mDiskLruCache.get(getSafeKey(key));
             if(snapshot != null){
                 return snapshot.getInputStream(DISK_CACHE_INDEX);
             }
@@ -100,9 +100,9 @@ public class LruDiskCache implements DiskCache{
     }
 
     @Override
-    public void remove(String key) {
+    public void remove(Key key) {
         try {
-            mDiskLruCache.remove(key);
+            mDiskLruCache.remove(getSafeKey(key));
         } catch (IOException e) {
             e.printStackTrace();
             Log.e(TAG, "LruDiskCache, remove, e = " + e.getMessage());
@@ -117,5 +117,9 @@ public class LruDiskCache implements DiskCache{
             e.printStackTrace();
             Log.e(TAG, "LruDiskCache, clear, e = " + e.getMessage());
         }
+    }
+
+    private String getSafeKey(Key key){
+        return key.hashString(key.toString());
     }
 }

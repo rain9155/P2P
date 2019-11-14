@@ -11,7 +11,7 @@ import com.example.p2p.bean.Folder;
 import com.example.p2p.bean.Photo;
 import com.example.p2p.callback.IPhotosCallback;
 import com.example.p2p.core.ConnectManager;
-import com.example.utils.CommonUtil;
+import com.example.utils.CommonUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,7 +74,7 @@ public class PhotoUtil {
      * @return 按文件拆分的图片集合
      */
     private static void splitPhotosByFolder(List<Photo> photos, IPhotosCallback callback) {
-        if(CommonUtil.isEmptyList(photos)) return;
+        if(CommonUtils.isEmptyList(photos)) return;
         Map<String, List<Photo>> cache = new HashMap<>();
         cache.put(ALL_PHOTOS, photos);
         int size = photos.size();

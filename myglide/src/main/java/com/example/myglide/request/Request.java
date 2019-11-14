@@ -3,7 +3,6 @@ package com.example.myglide.request;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.view.View;
 import android.widget.ImageView;
 
 import androidx.annotation.DrawableRes;
@@ -14,6 +13,7 @@ import com.example.myglide.R;
 import com.example.myglide.callback.ResourceCallback;
 import com.example.myglide.job.Engine;
 import com.example.myglide.job.EngineDecodeJob;
+import com.example.myglide.utils.Log;
 
 
 /**
@@ -34,6 +34,8 @@ public class Request implements ResourceCallback {
     private Status mStatus = Status.PENDING;
     private Drawable mPlaceHolderDrawable;
     private Drawable mErrorDrawable;
+    private boolean isSkipMemory;
+    private boolean isSkipDisk;
     private EngineDecodeJob mEngineDecodeJob;
 
     private void init(
@@ -43,6 +45,8 @@ public class Request implements ResourceCallback {
             int ovrrideHeight,
             int placeHolderId,
             int errorHolderId,
+            boolean isSkipMemory,
+            boolean isSkipDisk,
             ImageView imageView,
             String model
     ){
@@ -58,6 +62,8 @@ public class Request implements ResourceCallback {
         if(errorHolderId > 0){
             this.mErrorDrawable = ContextCompat.getDrawable(mContext, errorHolderId);
         }
+        this.isSkipDisk = isSkipDisk;
+        this.isSkipMemory = isSkipMemory;
     }
 
     public void begin(){
@@ -69,21 +75,38 @@ public class Request implements ResourceCallback {
         }
         mStatus = Status.RUNNING;
         onLoadStarted();
-        if(mOvrrideWidth > 0 && mOvrrideHeight > 0){
+        if(!isSizeValid(mOvrrideWidth, mOvrrideHeight)){
             mWidth = mOvrrideWidth;
             mHeight = mOvrrideHeight;
         }else {
             mWidth = getImageViewWidth();
             mHeight = getImageViewHeight();
         }
-        if(mWidth == 0 || mHeight == 0){
-            measure();
-            mWidth = getImageViewWidth();
-            mHeight = getImageViewHeight();
+        if(!isSizeValid(mWidth, mHeight)){
+            getSize();
+        }else {
+            onSizeReady();
         }
-        onSizeReady();
     }
 
+    private void getSize() {
+        mImageView.post(new Runnable() {
+            @Override
+            public void run() {
+                mWidth = getImageViewWidth();
+                mHeight = getImageViewHeight();
+                if(!isSizeValid(mWidth, mHeight)){
+                    onLoadFailed();
+                    return;
+                }
+                onSizeReady();
+            }
+        });
+    }
+
+    private boolean isSizeValid(int width, int height) {
+        return width > 0 && height > 0;
+    }
 
     private int getImageViewWidth(){
         return mImageView.getWidth() - mImageView.getPaddingLeft() - mImageView.getPaddingRight();
@@ -93,11 +116,7 @@ public class Request implements ResourceCallback {
         return mImageView.getHeight() - mImageView.getPaddingTop() - mImageView.getPaddingBottom();
     }
 
-    private void measure(){
-        int widthSpec = View.MeasureSpec.makeMeasureSpec((1 << 30) - 1, View.MeasureSpec.AT_MOST);
-        int heigtSpec = View.MeasureSpec.makeMeasureSpec((1 << 30) - 1, View.MeasureSpec.AT_MOST);
-        mImageView.measure(widthSpec, heigtSpec);
-    }
+
 
     @Override
     public void onResourceReady(Bitmap bitmap) {
@@ -128,6 +147,8 @@ public class Request implements ResourceCallback {
                 mModel,
                 mWidth,
                 mHeight,
+                isSkipMemory,
+                isSkipDisk,
                 this);
     }
 
@@ -159,6 +180,8 @@ public class Request implements ResourceCallback {
         private int mOvrrideHeight;
         private int mPlaceHolderId;
         private int mErrorHolderId;
+        private boolean isSkipMemory;
+        private boolean isSkipDisk;
 
 
         Builder(Engine engine, RequestManager requestManager, Context context){
@@ -189,6 +212,16 @@ public class Request implements ResourceCallback {
             return this;
         }
 
+        public Builder skipMemoryCache(boolean isSkipMemory){
+            this.isSkipMemory = isSkipMemory;
+            return this;
+        }
+
+        public Builder skipDiskCache(boolean isSkipDisk){
+            this.isSkipDisk = isSkipDisk;
+            return this;
+        }
+
         public void into(ImageView imageView){
             if(!isModelSet){
                 throw new IllegalArgumentException("url cannot be null, you must call load()!");
@@ -207,6 +240,8 @@ public class Request implements ResourceCallback {
                     mOvrrideHeight,
                     mPlaceHolderId,
                     mErrorHolderId,
+                    isSkipMemory,
+                    isSkipDisk,
                     mImageView,
                     mModel
             );

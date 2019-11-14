@@ -3,46 +3,51 @@ package com.example.myglide.job;
 import android.graphics.Bitmap;
 
 import com.example.myglide.MyGlide;
+import com.example.myglide.cache.Key;
 import com.example.myglide.cache.MemoryCache;
-import com.example.myglide.callback.JobListener;
+import com.example.myglide.callback.JobCallback;
 import com.example.myglide.callback.ResourceCallback;
 import com.example.myglide.utils.Log;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Created by 陈健宇 at 2019/11/5
  */
-public class Engine implements JobListener {
+public class Engine implements JobCallback {
 
     private static final String TAG = Engine.class.getSimpleName();
 
-    private Map<String, EngineDecodeJob> mJobs;
+    private Map<Key, EngineDecodeJob> mJobs;
     private MyGlide mImageLoader;
     private MemoryCache mMemoryCache;
     private EngineDecodeJobFactory mJobFactory;
-
+    private KeyFactory mKeyFactory;
 
     public Engine(MyGlide imageLoader){
             this.mImageLoader = imageLoader;
             this.mMemoryCache = imageLoader.getMemoryCache();
             mJobFactory = new EngineDecodeJobFactory();
             mJobs = new HashMap<>();
+            mKeyFactory = new KeyFactory();
     }
 
     public EngineDecodeJob load(
             final String model,
             final int width,
             final int height,
+            final boolean isSkipMemory,
+            final boolean isSkipDisk,
             final ResourceCallback callback
 
     ){
-        final String key = hashKeyFromUrl(model);
+        final Key key = mKeyFactory.build(
+                model,
+                width,
+                height);
 
-        Bitmap bitmap = loadFromMemoryCache(key);
+        Bitmap bitmap = loadFromMemoryCache(key, isSkipMemory);
         if(bitmap != null){
             Log.d(TAG, "load, loadBitmapFromMemory, url =  " + model);
             callback.onResourceReady(bitmap);
@@ -61,6 +66,8 @@ public class Engine implements JobListener {
                 width,
                 height,
                 model,
+                isSkipMemory,
+                isSkipDisk,
                 this);
         engineDecodeJob.setCallback(callback);
         engineDecodeJob.start();
@@ -73,68 +80,40 @@ public class Engine implements JobListener {
     /**
      * 从内存加载
      */
-    private Bitmap loadFromMemoryCache(String key){
+    private Bitmap loadFromMemoryCache(Key key, boolean isSkipMemory){
+        if(isSkipMemory){
+            return null;
+        }
         if(mMemoryCache == null){
             return null;
         }
         return mMemoryCache.get(key);
     }
 
-    /**
-     * 把图片的url转换成合法字符串（MD5编码）
-     * @param url url地址
-     * @return 编码后的字符串
-     */
-    private String hashKeyFromUrl(String url){
-        String cacheKey;
-        try {
-            final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-            messageDigest.update(url.getBytes());
-            cacheKey = bytesToHexString(messageDigest.digest());
-        } catch (NoSuchAlgorithmException e) {
-            cacheKey = String.valueOf(url.hashCode());
-        }
-        return cacheKey;
-    }
-
-    /**
-     * 把字节数组转成16进制字符串
-     * @param bytes 字节数组
-     * @return 16进制字符串
-     */
-    private String bytesToHexString(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < bytes.length; i++) {
-            String hex = Integer.toHexString(0xFF & bytes[i]);
-            if (hex.length() == 1) {
-                sb.append('0');
-            }
-            sb.append(hex);
-        }
-        return sb.toString();
-    }
 
     @Override
-    public void onJobComplete(String key, Bitmap bitmap) {
+    public void onJobComplete(Key key, Bitmap bitmap, boolean isSkipMemory) {
         mJobs.remove(key);
-        if(mMemoryCache != null && bitmap != null){
+        if(!isSkipMemory && mMemoryCache != null && bitmap != null){
             mMemoryCache.put(key, bitmap);
         }
     }
 
     @Override
-    public void onJobCancelled(String key) {
+    public void onJobCancelled(Key key) {
         mJobs.remove(key);
     }
 
     static class EngineDecodeJobFactory{
         EngineDecodeJob build(
                 MyGlide imageLoader,
-                String key,
+                Key key,
                 int width,
                 int height,
                 String uri,
-                JobListener jobListener)
+                boolean isSkipMemory,
+                boolean isSkipDisk,
+                JobCallback jobListener)
         {
             EngineDecodeJob job = new EngineDecodeJob();
             job.init(
@@ -143,9 +122,17 @@ public class Engine implements JobListener {
                     width,
                     height,
                     uri,
+                    isSkipMemory,
+                    isSkipDisk,
                     jobListener
             );
             return job;
+        }
+    }
+
+    static class KeyFactory{
+        Key build(String url, int width, int height){
+            return new Key(url, width, height);
         }
     }
 

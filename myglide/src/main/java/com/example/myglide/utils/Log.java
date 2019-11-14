@@ -6,7 +6,7 @@ package com.example.myglide.utils;
  */
 public class Log{
 
-    private static final boolean isDebug = true;
+    private static final boolean isDebug = false;
 
     // 下面是传入自定义tag的函数
     public static void i(String tag, String msg)

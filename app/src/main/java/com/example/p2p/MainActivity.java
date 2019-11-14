@@ -35,6 +35,7 @@ import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
+import com.example.p2p.utils.Log;
 import com.example.p2p.utils.WifiUtil;
 import com.example.p2p.widget.dialog.MenuPopup;
 import com.example.p2p.widget.dialog.ConnectingDialog;
@@ -43,7 +44,6 @@ import com.example.permission.PermissionHelper;
 import com.example.permission.bean.Permission;
 import com.example.permission.callback.IPermissionCallback;
 import com.example.utils.FileUtils;
-import com.example.utils.LogUtils;
 import com.example.utils.ToastUtils;
 
 import java.io.File;
@@ -236,7 +236,7 @@ public class MainActivity extends BaseActivity {
                         if(mOnlineUsers.get(i).getIp().equals(userIp)){
                             mOnlineUsers.get(i).setImagePath(imagePath);
                             mRvMainAdapter.notifyItemChanged(i);
-                            LogUtils.d(TAG, "接收到用户图片，name = " + name + ", path = " + imagePath);
+                            Log.d(TAG, "接收到用户图片，name = " + name + ", path = " + imagePath);
                             break;
                         }
                     }
@@ -247,12 +247,12 @@ public class MainActivity extends BaseActivity {
                         Image image = new Image(Constant.FILE_USER_IMAGE);
                         Mes<Image> message = new Mes<>(ItemType.OTHER, MesType.IMAGE, userIp, image);
                         ConnectManager.getInstance().sendMessage(userIp, message);
-                        LogUtils.d(TAG, "发送用户图片，name = " + name);
+                        Log.d(TAG, "发送用户图片，name = " + name);
                     }
 
                     @Override
                     public void onConnectFail(String targetIp) {
-                        LogUtils.e(TAG, "一个发送失败，user = " + name);
+                        Log.e(TAG, "一个发送失败，user = " + name);
                     }
                 });
                 ToastUtils.showToast(App.getContext(), user.getName() + getString(R.string.toast_user_login));
@@ -316,14 +316,14 @@ public class MainActivity extends BaseActivity {
                     NetworkInfo.State state = networkInfo.getState();
                     switch (state){
                         case CONNECTED:
-                            LogUtils.d(TAG, "wifi已经连接");
+                            Log.d(TAG, "wifi已经连接");
                             if(mGotoWifiSettingsDialog.isAdded()) mGotoWifiSettingsDialog.dismiss();
                             break;
                         case DISCONNECTED:
-                            LogUtils.d(TAG, "wifi已经断开");
+                            Log.d(TAG, "wifi已经断开");
                             break;
                         default:
-                            LogUtils.d(TAG, "wifi已其他状态 = " + state);
+                            Log.d(TAG, "wifi已其他状态 = " + state);
                             break;
                     }
                 }
@@ -332,21 +332,21 @@ public class MainActivity extends BaseActivity {
                 int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_UNKNOWN);
                 switch (state){
                     case WifiManager.WIFI_STATE_ENABLED:
-                        LogUtils.d(TAG, "wifi已经打开");
+                        Log.d(TAG, "wifi已经打开");
                         break;
                     case WifiManager.WIFI_STATE_DISABLED:
-                        LogUtils.d(TAG, "wifi已经关闭");
+                        Log.d(TAG, "wifi已经关闭");
                         if(mConnectingDialog.isAdded()) mConnectingDialog.dismiss();
                         mGotoWifiSettingsDialog.show(getSupportFragmentManager());
                         break;
                     case WifiManager.WIFI_STATE_DISABLING:
-                        LogUtils.d(TAG, "wifi关闭中...");
+                        Log.d(TAG, "wifi关闭中...");
                         break;
                     case WifiManager.WIFI_STATE_ENABLING:
-                        LogUtils.d(TAG, "wifi打开中...");
+                        Log.d(TAG, "wifi打开中...");
                         break;
                     default:
-                        LogUtils.d(TAG, "wifi的其他状态 = " + state);
+                        Log.d(TAG, "wifi的其他状态 = " + state);
                         break;
                 }
             }

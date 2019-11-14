@@ -28,6 +28,7 @@ public class RvPreViewAdapter extends BaseAdapter<Photo>{
 //                .into((ImageView) holder.getView(R.id.iv_photo));
         MyGlide.with(holder.getItemView().getContext())
                 .load(item.path)
+                .skipMemoryCache(true)
                 .into(holder.getView(R.id.iv_photo));
     }
 }

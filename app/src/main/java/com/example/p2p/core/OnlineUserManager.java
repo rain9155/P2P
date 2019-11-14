@@ -11,8 +11,8 @@ import com.example.p2p.callback.IUserCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.utils.IpUtil;
 import com.example.p2p.utils.JsonUtil;
+import com.example.p2p.utils.Log;
 import com.example.utils.FileUtils;
-import com.example.utils.LogUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -90,10 +90,10 @@ public class OnlineUserManager {
         mExecutor.execute(() -> {
             try {
                 mDatagramSocket = new DatagramSocket(PORT);
-                LogUtils.d(TAG, "开启广播监听，端口号 = " + PORT);
+                Log.d(TAG, "开启广播监听，端口号 = " + PORT);
             } catch (Exception e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "创建DatagramSocket监听失败， e = " + e.getMessage());
+                Log.e(TAG, "创建DatagramSocket监听失败， e = " + e.getMessage());
             }
             while (true){
                 try {
@@ -118,7 +118,7 @@ public class OnlineUserManager {
                                 if(mUserCallback != null){
                                     mHandler.obtainMessage(TYPE_JOIN_USER, mOnlineUsers.get(receiveIp)).sendToTarget();
                                 }
-                                LogUtils.d(TAG, "一个用户加入，地址 = " + receiveIp);
+                                Log.d(TAG, "一个用户加入，地址 = " + receiveIp);
                             }
                             //回复它
                             reply(receiveIp);
@@ -129,7 +129,7 @@ public class OnlineUserManager {
                                 if(mUserCallback != null){
                                     mHandler.obtainMessage(TYPE_EXIT_USER, exitUser).sendToTarget();
                                 }
-                                LogUtils.d(TAG, "一个用户退出，地址 = " + receiveIp);
+                                Log.d(TAG, "一个用户退出，地址 = " + receiveIp);
                             }
 
                         }else {
@@ -140,14 +140,14 @@ public class OnlineUserManager {
                                 if(mUserCallback != null){
                                     mHandler.obtainMessage(TYPE_JOIN_USER, mOnlineUsers.get(receiveIp)).sendToTarget();
                                 }
-                                LogUtils.d(TAG, "获得一个用户信息，地址 = " + receiveIp);
+                                Log.d(TAG, "获得一个用户信息，地址 = " + receiveIp);
                             }
                         }
                     }
-                    LogUtils.d(TAG, "当前在线用户，count = " + mOnlineUsers.size());
+                    Log.d(TAG, "当前在线用户，count = " + mOnlineUsers.size());
                 } catch (IOException e) {
                     e.printStackTrace();
-                    LogUtils.e(TAG, "接受广播失败， e = " + e.getMessage());
+                    Log.e(TAG, "接受广播失败， e = " + e.getMessage());
                     break;
                 }
             }
@@ -164,7 +164,7 @@ public class OnlineUserManager {
         String broadcastAddress = getBroadcastAddress();
         String datas = JsonUtil.toJson(new Data(0, user));
         sendAddress(broadcastAddress, datas);
-        LogUtils.d(TAG, "广播本地ip地址成功");
+        Log.d(TAG, "广播本地ip地址成功");
     }
 
     /**
@@ -176,7 +176,7 @@ public class OnlineUserManager {
         sendAddress(broadcastAddress, datas);
         mOnlineUsers.clear();
         if(mDatagramSocket != null) mDatagramSocket.close();
-        LogUtils.d(TAG, "广播退出");
+        Log.d(TAG, "广播退出");
     }
 
     /**
@@ -187,7 +187,7 @@ public class OnlineUserManager {
         Data data = new Data(2);
         String datas = JsonUtil.toJson(data);
         sendAddress(targetIp, datas);
-        LogUtils.d(TAG, "回复本地ip地址成功");
+        Log.d(TAG, "回复本地ip地址成功");
     }
 
     /**
@@ -244,10 +244,10 @@ public class OnlineUserManager {
                 return true;
             } catch (UnknownHostException e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "构造广播地址失败， e = " + e.getMessage());
+                Log.e(TAG, "构造广播地址失败， e = " + e.getMessage());
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "发送广播失败， e = " + e.getMessage());
+                Log.e(TAG, "发送广播失败， e = " + e.getMessage());
             }finally {
                 //关闭资源
                 if(datagramSocket != null) datagramSocket.close();
@@ -276,15 +276,15 @@ public class OnlineUserManager {
                     if(end >= length) end = length;
                     DatagramPacket datagramPacket = new DatagramPacket(bytes, start, end - start, InetAddress.getByName(targetIp), PORT);
                     datagramSocket.send(datagramPacket);
-                    LogUtils.d(TAG, "发送一段图片数据成功, offet = " + (end - start) + ", 总长度， len = " + length);
+                    Log.d(TAG, "发送一段图片数据成功, offet = " + (end - start) + ", 总长度， len = " + length);
                     start = end;
                 }
             } catch (UnknownHostException e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "构造广播地址失败， e = " + e.getMessage());
+                Log.e(TAG, "构造广播地址失败， e = " + e.getMessage());
             } catch (IOException e) {
                 e.printStackTrace();
-                LogUtils.e(TAG, "发送一段图片数据失败， e = " + e.getMessage());
+                Log.e(TAG, "发送一段图片数据失败， e = " + e.getMessage());
             }finally {
                 if(datagramSocket != null) datagramSocket.close();
             }

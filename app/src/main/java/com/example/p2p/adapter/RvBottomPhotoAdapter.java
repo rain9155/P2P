@@ -8,7 +8,6 @@ import com.example.library.BaseAdapter;
 import com.example.library.BaseViewHolder;
 import com.example.p2p.R;
 import com.example.p2p.bean.Photo;
-import com.example.utils.CommonUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -68,7 +67,11 @@ public class RvBottomPhotoAdapter extends BaseAdapter<Photo>{
             //如果添加的photo是来自删除列表中的，直接把它放回选择列表的原位
             for(Photo image : mUnSelectedPhotos){
                 if(image.equals(photo)){
-                    mDatas.add(image.selectPos, photo);
+                    if(mDatas.isEmpty()){
+                        mDatas.add(photo);
+                    }else {
+                        mDatas.add(image.selectPos, photo);
+                    }
                     mUnSelectedPhotos.remove(image);
                     notifyDataSetChanged();
                     return;

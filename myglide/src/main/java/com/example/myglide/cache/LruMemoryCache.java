@@ -15,7 +15,7 @@ public class LruMemoryCache implements MemoryCache {
 
     private static final String TAG = LruMemoryCache.class.getSimpleName();
 
-    private LruCache<String, Bitmap> mMemoryCache;//内存缓存
+    private LruCache<Key, Bitmap> mMemoryCache;//内存缓存
 
     public LruMemoryCache() {
         // 获取应用程序最大可用内存
@@ -23,23 +23,23 @@ public class LruMemoryCache implements MemoryCache {
         //设置图片内存缓存大小为程序最大可用内存的1/8
         int cacheSize = maxMemory / 8;
         Log.d(TAG, "LruMemoryCache, The maximum amount of memory is "  + (maxMemory / 1024 / 1024) + "MB");
-        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+        mMemoryCache = new LruCache<Key, Bitmap>(cacheSize) {
             @Override
-            protected int sizeOf(String key, Bitmap bitmap) {
+            protected int sizeOf(Key key, Bitmap bitmap) {
                 return getBitmapSize(bitmap);
             }
         };
     }
 
     @Override
-    public void put(String key, Bitmap bitmap) {
+    public void put(Key key, Bitmap bitmap) {
         if (get(key) == null) {
             mMemoryCache.put(key, bitmap);
         }
     }
 
     @Override
-    public Bitmap get(String key) {
+    public Bitmap get(Key key) {
         return mMemoryCache.get(key);
     }
 

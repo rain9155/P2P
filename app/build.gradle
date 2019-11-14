@@ -34,7 +34,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta1'
     implementation 'androidx.recyclerview:recyclerview:1.1.0-beta04'
 
-    implementation 'com.jianyu:utils:1.0.1'
+    implementation 'com.jianyu:utils:1.0.5'
     implementation 'com.jianyu:permissionhelper:1.0.0'
     implementation 'com.jianyu:baseadapter:1.0.1'
     implementation 'com.github.rain9155:Loading:1.0.1'
