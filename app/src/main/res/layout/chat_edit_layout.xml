@@ -23,7 +23,7 @@
         tools:ignore="UnusedAttribute" />
 
     <ImageView
-        android:id="@+id/iv_keyborad"
+        android:id="@+id/iv_keyboard"
         android:layout_width="@dimen/dp_32"
         android:layout_height="@dimen/dp_32"
         android:src="@drawable/ic_keyboard"
@@ -82,8 +82,15 @@
         android:layout_marginStart="12dp"
         android:layout_marginEnd="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/iv_add"
+        app:layout_constraintRight_toLeftOf="@+id/barrier"
         app:layout_constraintLeft_toRightOf="@id/rl_edit"/>
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="left"
+        app:constraint_referenced_ids="iv_add, btn_send"/>
 
     <ImageView
         android:id="@+id/iv_add"
@@ -95,24 +102,24 @@
         android:layout_marginEnd="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/iv_emoji"/>
+        app:layout_constraintLeft_toRightOf="@id/barrier"/>
 
 
     <com.example.p2p.widget.customView.SendButton
         android:id="@+id/btn_send"
-        android:layout_width="45dp"
-        android:layout_height="32dp"
+        android:layout_width="@dimen/dp_60"
+        android:layout_height="@dimen/dp_32"
         android:background="@drawable/select_chat_send"
         android:textColor="@color/colorWhite"
         android:text="@string/chat_btnSend"
-        android:textSize="12sp"
+        android:textSize="14sp"
         android:visibility="gone"
-        android:layout_marginBottom="10dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="@dimen/dp_10"
+        android:layout_marginStart="@dimen/dp_2"
+        android:layout_marginEnd="@dimen/dp_5"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/iv_emoji"/>
+        app:layout_constraintLeft_toRightOf="@id/barrier"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

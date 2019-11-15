@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/cl_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -24,11 +23,13 @@
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/srl_chat"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintVertical_weight="1"
         app:layout_constraintTop_toBottomOf="@id/tool_bar"
-        app:layout_constraintBottom_toTopOf="@+id/cl_edit">
+        app:layout_constraintBottom_toTopOf="@+id/cl_edit"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_chat"
@@ -46,38 +47,39 @@
         android:background="@color/colorDivider"
         app:layout_constraintBottom_toTopOf="@+id/cl_edit"/>
 
+
     <com.example.p2p.widget.helper.TranslationHelper
         android:id="@+id/helper_translation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="fl_bottom, cl_edit"
         tools:ignore="MissingConstraints" />
 
     <include
         android:id="@+id/cl_edit"
         layout="@layout/chat_edit_layout"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/srl_chat"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"/>
 
-    <FrameLayout
-        android:id="@+id/fl_bottom"
-        android:layout_width="match_parent"
+    <include
+        android:id="@+id/ll_emoji"
+        layout="@layout/chat_emoji_layout"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/cl_edit">
+        app:layout_constraintTop_toBottomOf="@id/cl_edit"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"/>
 
-        <include
-            android:id="@+id/cl_more"
-            layout="@layout/chat_more_layout"
-            android:visibility="gone"/>
-
-        <include
-            android:id="@+id/ll_emoji"
-            layout="@layout/chat_emoji_layout"
-            android:visibility="gone"/>
-
-    </FrameLayout>
-
+    <include
+        android:id="@+id/cl_more"
+        layout="@layout/chat_more_layout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/cl_edit"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

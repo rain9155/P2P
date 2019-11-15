@@ -24,7 +24,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -37,6 +36,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.transition.TransitionManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.p2p.adapter.RvChatAdapter;
@@ -132,14 +132,12 @@ public class ChatActivity extends BaseActivity {
     LinearLayout llEmoji;
     @BindView(R.id.iv_more)
     ImageView ivMore;
-    @BindView(R.id.iv_keyborad)
+    @BindView(R.id.iv_keyboard)
     ImageView ivKeyborad;
     @BindView(R.id.tv_audio)
     AudioTextView tvAudio;
     @BindView(R.id.cl_edit)
     ConstraintLayout clEdit;
-    @BindView(R.id.fl_bottom)
-    FrameLayout flBottom;
     @BindView(R.id.helper_translation)
     TranslationHelper helperTranslation;
 
@@ -148,6 +146,7 @@ public class ChatActivity extends BaseActivity {
     private final static int REQUEST_CODE_GET_IMAGE = 0x000;
     private final static int REQUEST_CODE_TAKE_IMAGE = 0x001;
     private final static int REQUEST_CODE_GET_FILE = 0x002;
+    private final static int DELAY_TIME = 200;
     private boolean isKeyboardShowing;
     private int screenHeight;
     private int mLastPosition = -1;
@@ -182,9 +181,11 @@ public class ChatActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         KeyBoardUtils.closeKeyBoard(this, edEdit);
-        if (clMore.isShown()) clMore.setVisibility(View.GONE);
-        if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
-        super.onBackPressed();
+        if(helperTranslation.isButtomLayoutShown()){
+            helperTranslation.hideBottomLayout();
+        }else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -308,8 +309,9 @@ public class ChatActivity extends BaseActivity {
         });
         //editText触摸监听
         edEdit.setOnTouchListener((view, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_UP && helperTranslation.isButtomLayoutShown()) {
-                helperTranslation.hideEmojiLayout();
+            if (event.getAction() == MotionEvent.ACTION_UP
+                    && helperTranslation.isButtomLayoutShown()) {
+                helperTranslation.hideBottomLayout();
             }
             return false;
         });
@@ -324,9 +326,7 @@ public class ChatActivity extends BaseActivity {
         rvChat.setOnTouchListener((view, event) -> {
             edEdit.clearFocus();
             if (isKeyboardShowing) KeyBoardUtils.closeKeyBoard(ChatActivity.this, edEdit);
-//            if (clMore.isShown()) clMore.setVisibility(View.GONE);
-//            if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
-            helperTranslation.hideEmojiLayout();
+            helperTranslation.hideBottomLayout();
             return false;
         });
         //底部布局弹出,聊天列表上滑
@@ -410,13 +410,13 @@ public class ChatActivity extends BaseActivity {
         });
     }
 
-    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyborad, R.id.rl_album, R.id.rl_camera, R.id.rl_file, R.id.rl_location})
+    @OnClick({R.id.iv_add, R.id.iv_back, R.id.iv_emoji, R.id.btn_send, R.id.iv_audio, R.id.iv_keyboard, R.id.rl_album, R.id.rl_camera, R.id.rl_file, R.id.rl_location})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.iv_audio:
                 changeAudioLayout();
                 break;
-            case R.id.iv_keyborad:
+            case R.id.iv_keyboard:
                 changeEditLayout();
                 break;
             case R.id.iv_add:
@@ -614,9 +614,8 @@ public class ChatActivity extends BaseActivity {
         edEdit.clearFocus();
         ivAudio.setVisibility(View.INVISIBLE);
         ivKeyborad.setVisibility(View.VISIBLE);
-        if (clMore.isShown()) clMore.setVisibility(View.GONE);
-        if (llEmoji.isShown()) llEmoji.setVisibility(View.GONE);
-        if (isKeyboardShowing) KeyBoardUtils.closeKeyBoard(this, edEdit);
+        if(isKeyboardShowing) KeyBoardUtils.closeKeyBoard(this, edEdit);
+        if(helperTranslation.isButtomLayoutShown()) helperTranslation.hideBottomLayout();
         edEdit.setVisibility(View.INVISIBLE);
         tvAudio.setVisibility(View.VISIBLE);
     }
@@ -628,28 +627,17 @@ public class ChatActivity extends BaseActivity {
     private void changeMoreLayout() {
         edEdit.clearFocus();
         if (!helperTranslation.isMoreLayoutShown() && !isKeyboardShowing) {//如果键盘没有显示，且更多布局也没有显示，只显示更多布局
-//            clMore.setVisibility(View.VISIBLE);
-//            if (llEmoji.isShown())
-//                llEmoji.setVisibility(View.GONE);
-//            helperTranslation.hideEmojiLayout();
             helperTranslation.showMoreLayout();
             edEdit.setVisibility(View.VISIBLE);
             ivAudio.setVisibility(View.VISIBLE);
             tvAudio.setVisibility(View.INVISIBLE);
             ivKeyborad.setVisibility(View.INVISIBLE);
         } else if (helperTranslation.isMoreLayoutShown() && !isKeyboardShowing) {//如果键盘没有显示，但更多布局显示，隐藏更多布局，显示键盘
-//            clMore.setVisibility(View.GONE);
-            helperTranslation.hideMoreLayout();
-            KeyBoardUtils.openKeyBoard(this, edEdit);
+            helperTranslation.hideBottomLayout();
+            edEdit.postDelayed(() ->  KeyBoardUtils.openKeyBoard(this, edEdit), DELAY_TIME);
         } else if (!helperTranslation.isMoreLayoutShown() && isKeyboardShowing) {//如果只有键盘显示，就隐藏键盘，显示更多布局
-            lockContentHeight();
             KeyBoardUtils.closeKeyBoard(this, edEdit);
-            edEdit.postDelayed(() -> {
-                unlockContentHeightDelayed();
-//                clMore.setVisibility(View.VISIBLE);
-                helperTranslation.showMoreLayout();
-
-            }, 200);
+            edEdit.postDelayed(() -> helperTranslation.showMoreLayout(), DELAY_TIME);
         }
     }
 
@@ -657,38 +645,22 @@ public class ChatActivity extends BaseActivity {
      * 改变表情布局显示
      */
     private void changeEmojiLayout() {
-        if (!llEmoji.isShown() && !isKeyboardShowing) {
-            llEmoji.setVisibility(View.VISIBLE);
-            if (clMore.isShown())
-                clMore.setVisibility(View.GONE);
+        if (!helperTranslation.isEmojiLayoutShown() && !isKeyboardShowing) {
+            helperTranslation.showEmojiLayout();
             tvAudio.setVisibility(View.INVISIBLE);
             edEdit.setVisibility(View.VISIBLE);
             edEdit.requestFocus();
             ivAudio.setVisibility(View.VISIBLE);
             ivKeyborad.setVisibility(View.INVISIBLE);
-
-        } else if (llEmoji.isShown() && !isKeyboardShowing) {
-            llEmoji.setVisibility(View.GONE);
-            KeyBoardUtils.openKeyBoard(this, edEdit);
-        } else if (!llEmoji.isShown() && isKeyboardShowing) {
-            lockContentHeight();
+        } else if (helperTranslation.isEmojiLayoutShown() && !isKeyboardShowing) {
+            helperTranslation.hideBottomLayout();
+            edEdit.postDelayed(() -> KeyBoardUtils.openKeyBoard(this, edEdit), DELAY_TIME);
+        } else if (!helperTranslation.isEmojiLayoutShown() && isKeyboardShowing) {
             KeyBoardUtils.closeKeyBoard(this, edEdit);
-            edEdit.postDelayed(() -> {
-                unlockContentHeightDelayed();
-                llEmoji.setVisibility(View.VISIBLE);
-
-            }, 200);
+            edEdit.postDelayed(() -> helperTranslation.showEmojiLayout(), DELAY_TIME);
         }
     }
 
-    /**
-     * 锁定内容高度，防止跳闪
-     */
-    private void lockContentHeight() {
-        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mContentView.getLayoutParams();
-        params.height = mContentView.getHeight();
-        params.weight = 0.0F;
-    }
 
     /**
      * 释放被锁定的内容高度
