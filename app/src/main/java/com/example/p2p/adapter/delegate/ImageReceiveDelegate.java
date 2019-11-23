@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.library.BaseViewHolder;
+import com.example.myglide.MyGlide;
 import com.example.p2p.R;
 import com.example.p2p.base.delegate.BaseReceiveMutiItemDelegate;
 import com.example.p2p.bean.Image;
@@ -21,12 +22,6 @@ import java.util.Map;
  * Created by 陈健宇 at 2019/6/24
  */
 public class ImageReceiveDelegate extends BaseReceiveMutiItemDelegate {
-
-    private Map<String, Bitmap> mMessageImages;
-
-    public ImageReceiveDelegate() {
-        mMessageImages = new HashMap<>();
-    }
 
     @Override
     public boolean isForViewType(Mes items, int position) {
@@ -43,9 +38,8 @@ public class ImageReceiveDelegate extends BaseReceiveMutiItemDelegate {
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
         super.onBindView(holder, items, position);
         Image image = (Image) items.data;
-        if(!mMessageImages.containsKey(image.imagePath)){
-            mMessageImages.put(image.imagePath,  BitmapFactory.decodeFile(image.imagePath));
-        }
-        holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imagePath));
+        MyGlide.with(holder.itemView.getContext())
+                .load(image.imagePath)
+                .into(holder.getView(R.id.iv_message));
     }
 }

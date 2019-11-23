@@ -1,7 +1,6 @@
 package com.example.p2p;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -27,7 +26,7 @@ import com.example.p2p.bean.Folder;
 import com.example.p2p.bean.Photo;
 import com.example.p2p.config.Constant;
 import com.example.p2p.decoration.GridLayoutItemDivider;
-import com.example.p2p.utils.PhotoUtil;
+import com.example.p2p.utils.LoadPhotoUtil;
 import com.example.p2p.utils.TimeUtil;
 import com.example.p2p.widget.dialog.ShowFoldersPopup;
 import com.example.p2p.widget.helper.ChangeArrowHelper;
@@ -40,10 +39,11 @@ import com.example.utils.DisplayUtils;
 import com.example.utils.StatusBarUtils;
 import com.example.utils.ToastUtils;
 import com.lxj.xpopup.XPopup;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
 import butterknife.BindView;
 import butterknife.OnClick;
 
@@ -61,11 +61,11 @@ public class PhotoActivity extends BaseActivity {
     RecyclerView rvPhotos;
     @BindView(R.id.tv_photo_data)
     TextView tvPhotoData;
-    @BindView(R.id.ib_select_raw)
-    ImageButton ibSelectRaw;
+    @BindView(R.id.ib_is_raw)
+    ImageButton ibIsRaw;
     @BindView(R.id.tv_raw_photo)
     TextView tvRawPhoto;
-    @BindView(R.id.tv_is_select)
+    @BindView(R.id.tv_pre_view)
     TextView tvPreviewPhoto;
     @BindView(R.id.helper_change_time)
     ChangeTimeHelper helperChangeTime;
@@ -76,6 +76,9 @@ public class PhotoActivity extends BaseActivity {
     @BindView(R.id.iv_arrow)
     ImageButton ivArrow;
 
+    private static final int REQUEST_UPDATE_SELECT_PHOTOS = 0x000;
+    private static final int SPAN_COUNT = 4;
+    private boolean isRawPhoto;
     private List<Photo> mPhotos;
     private List<Folder> mFolders;
     private RvPhotoAdapter mPhotoAdapter;
@@ -97,11 +100,12 @@ public class PhotoActivity extends BaseActivity {
     @Override
     protected void initView() {
         updateSelectCount(0);
+        ibIsRaw.setSelected(isRawPhoto);
 
         //照片墙
         mPhotos = new ArrayList<>();
         mPhotoAdapter = new RvPhotoAdapter(mPhotos, R.layout.item_photo_photos);
-        mPhotoLayoutManager = new GridLayoutManager(this, 4);
+        mPhotoLayoutManager = new GridLayoutManager(this, SPAN_COUNT);
         rvPhotos.setAdapter(mPhotoAdapter);
         rvPhotos.setLayoutManager(mPhotoLayoutManager);
         rvPhotos.addItemDecoration(new GridLayoutItemDivider(this));
@@ -128,7 +132,7 @@ public class PhotoActivity extends BaseActivity {
                 new IPermissionCallback() {
                     @Override
                     public void onAccepted(Permission permission) {
-                        PhotoUtil.loadPhotosFromExternal(App.getContext(), (folders, allPhotos) -> runOnUiThread(() -> {
+                        LoadPhotoUtil.loadPhotosFromExternal(App.getContext(), (folders, allPhotos) -> runOnUiThread(() -> {
                             mPhotoAdapter.setNewPhotos(allPhotos);
                             mFolderAdapter.setNewFolders(folders);
                         }));
@@ -156,12 +160,14 @@ public class PhotoActivity extends BaseActivity {
             }
         });
         mPhotoAdapter.setOnItemClickListener((adapter, view, position) -> {
-            PreViewActivity.startActivity(
+            PreViewActivity.startActivityForResult(
                     this,
                     mPhotos,
                     mPhotoAdapter.getSelectPhotos(),
                     position,
-                    false
+                    false,
+                    isRawPhoto,
+                    REQUEST_UPDATE_SELECT_PHOTOS
             );
         });
         mPhotoAdapter.setOnItemChildClickListener((adapter, view, position) -> {
@@ -180,22 +186,16 @@ public class PhotoActivity extends BaseActivity {
             tvTitle.setText(mFolders.get(position).name);
         });
 
-
     }
 
-    @OnClick({R.id.tv_is_select, R.id.iv_back, R.id.tv_title, R.id.iv_arrow})
+    @OnClick({R.id.tv_pre_view, R.id.iv_back, R.id.tv_title, R.id.iv_arrow, R.id.btn_send, R.id.ib_is_raw, R.id.tv_raw_photo})
     public void onViewClick(View view) {
         switch (view.getId()) {
-            case R.id.tv_is_select:
-                PreViewActivity.startActivity(
-                        this,
-                        new LinkedList<>(mPhotoAdapter.getSelectPhotos()),
-                        mPhotoAdapter.getSelectPhotos(),
-                        0,
-                        true);
-                break;
             case R.id.iv_back:
                 finish();
+                break;
+            case R.id.btn_send:
+                startChatActivity();
                 break;
             case R.id.tv_title:
             case R.id.iv_arrow:
@@ -204,6 +204,20 @@ public class PhotoActivity extends BaseActivity {
                 } else {
                     mShowFoldersPopup.show();
                 }
+                break;
+            case R.id.tv_pre_view:
+                PreViewActivity.startActivityForResult(
+                        this,
+                        new LinkedList<>(mPhotoAdapter.getSelectPhotos()),
+                        mPhotoAdapter.getSelectPhotos(),
+                        0,
+                        true,
+                        isRawPhoto,
+                        REQUEST_UPDATE_SELECT_PHOTOS);
+                break;
+            case R.id.ib_is_raw:
+            case R.id.tv_raw_photo:
+                updateRaw(!isRawPhoto);
                 break;
             default:
                 break;
@@ -214,8 +228,9 @@ public class PhotoActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            if (requestCode == Constant.REQUEST_UPDATE_SELECT_PHOTOS) {
+            if (requestCode == REQUEST_UPDATE_SELECT_PHOTOS) {
                 int[] rang = data.getIntArrayExtra(Constant.KEY_MIN_MAX_UPDATE_POS);
+                updateRaw(data.getBooleanExtra(Constant.KEY_IS_RAW_PHOTO, isRawPhoto));
                 if (rang == null) {
                     mPhotoAdapter.notifyDataSetChanged();
                 } else {
@@ -226,6 +241,31 @@ public class PhotoActivity extends BaseActivity {
         }
     }
 
+
+    @Override
+    public void finish() {
+        if(mShowFoldersPopup.isShow()){
+            mShowFoldersPopup.dismiss();
+        }else {
+            super.finish();
+        }
+    }
+
+    /**
+     * 发送选择的照片路径给聊天界面
+     */
+    private void startChatActivity() {
+        List<Photo> selectedPhotos = mPhotoAdapter.getSelectPhotos();
+        Collections.sort(selectedPhotos, (o1, o2) -> Integer.compare(o1.position, o2.position));
+        ArrayList<String> paths = new ArrayList<>(selectedPhotos.size());
+        for(Photo photo : selectedPhotos){
+            paths.add(photo.path);
+        }
+        Intent result = new Intent(this, ChatActivity.class);
+        result.putStringArrayListExtra(Constant.KEY_CHOOSE_PHOTOS_PATH, paths);
+        result.putExtra(Constant.KEY_IS_RAW_PHOTO, isRawPhoto);
+        startActivity(result);
+    }
 
     /**
      * 更新时间条时间
@@ -280,8 +320,14 @@ public class PhotoActivity extends BaseActivity {
         }
     }
 
-    public static void startActivity(Context context) {
-        context.startActivity(new Intent(context, PhotoActivity.class));
+    /**
+     * 更新是否原图按钮
+     */
+    private void updateRaw(boolean b) {
+        isRawPhoto = b;
+        ibIsRaw.setSelected(isRawPhoto);
     }
+
+
 
 }

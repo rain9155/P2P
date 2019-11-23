@@ -48,7 +48,7 @@ public class TranslationHelper extends ConstraintHelper {
         mMoreConstraintSet.clear(R.id.cl_more);
         mMoreConstraintSet.clear(R.id.ll_emoji);
 
-        mMoreConstraintSet.connect(R.id.cl_edit, ConstraintSet.TOP, R.id.srl_chat, ConstraintSet.BOTTOM);
+        mMoreConstraintSet.connect(R.id.cl_edit, ConstraintSet.TOP, R.id.rv_chat, ConstraintSet.BOTTOM);
         mMoreConstraintSet.connect(R.id.cl_edit, ConstraintSet.BOTTOM, R.id.cl_more, ConstraintSet.TOP);
         mMoreConstraintSet.centerHorizontally(R.id.cl_edit, ConstraintSet.PARENT_ID);
         mMoreConstraintSet.constrainHeight(R.id.cl_edit, ConstraintSet.WRAP_CONTENT);
@@ -71,7 +71,7 @@ public class TranslationHelper extends ConstraintHelper {
         mEmojiConstraintSet.clear(R.id.cl_more);
         mEmojiConstraintSet.clear(R.id.ll_emoji);
 
-        mEmojiConstraintSet.connect(R.id.cl_edit, ConstraintSet.TOP, R.id.srl_chat, ConstraintSet.BOTTOM);
+        mEmojiConstraintSet.connect(R.id.cl_edit, ConstraintSet.TOP, R.id.rv_chat, ConstraintSet.BOTTOM);
         mEmojiConstraintSet.connect(R.id.cl_edit, ConstraintSet.BOTTOM, R.id.ll_emoji, ConstraintSet.TOP);
         mEmojiConstraintSet.centerHorizontally(R.id.cl_edit, ConstraintSet.PARENT_ID);
         mEmojiConstraintSet.constrainHeight(R.id.cl_edit, ConstraintSet.WRAP_CONTENT);
@@ -95,7 +95,7 @@ public class TranslationHelper extends ConstraintHelper {
         mResetConstraintSet.clear(R.id.cl_more);
         mResetConstraintSet.clear(R.id.ll_emoji);
 
-        mResetConstraintSet.connect(R.id.cl_edit, ConstraintSet.TOP, R.id.srl_chat, ConstraintSet.BOTTOM);
+        mResetConstraintSet.connect(R.id.cl_edit, ConstraintSet.TOP, R.id.rv_chat, ConstraintSet.BOTTOM);
         mResetConstraintSet.connect(R.id.cl_edit, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
         mResetConstraintSet.centerHorizontally(R.id.cl_edit, ConstraintSet.PARENT_ID);
         mResetConstraintSet.constrainHeight(R.id.cl_edit, ConstraintSet.WRAP_CONTENT);

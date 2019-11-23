@@ -22,7 +22,7 @@ import java.util.Map;
  * 从相册加载照片工具类
  * Created by 陈健宇 at 2019/9/27
  */
-public class PhotoUtil {
+public class LoadPhotoUtil {
 
     private static final String ALL_PHOTOS = "全部图片";
 
@@ -32,7 +32,7 @@ public class PhotoUtil {
      * @param callback 回调
      */
     public static void loadPhotosFromExternal(final Context context, final IPhotosCallback callback) {
-        ConnectManager.getInstance().executeTast(() -> {
+        ConnectManager.execute(() -> {
             if(callback == null) return;
             Uri photoUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             ContentResolver contentResolver = context.getContentResolver();

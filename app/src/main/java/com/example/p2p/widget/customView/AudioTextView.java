@@ -223,7 +223,7 @@ public class AudioTextView extends AppCompatTextView {
         if(inteval < MIN_RECORS_TIME){
             cancelStartRecord();
         }else {
-            int duration = MediaPlayerManager.getInstance().getDuration(mFileName);
+            int duration = MediaPlayerManager.get().getDuration(mFileName);
             if(duration < 0){
                 if(mRecordedCallback != null){
                     mRecordedCallback.onError();
@@ -279,7 +279,7 @@ public class AudioTextView extends AppCompatTextView {
             mMediaRecorder = null;
             isRecording = false;
         }
-        MediaPlayerManager.getInstance().release();
+        MediaPlayerManager.get().release();
         Log.d(TAG, "释放资源");
     }
 

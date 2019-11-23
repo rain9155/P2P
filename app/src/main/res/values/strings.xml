@@ -19,6 +19,8 @@
     <string name="chat_btnSend">发送</string>
     <string name="chat_audio_error">录音失败</string>
     <string name="chat_choose_file">"选择文件"</string>
+    <string name="chat_send_error">发送消息失败</string>
+
 
     <string name="toast_wifi_noconnect">没有连接上Wifi</string>
     <string name="toast_wifi_connecting">"wifi连接中..."</string>

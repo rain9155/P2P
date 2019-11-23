@@ -2,9 +2,7 @@ package com.example.p2p.adapter;
 
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
 import com.example.library.BaseAdapter;
 import com.example.library.BaseViewHolder;
 import com.example.myglide.MyGlide;
@@ -29,9 +27,6 @@ public class RvPhotoAdapter extends BaseAdapter<Photo> {
 
     @Override
     protected void onBindView(BaseViewHolder holder, Photo item) {
-//        Glide.with(holder.getItemView())
-//                .load(item.path)
-//                .into((ImageView) holder.getView(R.id.iv_photo));
         MyGlide.with(holder.getItemView().getContext())
                 .load(item.path)
                 .into(holder.getView(R.id.iv_photo));

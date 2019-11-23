@@ -2,7 +2,7 @@
 <resources>
     <color name="colorPrimary">#F4F4F4</color>
     <color name="colorPrimaryDark">#F4F4F4</color>
-    <color name="colorAccent">#F4F4F4</color>
+    <color name="colorAccent">#00c853</color>
     <color name="colorSecondPrimary">#FAFAFA</color>
     <color name="colorWhite">#FFFFFF</color>
     <color name="colorBlack">#000000</color>
@@ -10,10 +10,9 @@
     <color name="colorSecondText">#424242</color>
     <color name="colorMark">#A3111212</color>
     <color name="colorThirdText">#9E9E9E</color>
-    <color name="colorGreen">#4CAF50</color>
-    <color name="colorGreenSelected">#81C784</color>
+    <color name="colorGreen">#00c853</color>
+    <color name="colorGreenSelected">#CD00C853</color>
     <color name="colorGreenEnabled">#D2F3D2</color>
-    <color name="colorGreenSend">#6AEC6A</color>
     <color name="colorDisable">#B3FFFFFF</color>
     <color name="colorDivider">#CBD9D9D9</color>
     <color name="colorIndicator">#6DB6B6B6</color>

@@ -26,21 +26,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadPoolExecutor;
 
+import static com.example.p2p.core.ConnectManager.execute;
+import static com.example.p2p.core.ConnectManager.submit;
 
 
 public class OnlineUserManager {
 
     private String TAG = OnlineUserManager.class.getSimpleName();
-    private static OnlineUserManager sInstance;
     private static final int PORT = 9156;
     private static final int MAX_RECEIVE_DATA = 50000;
     private static final int TYPE_JOIN_USER = 0x000;
     private static final int TYPE_EXIT_USER = 0x001;
     private static final int TYPE_JOIN_USERS = 0x002;
+    private static OnlineUserManager sInstance;
 
-    private ExecutorService mExecutor;
     private DatagramSocket mDatagramSocket;
     private Map<String, User> mOnlineUsers;
     private IUserCallback mUserCallback;
@@ -66,11 +69,10 @@ public class OnlineUserManager {
     };
 
     private OnlineUserManager(){
-        mExecutor = Executors.newCachedThreadPool();
         mOnlineUsers = new ConcurrentHashMap<>();
     }
 
-    public static OnlineUserManager getInstance(){
+    public static OnlineUserManager get(){
         if(sInstance == null){
             synchronized (OnlineUserManager.class){
                 OnlineUserManager scan;
@@ -87,7 +89,7 @@ public class OnlineUserManager {
      * 初始化监听，绑定指定端口, 等待接受广播
      */
     public void initListener(){
-        mExecutor.execute(() -> {
+        execute(() -> {
             try {
                 mDatagramSocket = new DatagramSocket(PORT);
                 Log.d(TAG, "开启广播监听，端口号 = " + PORT);
@@ -231,10 +233,8 @@ public class OnlineUserManager {
      */
     private void sendAddress(String targetIp, String datas){
         final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
-            DatagramSocket datagramSocket = null;
-            try {
+            try (DatagramSocket datagramSocket = new DatagramSocket()) {
                 //创建DatagramSocket类对象，此类表示用来发送和接收数据报包的套接字
-                datagramSocket = new DatagramSocket();
                 //创建要发送的数据，这里是code字段
                 byte[] data = datas.getBytes();
                 //构造DatagramPacket，DatagramPacket表示数据包，构造函数表示用来将长度为 length 偏移量为 offset 的包发送到指定主机上的指定端口号
@@ -248,13 +248,11 @@ public class OnlineUserManager {
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e(TAG, "发送广播失败， e = " + e.getMessage());
-            }finally {
-                //关闭资源
-                if(datagramSocket != null) datagramSocket.close();
             }
+            //关闭资源
             return false;
         });
-        mExecutor.submit(futureTask);
+        submit(futureTask);
     }
 
     /**
@@ -263,17 +261,15 @@ public class OnlineUserManager {
     @Deprecated
     private void sendUserWithImage(byte[] bytes, String targetIp) {
         isSendingImage = true;
-        mExecutor.execute(() -> {
-            DatagramSocket datagramSocket = null;
-            try {
-                datagramSocket = new DatagramSocket();
+        execute(() -> {
+            try (DatagramSocket datagramSocket = new DatagramSocket()) {
                 int start = 0;
                 int end = 0;
                 int length = bytes.length;
-                while (end < length){
-                    if(!isSendingImage) break;//退出后停止发送
+                while (end < length) {
+                    if (!isSendingImage) break;//退出后停止发送
                     end += MAX_RECEIVE_DATA;
-                    if(end >= length) end = length;
+                    if (end >= length) end = length;
                     DatagramPacket datagramPacket = new DatagramPacket(bytes, start, end - start, InetAddress.getByName(targetIp), PORT);
                     datagramSocket.send(datagramPacket);
                     Log.d(TAG, "发送一段图片数据成功, offet = " + (end - start) + ", 总长度， len = " + length);
@@ -285,8 +281,6 @@ public class OnlineUserManager {
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e(TAG, "发送一段图片数据失败， e = " + e.getMessage());
-            }finally {
-                if(datagramSocket != null) datagramSocket.close();
             }
         });
     }

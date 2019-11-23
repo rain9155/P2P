@@ -20,7 +20,7 @@ public abstract class BaseReceiveMutiItemDelegate implements IMultiItemDelegate<
     @Override
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
         if(mUserImage == null){
-            User user = OnlineUserManager.getInstance().getOnlineUser(items.userIp);
+            User user = OnlineUserManager.get().getOnlineUser(items.userIp);
             mUserImage = BitmapFactory.decodeFile(user.getImagePath());
             if(mUserImage == null)
                 mUserImage = BitmapFactory.decodeResource(holder.getItemView().getContext().getResources(), R.drawable.ic_default_user_2);

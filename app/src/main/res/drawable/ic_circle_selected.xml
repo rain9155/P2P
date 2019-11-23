@@ -8,7 +8,7 @@
     <group>
 
         <path
-            android:strokeColor="#4CAF50"
+            android:strokeColor="#00c853"
             android:strokeWidth="2"
             android:strokeLineCap="round"
             android:strokeLineJoin="round"
@@ -16,7 +16,7 @@
                           a 20 20 0 1 0 1 0"/>
 
         <path
-            android:fillColor="#4CAF50"
+            android:fillColor="#00c853"
             android:pathData="M 30 15
                           a 15 15 0 1 0 1 0"/>
 

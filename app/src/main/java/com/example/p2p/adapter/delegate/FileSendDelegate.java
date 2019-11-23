@@ -39,6 +39,7 @@ public class FileSendDelegate extends BaseSendMutiItemDelegate {
                 .setImageResource(R.id.iv_file_icon, ImageUtil.getImageId(file.fileType));
         ProgressBar progressBar = holder.getView(R.id.progress);
         if(file.progress < 100){
+            holder.setVisibility(R.id.progress, View.VISIBLE);
             progressBar.setProgress(file.progress);
         }else {
             progressBar.setProgress(file.progress);

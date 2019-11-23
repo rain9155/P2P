@@ -29,6 +29,7 @@ import com.example.utils.CommonUtils;
 import com.example.utils.StatusBarUtils;
 import com.example.utils.ToastUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,11 +50,11 @@ public class PreViewActivity extends BaseActivity {
     RecyclerView rvBottomPreView;
     @BindView(R.id.divider)
     View divider;
-    @BindView(R.id.ib_select_raw)
-    ImageButton ibSelectRaw;
+    @BindView(R.id.ib_is_raw)
+    ImageButton ibIsRaw;
     @BindView(R.id.tv_raw_photo)
     TextView tvRawPhoto;
-    @BindView(R.id.tv_is_select)
+    @BindView(R.id.tv_pre_view)
     TextView tvIsSelect;
     @BindView(R.id.cl_bottom)
     ConstraintLayout clBottom;
@@ -64,11 +65,14 @@ public class PreViewActivity extends BaseActivity {
     @BindView(R.id.ib_is_select)
     ImageButton ibIsSelect;
 
+    private static final String KEY_CLICK_POSITION = "clickPos";
+    private static final String KEY_MODE = "mode";
     private static List<Photo> mTempPreViewPhotos, mTempSelectPhotos;
     private static List<Photo> mPreViewPhotos, mSelectPhotos;//依次为预览照片列表，底部的已选择照片列表
 
     private RvBottomPhotoAdapter mBottomAdapter;
     private RvPreViewAdapter mPreViewAdapter;
+    private boolean isRawPhoto;
     private int mPos;
     private boolean isJumpFromPreBtn;//从PhotoActivity点击列表跳转还是点击预览跳转
 
@@ -78,8 +82,9 @@ public class PreViewActivity extends BaseActivity {
         mSelectPhotos = mTempSelectPhotos;
         mTempPreViewPhotos = null;
         mTempSelectPhotos = null;
-        mPos = getIntent().getIntExtra(Constant.KEY_CLICK_POSITION, 0);
-        isJumpFromPreBtn = getIntent().getBooleanExtra(Constant.KEY_MODE, true);
+        mPos = getIntent().getIntExtra(KEY_CLICK_POSITION, 0);
+        isJumpFromPreBtn = getIntent().getBooleanExtra(KEY_MODE, true);
+        isRawPhoto = getIntent().getBooleanExtra(Constant.KEY_IS_RAW_PHOTO, isRawPhoto);
         super.onCreate(savedInstanceState);
         StatusBarUtils.immersive(this, ContextCompat.getColor(this, R.color.colorPhotoBg));
     }
@@ -109,6 +114,7 @@ public class PreViewActivity extends BaseActivity {
         updateTitle(mPos);
         updateSend(mSelectPhotos.size());
         ibIsSelect.setSelected(mPreViewPhotos.get(mPos).isSelect);
+        ibIsRaw.setSelected(isRawPhoto);
     }
 
     @Override
@@ -157,15 +163,22 @@ public class PreViewActivity extends BaseActivity {
 
     }
 
-    @OnClick({R.id.iv_back, R.id.tv_is_select, R.id.ib_is_select})
+    @OnClick({R.id.iv_back, R.id.tv_pre_view, R.id.ib_is_select, R.id.btn_send, R.id.ib_is_raw, R.id.tv_raw_photo})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.iv_back:
                 finish();
                 break;
-            case R.id.tv_is_select:
+            case R.id.btn_send:
+                startChatActivity();
+                break;
+            case R.id.tv_pre_view:
             case R.id.ib_is_select:
                 checkAndUpdateSelectCount();
+                break;
+            case R.id.ib_is_raw:
+            case R.id.tv_raw_photo:
+                updateRaw();
                 break;
             default:
                 break;
@@ -184,8 +197,27 @@ public class PreViewActivity extends BaseActivity {
 
     @Override
     public void finish() {
-        setResultOk();
+        setResult();
         super.finish();
+    }
+
+    /**
+     * 发送选择的照片路径给聊天界面
+     */
+    private void startChatActivity() {
+        List<Photo> selectedPhotos = mSelectPhotos;
+        if(selectedPhotos.isEmpty()){
+            selectedPhotos.add(mPreViewPhotos.get(mPos));
+        }
+        Collections.sort(selectedPhotos, (o1, o2) -> Integer.compare(o1.position, o2.position));
+        ArrayList<String> paths = new ArrayList<>(selectedPhotos.size());
+        for(Photo photo : selectedPhotos){
+            paths.add(photo.path);
+        }
+        Intent result = new Intent(this, ChatActivity.class);
+        result.putStringArrayListExtra(Constant.KEY_CHOOSE_PHOTOS_PATH, paths);
+        result.putExtra(Constant.KEY_IS_RAW_PHOTO, isRawPhoto);
+        startActivity(result);
     }
 
     /**
@@ -242,9 +274,17 @@ public class PreViewActivity extends BaseActivity {
     }
 
     /**
+     * 更新是否原图按钮
+     */
+    private void updateRaw() {
+        isRawPhoto = !isRawPhoto;
+        ibIsRaw.setSelected(isRawPhoto);
+    }
+
+    /**
      * 返回列表的更新范围给上一个活动
      */
-    private void setResultOk() {
+    private void setResult() {
         int minPos = Integer.MAX_VALUE;
         int maxPos = Integer.MIN_VALUE;
         for(Photo photo : mSelectPhotos){
@@ -266,16 +306,25 @@ public class PreViewActivity extends BaseActivity {
         }
         Intent data = new Intent();
         data.putExtra(Constant.KEY_MIN_MAX_UPDATE_POS, new int[]{minPos, maxPos});
+        data.putExtra(Constant.KEY_IS_RAW_PHOTO, isRawPhoto);
         setResult(RESULT_OK, data);
     }
 
-    public static void startActivity(Activity activity, List<Photo> preViewPhotos, List<Photo> selectPhotos, int clickPos, boolean mode) {
+
+    /**
+     * @param preViewPhotos 需要预览的照片列表
+     * @param selectPhotos 底部展示的照片列表，即已经选择了的的照片列表
+     * @param clickPos 点击的照片的位置
+     * @param mode 是从照片墙点击，还是从预览点击
+     */
+    public static void startActivityForResult(Activity activity, List<Photo> preViewPhotos, List<Photo> selectPhotos, int clickPos, boolean mode, boolean isRawPhoto, int requestCode) {
         mTempPreViewPhotos = preViewPhotos;
         mTempSelectPhotos = selectPhotos;
         Intent intent = new Intent(activity, PreViewActivity.class);
-        intent.putExtra(Constant.KEY_CLICK_POSITION, clickPos);
-        intent.putExtra(Constant.KEY_MODE, mode);
-        activity.startActivityForResult(intent, Constant.REQUEST_UPDATE_SELECT_PHOTOS);
+        intent.putExtra(KEY_CLICK_POSITION, clickPos);
+        intent.putExtra(KEY_MODE, mode);
+        intent.putExtra(Constant.KEY_IS_RAW_PHOTO, isRawPhoto);
+        activity.startActivityForResult(intent, requestCode);
     }
 
 }

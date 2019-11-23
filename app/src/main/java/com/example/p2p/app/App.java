@@ -16,7 +16,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         mContext = this;
-        ConnectManager.getInstance().initListener();
+        ConnectManager.get().initListener();
     }
 
     public static Context getContext(){

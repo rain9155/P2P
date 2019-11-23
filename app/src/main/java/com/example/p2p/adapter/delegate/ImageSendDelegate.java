@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.example.library.BaseViewHolder;
+import com.example.myglide.MyGlide;
 import com.example.p2p.R;
 import com.example.p2p.base.delegate.BaseSendMutiItemDelegate;
 import com.example.p2p.bean.Image;
@@ -25,11 +26,6 @@ import java.util.Map;
  */
 public class ImageSendDelegate extends BaseSendMutiItemDelegate {
 
-    private Map<String, Bitmap> mMessageImages;//缓存一下，不然滑动卡顿
-
-    public ImageSendDelegate() {
-        mMessageImages = new HashMap<>();
-    }
 
     @Override
     public boolean isForViewType(Mes items, int position) {
@@ -46,18 +42,18 @@ public class ImageSendDelegate extends BaseSendMutiItemDelegate {
     public void onBindView(BaseViewHolder holder, Mes items, int position) {
         super.onBindView(holder, items, position);
         Image image = (Image) items.data;
-        if(!mMessageImages.containsKey(image.imagePath)){
-            mMessageImages.put(image.imagePath, BitmapFactory.decodeFile(image.imagePath));
-        }
-        holder.setImageBitmap(R.id.iv_message, mMessageImages.get(image.imagePath));
+        MyGlide.with(holder.itemView.getContext())
+                .load(image.imagePath)
+                .into(holder.getView(R.id.iv_message));
         ImageView imageView = holder.getView(R.id.iv_message);
         if(image.progress < 100){
             imageView.getDrawable().mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
-            holder.setText(R.id.tv_progress, image.progress + "");
+            holder.setVisibility(R.id.tv_progress, View.VISIBLE)
+                    .setText(R.id.tv_progress, image.progress + "");
         }else {
-            holder.setText(R.id.tv_progress, image.progress + "");
             imageView.clearColorFilter();
-            holder.setVisibility(R.id.ll_sending, View.GONE);
+            holder.setText(R.id.tv_progress, image.progress + "")
+                    .setVisibility(R.id.ll_sending, View.GONE);
         }
     }
 }

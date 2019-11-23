@@ -33,6 +33,7 @@ import com.example.p2p.callback.IUserCallback;
 import com.example.p2p.callback.IConnectCallback;
 import com.example.p2p.callback.IDialogCallback;
 import com.example.p2p.config.Constant;
+import com.example.p2p.core.MessageManager;
 import com.example.p2p.core.OnlineUserManager;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.utils.Log;
@@ -82,7 +83,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //初始化用户系统
-        OnlineUserManager.getInstance().initListener();
+        OnlineUserManager.get().initListener();
         super.onCreate(savedInstanceState);
     }
 
@@ -109,8 +110,9 @@ public class MainActivity extends BaseActivity {
     }
 
     private void exitLogin() {
-        OnlineUserManager.getInstance().exit();
-        ConnectManager.getInstance().destory();
+        OnlineUserManager.get().exit();
+        ConnectManager.get().destory();
+        MessageManager.get().destory();
     }
 
     @Override
@@ -190,7 +192,7 @@ public class MainActivity extends BaseActivity {
             mPosition = position;
             mConnectingDialog.show(getSupportFragmentManager());
             //连接回调监听
-            ConnectManager.getInstance().connect(mOnlineUsers.get(position).getIp(), new IConnectCallback() {
+            ConnectManager.get().connect(mOnlineUsers.get(position).getIp(), new IConnectCallback() {
                 @Override
                 public void onConnectSuccess(String targetIp) {
                     mConnectingDialog.dismiss();
@@ -222,16 +224,16 @@ public class MainActivity extends BaseActivity {
             }
         });
         //广播回调监听
-        OnlineUserManager.getInstance().setUserCallback(new IUserCallback() {
+        OnlineUserManager.get().setUserCallback(new IUserCallback() {
 
             @Override
             public void onJoin(User user){
-                if(mOnlineUsers.isEmpty() && !OnlineUserManager.getInstance().isRefresh()) mStatusView.showSuccess();
+                if(mOnlineUsers.isEmpty() && !OnlineUserManager.get().isRefresh()) mStatusView.showSuccess();
                 mOnlineUsers.add(user);
                 mRvMainAdapter.notifyItemInserted(mOnlineUsers.size());
                 final String userIp = user.getIp();
                 final String name = user.getName();
-                ConnectManager.getInstance().addImageReceiveCallback(userIp, imagePath -> {
+                MessageManager.get().addImageReceiveCallback(userIp, imagePath -> {
                     for(int i = 0; i < mOnlineUsers.size(); i++){
                         if(mOnlineUsers.get(i).getIp().equals(userIp)){
                             mOnlineUsers.get(i).setImagePath(imagePath);
@@ -241,12 +243,12 @@ public class MainActivity extends BaseActivity {
                         }
                     }
                 });
-                ConnectManager.getInstance().connect(user.getIp(), new IConnectCallback() {
+                ConnectManager.get().connect(user.getIp(), new IConnectCallback() {
                     @Override
                     public void onConnectSuccess(String targetIp) {
                         Image image = new Image(Constant.FILE_USER_IMAGE);
                         Mes<Image> message = new Mes<>(ItemType.OTHER, MesType.IMAGE, userIp, image);
-                        ConnectManager.getInstance().sendMessage(userIp, message);
+                        MessageManager.get().sendMessage(userIp, message);
                         Log.d(TAG, "发送用户图片，name = " + name);
                     }
 
@@ -264,14 +266,14 @@ public class MainActivity extends BaseActivity {
                 mOnlineUsers.remove(user);
                 mRvMainAdapter.notifyItemRemoved(index);
                 FileUtils.deleteFiles(new File(Constant.FILE_PATH_ONLINE_USER + user.getIp() + File.separator));
-                ConnectManager.getInstance().removeConnect(user.getIp());
-                ConnectManager.getInstance().cancelScheduledTask(user.getIp());
+                ConnectManager.get().removeConnect(user.getIp());
+                ConnectManager.get().cancelScheduledTask(user.getIp());
                 if(mOnlineUsers.isEmpty()) mStatusView.showEmpty();
                 ToastUtils.showToast(App.getContext(),  user.getName() + getString(R.string.toast_user_exit));
             }
         });
         mWindowPopup.setRefreshCallback(() -> {
-            if(OnlineUserManager.getInstance().isRefresh()) return;
+            if(OnlineUserManager.get().isRefresh()) return;
             refresh();
         });
     }
@@ -294,7 +296,7 @@ public class MainActivity extends BaseActivity {
         mStatusView.showLoading();
         mOnlineUsers.clear();
         mRvMainAdapter.notifyDataSetChanged();
-        OnlineUserManager.getInstance().refresh();
+        OnlineUserManager.get().refresh();
         new Handler().postDelayed(() -> {
             if(mOnlineUsers.isEmpty()){
                 mStatusView.showEmpty();

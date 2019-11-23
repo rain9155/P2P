@@ -18,10 +18,9 @@ public class Constant {
     public static final String FILE_PATH_ONLINE_USER = FileUtils.getFilePath(App.getContext(),  "/P2P/onlineUser/");
 
     public static final int MAX_SELECTED_PHOTO = 9;
-    public static final String KEY_CLICK_POSITION = "clickPos";
-    public static final String KEY_MODE = "mode";
     public static final String KEY_MIN_MAX_UPDATE_POS = "rangPos";
-    public static final int REQUEST_UPDATE_SELECT_PHOTOS = 0;
+    public static final String KEY_CHOOSE_PHOTOS_PATH = "paths";
+    public static final String KEY_IS_RAW_PHOTO = "isRawPhoto";
 
     public static final int WAITING_TIME = 3000;
 

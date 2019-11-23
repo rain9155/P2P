@@ -15,7 +15,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -35,8 +34,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.transition.TransitionManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.p2p.adapter.RvChatAdapter;
@@ -57,6 +54,7 @@ import com.example.p2p.callback.ISendMessgeCallback;
 import com.example.p2p.config.Constant;
 import com.example.p2p.core.ConnectManager;
 import com.example.p2p.core.MediaPlayerManager;
+import com.example.p2p.core.MessageManager;
 import com.example.p2p.db.EmojiDao;
 import com.example.p2p.utils.FileUtil;
 import com.example.p2p.utils.ImageUtil;
@@ -73,6 +71,7 @@ import com.example.permission.callback.IPermissionCallback;
 import com.example.permission.callback.IPermissionsCallback;
 import com.example.utils.CommonUtils;
 import com.example.utils.DisplayUtils;
+import com.example.utils.FileProvider7;
 import com.example.utils.FileUtils;
 import com.example.utils.KeyBoardUtils;
 import com.example.utils.ToastUtils;
@@ -100,8 +99,6 @@ public class ChatActivity extends BaseActivity {
     Toolbar toolBar;
     @BindView(R.id.rv_chat)
     RecyclerView rvChat;
-    @BindView(R.id.srl_chat)
-    SwipeRefreshLayout srlChat;
     @BindView(R.id.iv_audio)
     ImageView ivAudio;
     @BindView(R.id.ed_edit)
@@ -143,21 +140,20 @@ public class ChatActivity extends BaseActivity {
 
 
     private final String TAG = this.getClass().getSimpleName();
-    private final static int REQUEST_CODE_GET_IMAGE = 0x000;
-    private final static int REQUEST_CODE_TAKE_IMAGE = 0x001;
-    private final static int REQUEST_CODE_GET_FILE = 0x002;
+    private final static int REQUEST_TAKE_IMAGE = 0x000;
+    private final static int REQUEST_GET_FILE = 0x001;
     private final static int DELAY_TIME = 200;
+
     private boolean isKeyboardShowing;
+    private boolean isRawPhoto;
     private int screenHeight;
     private int mLastPosition = -1;
     private Uri mTakedImageUri;
-    private List<RvEmojiAdapter> mEmojiAdapters;
     private List<Emoji> mEmojiBeans;
     private User mTargetUser;
     private User mUser;
     private RvChatAdapter mRvChatAdapter;
     private List<Mes> mMessageList;
-    private ViewGroup mContentView;
     private LocatingDialog mLocatingDialog;
     private boolean isSendingImage, isSendingFile;
 
@@ -167,8 +163,8 @@ public class ChatActivity extends BaseActivity {
         mTargetUser = (User) getIntent().getSerializableExtra(Constant.EXTRA_TARGET_USER);
         mUser = (User) FileUtils.restoreObject(this, Constant.FILE_NAME_USER);
         //测试
-        mTargetUser = new User("rain", "123.123.123.123", "http://234");
-        mUser = new User("jianyu", "123.123.123.123", "http://234");
+//        mTargetUser = new User("rain", "123.123.123.123", "http://234");
+//        mUser = new User("jianyu", "123.123.123.123", "http://234");
         super.onCreate(savedInstanceState);
     }
 
@@ -179,31 +175,11 @@ public class ChatActivity extends BaseActivity {
     }
 
     @Override
-    public void onBackPressed() {
-        KeyBoardUtils.closeKeyBoard(this, edEdit);
-        if(helperTranslation.isButtomLayoutShown()){
-            helperTranslation.hideBottomLayout();
-        }else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     protected void onDestroy() {
-        ConnectManager.getInstance().release();
+        MessageManager.get().release();
         mMessageList.clear();
         if (mLocatingDialog != null) mLocatingDialog = null;
         super.onDestroy();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (resultCode != Activity.RESULT_OK) return;
-        if (requestCode == REQUEST_CODE_GET_IMAGE) sendImage(data.getData());
-        if (requestCode == REQUEST_CODE_TAKE_IMAGE) sendImage(mTakedImageUri);
-        if (requestCode == REQUEST_CODE_GET_FILE)
-            sendFile(data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH));
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -232,7 +208,6 @@ public class ChatActivity extends BaseActivity {
                 }
         );
         screenHeight = DisplayUtils.getScreenHeight(ChatActivity.this);
-        mContentView = getWindow().getDecorView().findViewById(android.R.id.content);
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             //当前窗口可见区域的大小
             Rect rect = new Rect();
@@ -256,20 +231,20 @@ public class ChatActivity extends BaseActivity {
         }
         //为每个Vp添加Rv，并初始化Rv
         List<View> views = new ArrayList<>();
-        mEmojiAdapters = new ArrayList<>(emojiDeleteCount);
+        List<RvEmojiAdapter> emojiAdapters = new ArrayList<>(emojiDeleteCount);
         for (int i = 0; i < emojiDeleteCount; i++) {
             RecyclerView recyclerView = (RecyclerView) LayoutInflater.from(this).inflate(R.layout.item_chat_emoji_vp, vpEmoji, false);
             recyclerView.setLayoutManager(new GridLayoutManager(this, 7));
             if (i == emojiDeleteCount - 1) {
-                mEmojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, mEmojiBeans.size()), R.layout.item_chat_emoji));
+                emojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, mEmojiBeans.size()), R.layout.item_chat_emoji));
             } else {
-                mEmojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, i * 21 + 21), R.layout.item_chat_emoji));
+                emojiAdapters.add(new RvEmojiAdapter(mEmojiBeans.subList(i * 21, i * 21 + 21), R.layout.item_chat_emoji));
             }
-            recyclerView.setAdapter(mEmojiAdapters.get(i));
+            recyclerView.setAdapter(emojiAdapters.get(i));
             views.add(recyclerView);
             int index = i;
             //为每个Rv添加item监听
-            mEmojiAdapters.get(i).setOnItemClickListener((adapter, view, position) -> {
+            emojiAdapters.get(i).setOnItemClickListener((adapter, view, position) -> {
                 Emoji emojiBean = mEmojiBeans.get(position + index * 21);
                 if (emojiBean.getId() == 0) {
                     edEdit.setText("");
@@ -285,7 +260,7 @@ public class ChatActivity extends BaseActivity {
         vpEmoji.setAdapter(vpEmojiAdapter);
         idvEmoji.setIndicatorCount(views.size());
         //初始化聊天的Rv
-        mMessageList = ConnectManager.getInstance().getMessages(mTargetUser.getIp());
+        mMessageList = MessageManager.get().getTempMessages(mTargetUser.getIp());
         mRvChatAdapter = new RvChatAdapter(mMessageList);
         rvChat.setLayoutManager(new LinearLayoutManager(this));
         rvChat.setAdapter(mRvChatAdapter);
@@ -294,11 +269,6 @@ public class ChatActivity extends BaseActivity {
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void initCallback() {
-        //下拉刷新监听
-        srlChat.setOnRefreshListener(() ->
-                new Handler().postDelayed(() ->
-                        srlChat.setRefreshing(false), 2000)
-        );
         //editText文本变化监听
         edEdit.addTextChangedListener(new TextWatchListener() {
             @Override
@@ -326,7 +296,7 @@ public class ChatActivity extends BaseActivity {
         rvChat.setOnTouchListener((view, event) -> {
             edEdit.clearFocus();
             if (isKeyboardShowing) KeyBoardUtils.closeKeyBoard(ChatActivity.this, edEdit);
-            helperTranslation.hideBottomLayout();
+            if(helperTranslation.isButtomLayoutShown()) helperTranslation.hideBottomLayout();
             return false;
         });
         //底部布局弹出,聊天列表上滑
@@ -337,14 +307,14 @@ public class ChatActivity extends BaseActivity {
             }
         });
         //接收消息回调监听
-        ConnectManager.getInstance().addReceiveMessageCallback(mTargetUser.getIp(), message -> {
+        MessageManager.get().addReceiveMessageCallback(mTargetUser.getIp(), message -> {
             if (message.mesType == MesType.ERROR) {
                 return;
             }
             addMessage(message);
         });
         //发送消息回调监听
-        ConnectManager.getInstance().setSendMessgeCallback(new ISendMessgeCallback() {
+        MessageManager.get().setSendMessageCallback(new ISendMessgeCallback() {
             @Override
             public void onSendSuccess(Mes<?> message) {
                 if (message.mesType == MesType.IMAGE || message.mesType == MesType.FILE || message.mesType == MesType.ERROR) {
@@ -355,7 +325,7 @@ public class ChatActivity extends BaseActivity {
 
             @Override
             public void onSendFail(Mes<?> message) {
-                ToastUtils.showToast(App.getContext(), "发送消息失败");
+                ToastUtils.showToast(App.getContext(), getString(R.string.chat_send_error));
             }
         });
         //录音结束回调
@@ -380,7 +350,7 @@ public class ChatActivity extends BaseActivity {
                 int audioBg = message.itemType == ItemType.SEND_AUDIO ? R.drawable.ic_audio_right_3 : R.drawable.ic_audio_left_3;
                 int audioBgAnim = message.itemType == ItemType.SEND_AUDIO ? R.drawable.anim_item_audio_right : R.drawable.anim_item_audio_left;
                 if (drawable instanceof AnimationDrawable) {
-                    MediaPlayerManager.getInstance().stopPlayAudio();
+                    MediaPlayerManager.get().stopPlayAudio();
                     imageView.setBackgroundResource(audioBg);
                 } else {
                     if (mLastPosition != -1 && position != mLastPosition) {
@@ -395,7 +365,7 @@ public class ChatActivity extends BaseActivity {
                     imageView.setBackgroundResource(audioBgAnim);
                     AnimationDrawable audioAnimDrawable = (AnimationDrawable) imageView.getBackground();
                     audioAnimDrawable.start();
-                    MediaPlayerManager.getInstance().startPlayAudio(audio.audioPath, mp -> imageView.setBackgroundResource(audioBg));
+                    MediaPlayerManager.get().startPlayAudio(audio.audioPath, mp -> imageView.setBackgroundResource(audioBg));
                 }
             }
             if (message.mesType == MesType.IMAGE && !isSendingImage) {
@@ -448,6 +418,31 @@ public class ChatActivity extends BaseActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (resultCode != Activity.RESULT_OK) return;
+        if (requestCode == REQUEST_TAKE_IMAGE) sendImage(mTakedImageUri);
+        if (requestCode == REQUEST_GET_FILE) sendFile(data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH));
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void finish() {
+        KeyBoardUtils.closeKeyBoard(this, edEdit);
+        if(helperTranslation.isButtomLayoutShown()){
+            helperTranslation.hideBottomLayout();
+        }else {
+            super.finish();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        isRawPhoto = intent.getBooleanExtra(Constant.KEY_IS_RAW_PHOTO, isRawPhoto);
+        sendImage(intent.getStringArrayListExtra(Constant.KEY_CHOOSE_PHOTOS_PATH));
+    }
+
     /**
      * 选择文件
      */
@@ -455,7 +450,7 @@ public class ChatActivity extends BaseActivity {
         String regex = ".*\\.(txt|ppt|doc|xls|pdf|apk|zip|rar|pptx|docx|xlsx|mp3|mp4)$";
         new MaterialFilePicker()
                 .withActivity(this)
-                .withRequestCode(REQUEST_CODE_GET_FILE)
+                .withRequestCode(REQUEST_GET_FILE)
                 .withHiddenFiles(false)
                 .withFilter(Pattern.compile(regex))
                 .withTitle(getString(R.string.chat_choose_file))
@@ -475,7 +470,7 @@ public class ChatActivity extends BaseActivity {
                         String imageFileName = System.currentTimeMillis() + ".png";
                         mTakedImageUri = ImageUtil.getImageUri(ChatActivity.this, FileUtil.getImagePath(mTargetUser.getIp(), ItemType.SEND_IMAGE), imageFileName);
                         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, mTakedImageUri);
-                        startActivityForResult(cameraIntent, REQUEST_CODE_TAKE_IMAGE);
+                        startActivityForResult(cameraIntent, REQUEST_TAKE_IMAGE);
                     }
 
                     @Override
@@ -490,8 +485,8 @@ public class ChatActivity extends BaseActivity {
      * 选择照片
      */
     private void chooseImage() {
-        //startActivityForResult(IntentUtils.getChooseImageIntent(), REQUEST_CODE_GET_IMAGE);
-        PhotoActivity.startActivity(this);
+        //startActivity(IntentUtils.getChooseImageIntent(), REQUEST_GET_IMAGES);
+        startActivity(new Intent(this, PhotoActivity.class));
     }
 
     /**
@@ -500,7 +495,7 @@ public class ChatActivity extends BaseActivity {
     private void sendText() {
         String text = edEdit.getText().toString();
         Mes<String> message = new Mes<>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), text);
-        ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message);
+        MessageManager.get().sendMessage(mTargetUser.getIp(), message);
         edEdit.setText("");
     }
 
@@ -510,7 +505,18 @@ public class ChatActivity extends BaseActivity {
     private void sendAudio(String audioPath, int duration) {
         Audio audio = new Audio(duration, audioPath);
         Mes<Audio> message = new Mes<>(ItemType.SEND_AUDIO, MesType.AUDIO, mUser.getIp(), audio);
-        ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message);
+        MessageManager.get().sendMessage(mTargetUser.getIp(), message);
+    }
+
+    /**
+     * 发送多个图片
+     */
+    @SuppressLint("StaticFieldLeak")
+    private void sendImage(List<String> imagePaths) {
+        for(String path : imagePaths){
+            Uri imageUri = FileProvider7.getUriForFile(this, new File(path));
+            sendImage(imageUri);
+        }
     }
 
     /**
@@ -520,10 +526,11 @@ public class ChatActivity extends BaseActivity {
         isSendingImage = true;
         String imagePath = ImageUtil.saveImageByUri(this, imageUri, mTargetUser.getIp());
         Image image = new Image(imagePath);
+        image.isRaw = isRawPhoto;
         Mes<Image> message = new Mes<>(ItemType.SEND_IMAGE, MesType.IMAGE, mUser.getIp(), image);
         addMessage(message);
         final int sendingImagePostion = mMessageList.indexOf(message);
-        ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
+        MessageManager.get().sendMessage(mTargetUser.getIp(), message, progress -> {
             if (progress >= 100) {
                 isSendingImage = false;
             }
@@ -570,7 +577,7 @@ public class ChatActivity extends BaseActivity {
         Mes<Document> message = new Mes<>(ItemType.SEND_FILE, MesType.FILE, mUser.getIp(), file);
         addMessage(message);
         final int sendingFilePosition = mMessageList.indexOf(message);
-        ConnectManager.getInstance().sendMessage(mTargetUser.getIp(), message, progress -> {
+        MessageManager.get().sendMessage(mTargetUser.getIp(), message, progress -> {
             if (progress >= 100) {
                 isSendingFile = false;
             }
@@ -662,15 +669,6 @@ public class ChatActivity extends BaseActivity {
     }
 
 
-    /**
-     * 释放被锁定的内容高度
-     */
-    private void unlockContentHeightDelayed() {
-        ((LinearLayout.LayoutParams) mContentView.getLayoutParams()).weight = 1.0F;
-    }
-
-
-
     @SuppressLint("MissingPermission")
     private void getLocation() {
         Criteria criteria = new Criteria();//配置定位的一些配置信息
@@ -684,7 +682,7 @@ public class ChatActivity extends BaseActivity {
         String bestProvider = locationManager.getBestProvider(criteria, true);//得到最好的位置提供者，如GPS，netWork等
         Log.d(TAG, "provider = " + bestProvider);
         mLocatingDialog.show(getSupportFragmentManager());
-        ConnectManager.getInstance().executeTast(() -> {
+        ConnectManager.execute(() -> {
             Location location = null;//里面存放着定位的信息,经纬度,海拔等
             if (!TextUtils.isEmpty(bestProvider)) {
                 location = locationManager.getLastKnownLocation(bestProvider);
@@ -726,7 +724,7 @@ public class ChatActivity extends BaseActivity {
                     builder.append("位置：").append(country).append(city);
                     if (!TextUtils.isEmpty(citySub)) builder.append(citySub);
                     if (!TextUtils.isEmpty(thoroughfare)) builder.append(thoroughfare);
-                    ConnectManager.getInstance().sendMessage(
+                    MessageManager.get().sendMessage(
                             mTargetUser.getIp(),
                             new Mes<String>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), builder.toString()));
                 } catch (IOException e) {

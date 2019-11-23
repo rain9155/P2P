@@ -2,7 +2,6 @@ package com.example.p2p.core;
 
 import android.media.MediaPlayer;
 
-import com.example.p2p.callback.IMediaPlayCompleteCallback;
 import com.example.p2p.utils.Log;
 
 import java.io.IOException;
@@ -16,12 +15,10 @@ public class MediaPlayerManager {
     private static final String TAG = MediaPlayerManager.class.getSimpleName();
     private static MediaPlayerManager sInstance;
     private MediaPlayer mMediaPlayer;
-    private IMediaPlayCompleteCallback mCallback;
-    private int mLastPosition;
 
     private MediaPlayerManager(){}
 
-    public static MediaPlayerManager getInstance(){
+    public static MediaPlayerManager get(){
         if(sInstance == null){
             synchronized (MediaPlayer.class){
                 MediaPlayerManager mediaPlayerManager;
@@ -96,13 +93,6 @@ public class MediaPlayerManager {
             mMediaPlayer.release();
             mMediaPlayer = null;
         }
-    }
-
-    /**
-     * 设置播放结束回调
-     */
-    public void setOnPlayCompleteCallback(IMediaPlayCompleteCallback callback){
-        this.mCallback = callback;
     }
 
     /**

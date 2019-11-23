@@ -90,7 +90,7 @@
 
 
         <ImageButton
-            android:id="@+id/ib_select_raw"
+            android:id="@+id/ib_is_raw"
             android:layout_width="@dimen/dp_25"
             android:layout_height="@dimen/dp_25"
             android:background="@drawable/select_photo_raw"
@@ -110,7 +110,7 @@
             android:textSize="@dimen/sp_16"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/ib_select_raw"/>
+            app:layout_constraintLeft_toRightOf="@id/ib_is_raw"/>
 
         <ImageButton
             android:id="@+id/ib_is_select"
@@ -119,10 +119,10 @@
             android:background="@drawable/select_item_square"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintRight_toLeftOf="@+id/tv_is_select"/>
+            app:layout_constraintRight_toLeftOf="@+id/tv_pre_view"/>
 
         <TextView
-            android:id="@+id/tv_is_select"
+            android:id="@+id/tv_pre_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/pre_tvIsSelect"

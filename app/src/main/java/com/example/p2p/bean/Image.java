@@ -13,6 +13,7 @@ public class Image {
     public String imagePath;
     public int len;
     public int progress;
+    public boolean isRaw;
 
     public Image(String path) {
         this(path, 0, 0);
