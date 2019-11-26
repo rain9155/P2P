@@ -26,6 +26,7 @@ public class LocatingDialog extends BaseDialogFragment {
         TextView textView = view.findViewById(R.id.tv_loading);
         textView.setText(R.string.dialog_locating);
         view.setPadding(0, 50, 0, 50);
-        return view;    }
+        return view;
+    }
 
 }

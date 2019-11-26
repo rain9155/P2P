@@ -12,6 +12,7 @@ import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -698,44 +699,88 @@ public class ChatActivity extends BaseActivity {
             Log.d(TAG, "location = " + location);
             final Location finalLocation = location;
             runOnUiThread(() -> {
-                if (null == finalLocation) {
-                    mLocatingDialog.dismiss();
-                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
-                    return;
+                if(finalLocation != null){
+                    showLocation(finalLocation);
+                }else if(!TextUtils.isEmpty(bestProvider)){
+                    locationManager.requestSingleUpdate(bestProvider, new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            //当位置发生改变后就会回调该方法，经纬度相关信息存在Location里面
+                            if(mLocatingDialog.isAdded()){
+                                showLocation(location);
+                            }
+                            Log.d(TAG, "onLocationChanged(), location改变, location = " + location);
+                        }
+
+                        @Override
+                        public void onStatusChanged(String provider, int status, Bundle extras) {
+                            //3种状态：
+                            // LocationProvider.OUT_OF_SERVICE = 0(无服务)
+                            //LocationProvider.TEMPORARILY_UNAVAILABLE = 1（provider不可用）
+                            // LocationProvider.AVAILABLE = 2(provider可用)
+                            Log.d(TAG, "onStatusChanged(), provider状态改变, status = " + status);
+                        }
+
+                        @Override
+                        public void onProviderEnabled(String provider) {
+                            //当provider可用时被触发
+                            Log.d(TAG, "onProviderEnabled(), provider可用, provider = " + provider);
+                        }
+
+                        @Override
+                        public void onProviderDisabled(String provider) {
+                            //当provider不可用时被触发
+                            Log.d(TAG, "onProviderDisabled(), provider不可用, provider = " + provider);
+                        }
+                    }, null);
+                }else {
+                    showLocationFail();
                 }
-                Geocoder geocoder = new Geocoder(ChatActivity.this, Locale.getDefault());//地区编码,可以得到具体的地理位置
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(finalLocation.getLatitude(), finalLocation.getLongitude(), 1);
-                    if (CommonUtils.isEmptyList(addresses)) {
-                        mLocatingDialog.dismiss();
-                        ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
-                        return;
-                    }
-                    Address address = addresses.get(0);
-                    String country = address.getCountryName();
-                    String city = address.getLocality();
-                    String citySub = address.getSubLocality();
-                    String thoroughfare = address.getThoroughfare();
-                    Log.d(TAG, "country = " + country
-                            + ", city = " + city
-                            + ", citySub = " + citySub
-                            + ", fare = " + thoroughfare);
-                    StringBuilder builder = new StringBuilder(32);
-                    builder.append("位置：").append(country).append(city);
-                    if (!TextUtils.isEmpty(citySub)) builder.append(citySub);
-                    if (!TextUtils.isEmpty(thoroughfare)) builder.append(thoroughfare);
-                    MessageManager.get().sendMessage(
-                            mTargetUser.getIp(),
-                            new Mes<String>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), builder.toString()));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
-                    Log.e(TAG, "定位失败， e = " + e.getMessage());
-                }
-                mLocatingDialog.dismiss();
             });
         });
     }
+
+    private void showLocation(Location location) {
+        if (null == location) {
+            showLocationFail();
+            return;
+        }
+        Geocoder geocoder = new Geocoder(ChatActivity.this, Locale.getDefault());//地区编码,可以得到具体的地理位置
+        try {
+            List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+            if (CommonUtils.isEmptyList(addresses)) {
+                showLocationFail();
+                return;
+            }
+            Address address = addresses.get(0);
+            String country = address.getCountryName();
+            String city = address.getLocality();
+            String citySub = address.getSubLocality();
+            String thoroughfare = address.getThoroughfare();
+            Log.d(TAG, "country = " + country
+                    + ", city = " + city
+                    + ", citySub = " + citySub
+                    + ", fare = " + thoroughfare);
+            StringBuilder builder = new StringBuilder(32);
+            builder.append("位置：").append(country).append(city);
+            if (!TextUtils.isEmpty(citySub)) builder.append(citySub);
+            if (!TextUtils.isEmpty(thoroughfare)) builder.append(thoroughfare);
+            MessageManager.get().sendMessage(
+                    mTargetUser.getIp(),
+                    new Mes<String>(ItemType.SEND_TEXT, MesType.TEXT, mUser.getIp(), builder.toString()));
+        } catch (IOException e) {
+            e.printStackTrace();
+            ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
+            Log.e(TAG, "定位失败， e = " + e.getMessage());
+        }
+        mLocatingDialog.dismiss();
+    }
+
+    private void showLocationFail() {
+        mLocatingDialog.dismiss();
+        ToastUtils.showToast(App.getContext(), getString(R.string.toast_location_fail));
+    }
+
 
     public static void startActiivty(Activity context, User user, int code) {
         Intent intent = new Intent(context, ChatActivity.class);
