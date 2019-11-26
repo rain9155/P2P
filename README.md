@@ -24,8 +24,6 @@
 
 ![p2p3](screenshots/p2p3.gif)
 
-![p2p3](screenshots/p2p3.gif)
-
 ## Screenshots
 
 ![](screenshots/p2p1.png)
