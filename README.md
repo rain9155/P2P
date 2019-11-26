@@ -64,8 +64,6 @@
 
 [BaseAdapter](https://github.com/rain9155/BaseAdapter) - 减少Adapter重复代码的编写，支持多种类型的itemType、支持添加自动加载更多和headerView.
 
-[Utils](https://github.com/rain9155/Utils) - 封装了一些实用的工具方法的库
-
 **其他优秀的开源库**：
 
  [MaterialFilePicker](https://github.com/nbsp-team/MaterialFilePicker) - 基于MD风格的文件选择器.
