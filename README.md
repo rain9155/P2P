@@ -4,7 +4,7 @@
 
 关于该应用的设计思路可以查看这篇文章[基于P2P的局域网即时通信应用](https://juejin.im/post/5d2aa766f265da1bc752687b)，
 
-这是一个仿微信的聊天界面，基于P2P的思想的即时通讯系统，里面用到了java多线程并发编程、TCP连接、Socket编程、UDP广播机制等知识点，发送消息的聊天气泡是自己使用[SVG](https://blog.csdn.net/Rain_9155/article/details/89262144)画的，这样可以满足图片的伸缩性，只要你的手机连上**WIFI**，就可以和你在同一个局域网下的用户聊天。
+这是一个仿微信，基于P2P思想的即时通讯系统，里面用到了java多线程并发编程、TCP连接、Socket编程、UDP广播机制等知识点，发送消息的聊天气泡是自己使用[SVG](https://blog.csdn.net/Rain_9155/article/details/89262144)画的，这样可以满足图片的伸缩性，只要你的手机连上**WIFI**，就可以和你在同一个局域网下的用户聊天。
 
 ## Features
 
@@ -33,6 +33,14 @@
 ![](screenshots/p2p2.png)
 
 ![](screenshots/p2p3.png)
+
+![](screenshots/p2p4.png)
+
+![](screenshots/p2p5.png)
+
+## DownLoad
+
+[app-release](https://fir.im/97ks)
 
 ## Problem
 
