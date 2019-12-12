@@ -31,9 +31,6 @@
 
 ![](screenshots/p2p5.png)
 
-## DownLoad
-
-[app-release](https://fir.im/97ks)
 
 ## Todo
 
