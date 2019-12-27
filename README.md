@@ -35,7 +35,7 @@
 
 ## Download
 
-[](screenshots/QR.png)
+![](screenshots/QR.png)
 
 ## Todo
 
