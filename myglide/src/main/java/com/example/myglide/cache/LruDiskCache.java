@@ -89,7 +89,7 @@ public class LruDiskCache implements DiskCache{
     public InputStream get(Key key) {
         try {
             DiskLruCache.Snapshot snapshot = mDiskLruCache.get(getSafeKey(key));
-            if(snapshot != null){
+                if(snapshot != null){
                 return snapshot.getInputStream(DISK_CACHE_INDEX);
             }
         } catch (IOException e) {
