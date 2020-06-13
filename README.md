@@ -33,6 +33,9 @@
 
 ![](screenshots/p2p5.png)
 
+## Download
+
+![](screenshots/QR.png)
 
 ## Todo
 
