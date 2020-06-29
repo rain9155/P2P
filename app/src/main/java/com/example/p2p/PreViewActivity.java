@@ -68,7 +68,7 @@ public class PreViewActivity extends BaseActivity {
     private static final String KEY_CLICK_POSITION = "clickPos";
     private static final String KEY_MODE = "mode";
     private static List<Photo> mTempPreViewPhotos, mTempSelectPhotos;
-    private static List<Photo> mPreViewPhotos, mSelectPhotos;//依次为预览照片列表，底部的已选择照片列表
+    private List<Photo> mPreViewPhotos, mSelectPhotos;//依次为预览照片列表，底部的已选择照片列表
 
     private RvBottomPhotoAdapter mBottomAdapter;
     private RvPreViewAdapter mPreViewAdapter;
