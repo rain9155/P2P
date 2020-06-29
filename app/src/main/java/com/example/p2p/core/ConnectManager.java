@@ -132,7 +132,7 @@ public class ConnectManager {
                 if(callback != null){
                     mHandler.post(() -> callback.onConnectSuccess(targetIp));
                 }
-                MessageManager.ReceiveMessageThread  receiveThread = new MessageManager.ReceiveMessageThread(socket);
+                MessageManager.ReceiveMessageThread receiveThread = new MessageManager.ReceiveMessageThread(socket);
                 mClients.put(targetIp, socket);
                 execute(receiveThread);
                 heartBeat(targetIp);

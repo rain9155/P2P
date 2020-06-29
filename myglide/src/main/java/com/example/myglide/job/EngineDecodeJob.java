@@ -331,9 +331,14 @@ public class EngineDecodeJob implements Runnable{
 
 
     /**
-     * Bitmap的像素大小(占用内存大小)计算公式：((width * scale)/ inSampleSize) * ((height * scale)/ inSampleSize) * 每个像素点所占用的大小（如ARGB_4444，一个像素点占用的16byte，即2b），其中scale = inTargetDensity / inDensity
-     * 关于inSampleSize、inTargetDensity和inDensity是什么意思? 参考：https://www.cnblogs.com/nimorl/p/8065071.html和https://blog.csdn.net/haozipi/article/details/47185917
-     * calculateScaling方法用来计算图片的inSampleSize和图片的缩放比例scale
+     * Bitmap的像素大小(占用内存大小)计算公式：((width * scale)/ inSampleSize) * ((height * scale)/ inSampleSize) * inPreferredConfig，其中scale = inTargetDensity / inDensity
+     * inSampleSize：图片的像素点采用率，如果inSampleSize = 2，则像素点大小为原来的1/4
+     * inTargetDensity：设备的像素密度，等于DisplayMetrics.densityDpi
+     * inDensity: 图片的像素密度，等于图片对应drawable目录下的dpi大小
+     * inPreferredConfig：图片的像素点大小，如ARGB_4444，一个像素点占用的16byte，即2b
+     * 更多参考：https://www.cnblogs.com/nimorl/p/8065071.html 和 https://blog.csdn.net/haozipi/article/details/47185917
+     *
+     * calculateScaling方法用来计算图片的inSampleSize和图片的缩放比例scale和图片的像素点大小inPreferredConfig
      * 这样在加载图片进入内存时，可以减少图片的大小，防止出现OOM
      * @param options BitmapFactory.Options
      * @param reWidth 希望图片的宽
@@ -383,6 +388,9 @@ public class EngineDecodeJob implements Runnable{
         }else {
             options.inDensity = options.inTargetDensity = 0;
         }
+
+        /* 设置Bitmap的像素点大小 */
+        options.inPreferredConfig = Bitmap.Config.ARGB_4444;
     }
 
     /**
