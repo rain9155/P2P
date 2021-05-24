@@ -1,25 +1,15 @@
 package com.example.p2p.widget.customView;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.LinearInterpolator;
-
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.transition.ChangeBounds;
 import androidx.transition.ChangeTransform;
-import androidx.transition.Scene;
-import androidx.transition.Transition;
 import androidx.transition.TransitionManager;
 import androidx.transition.TransitionSet;
 
-import com.example.p2p.R;
-import com.example.utils.listener.AnimatorListener;
 
 /**
  * 发送消息按钮

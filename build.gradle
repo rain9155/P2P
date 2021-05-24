@@ -25,9 +25,6 @@ allprojects {
             url 'https://jitpack.io'
         }
         maven {
-            url  "http://dl.bintray.com/lukaville/maven"
-        }
-        maven {
             url "https://raw.github.com/bmob/bmob-android-sdk/master"
         }
     }
@@ -38,5 +35,5 @@ task clean(type: Delete) {
 }
 
 ext{
-    isMyGlideApplication = false //false，myglide作为lib组件存在，true，myglide作为Application存在
+    isMyGlideApplication = true //false，myglide作为lib组件存在，true，myglide作为Application存在
 }

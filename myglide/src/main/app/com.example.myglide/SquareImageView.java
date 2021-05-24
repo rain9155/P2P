@@ -1,5 +1,4 @@
-package com.example.myglide.view;
-
+package com.example.myglide;
 
 import android.content.Context;
 import android.util.AttributeSet;

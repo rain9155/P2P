@@ -30,7 +30,9 @@ android {
     sourceSets{
         main{
             if(rootProject.ext.isMyGlideApplication){
-                manifest.srcFile 'src/main/module/AndroidManifest.xml'
+                manifest.srcFile 'src/main/app/AndroidManifest.xml'
+                java.srcDirs += 'src/main/app'
+                res.srcDirs += 'src/main/appRes'
             }else{
                 manifest.srcFile 'src/main/AndroidManifest.xml'
             }
@@ -42,10 +44,11 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'com.jakewharton:disklrucache:2.0.2'
     implementation 'com.jianyu:utils:1.0.5'
-    implementation "androidx.core:core-ktx:+"
+    implementation "androidx.core:core-ktx:1.5.0"
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 

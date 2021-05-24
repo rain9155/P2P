@@ -21,7 +21,7 @@ import kotlin.math.sqrt
  * 使用GestureDetector监听双击、单击、fling手势
  * Create by 陈健宇 at 2020/5/31
  */
-class ZoomImageView @JvmOverloads constructor(context: Context?, attrs: AttributeSet? = null, defAttrs: Int = 0) : AppCompatImageView(context, attrs, defAttrs),
+class ZoomImageView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defAttrs: Int = 0) : AppCompatImageView(context, attrs, defAttrs),
         View.OnLayoutChangeListener,
         View.OnTouchListener {
 

@@ -1,18 +1,10 @@
 package com.example.p2p.widget.helper;
 
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.View;
-
 import androidx.constraintlayout.widget.ConstraintHelper;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
-import androidx.interpolator.view.animation.LinearOutSlowInInterpolator;
-import androidx.transition.ChangeBounds;
-import androidx.transition.Transition;
 import androidx.transition.TransitionManager;
 
 import com.example.p2p.R;
