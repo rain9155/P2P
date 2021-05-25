@@ -34,8 +34,7 @@
 ![](screenshots/p2p5.png)
 
 ## Download
-
-![](screenshots/QR.png)
+[点击下载apk](https://github.com/rain9155/P2P/raw/master/app/release/app-release.apk)
 
 ## Todo
 
