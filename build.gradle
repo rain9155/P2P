@@ -35,5 +35,5 @@ task clean(type: Delete) {
 }
 
 ext{
-    isMyGlideApplication = true //false，myglide作为lib组件存在，true，myglide作为Application存在
+    isMyGlideApplication = false //false，myglide作为lib组件存在，true，myglide作为Application存在
 }

@@ -186,32 +186,6 @@ public class EngineDecodeJob implements Runnable{
         return bitmap;
     }
 
-
-    /**
-     * 把图片流先缓存到硬盘，然后读取硬盘缓存返回
-     * 如果没有开启硬盘缓存，直接解码压缩返回
-     */
-    private Bitmap cacheData(InputStream inputStream) throws IOException {
-        if(!isSkipDisk && mDiskCache != null){
-            mDiskCache.put(mKey, inputStream);
-            return loadFromDiskCache(mKey);
-        }
-        if(isCancel){
-            return null;
-        }
-        if(inputStream instanceof FileInputStream){
-            return decodeBitmapFromFileInputStream(
-                    (FileInputStream) inputStream,
-                    mWidth,
-                    mHeight);
-        }else {
-            return decodeBitmapFromInputStream(
-                    inputStream,
-                    mWidth,
-                    mHeight);
-        }
-    }
-
     /**
      * 从硬盘加载
      */
@@ -292,18 +266,46 @@ public class EngineDecodeJob implements Runnable{
         return statusCode / 100 == 3;
     }
 
+    /**
+     * 把图片流先缓存到硬盘，然后读取硬盘缓存返回
+     * 如果没有开启硬盘缓存，直接解码压缩返回
+     */
+    private Bitmap cacheData(InputStream inputStream) throws IOException {
+        if(!isSkipDisk && mDiskCache != null){
+            mDiskCache.put(mKey, inputStream);
+            return loadFromDiskCache(mKey);
+        }
+        if(isCancel){
+            return null;
+        }
+        if(inputStream instanceof FileInputStream){
+            return decodeBitmapFromFileInputStream(
+                    (FileInputStream) inputStream,
+                    mWidth,
+                    mHeight);
+        }else {
+            return decodeBitmapFromInputStream(
+                    inputStream,
+                    mWidth,
+                    mHeight);
+        }
+    }
 
     /**
      * 通过流加载图片
      * @param inputStream 图片流
      */
-    public  Bitmap decodeBitmapFromInputStream(InputStream inputStream, int reWidth, int reHeight){
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeStream(inputStream, null, options);
-        calculateScaling(options, reWidth, reHeight);
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeStream(inputStream, null, options);
+    private Bitmap decodeBitmapFromInputStream(InputStream inputStream, int reWidth, int reHeight){
+        try {
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(inputStream, null, options);
+            calculateScaling(options, reWidth, reHeight);
+            options.inJustDecodeBounds = false;
+            return BitmapFactory.decodeStream(inputStream, null, options);
+        }finally {
+            FileUtil.close(inputStream);
+        }
     }
 
 
@@ -312,15 +314,19 @@ public class EngineDecodeJob implements Runnable{
      * @param fileInputStream 文件输入流
      * @throws IOException
      */
-    public Bitmap decodeBitmapFromFileInputStream(FileInputStream fileInputStream, int reWidth, int reHeight) throws IOException {
-        return decodeBitmapFromFileDescriptor(fileInputStream.getFD(), reWidth, reHeight);
+    private Bitmap decodeBitmapFromFileInputStream(FileInputStream fileInputStream, int reWidth, int reHeight) throws IOException {
+        try{
+            return decodeBitmapFromFileDescriptor(fileInputStream.getFD(), reWidth, reHeight);
+        }finally {
+            FileUtil.close(fileInputStream);
+        }
     }
 
     /**
      * 通过文件描述符加载图片
      * @param fileDescriptor 文件描述符
      */
-    public Bitmap decodeBitmapFromFileDescriptor(FileDescriptor fileDescriptor, int reWidth, int reHeight){
+    private Bitmap decodeBitmapFromFileDescriptor(FileDescriptor fileDescriptor, int reWidth, int reHeight){
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);

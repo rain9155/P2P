@@ -22,7 +22,7 @@ import com.example.myglide.utils.Log;
 public class Request implements ResourceCallback {
 
     private static final String TAG = Request.class.getSimpleName();
-    private static final int TAG_KEY = R.id.image_view;
+    private int mTagKey;
     private int mOvrrideWidth;
     private int mOvrrideHeight;
     private int mWidth;
@@ -116,13 +116,11 @@ public class Request implements ResourceCallback {
         return mImageView.getHeight() - mImageView.getPaddingTop() - mImageView.getPaddingBottom();
     }
 
-
-
     @Override
     public void onResourceReady(Bitmap bitmap) {
         mStatus = Status.COMPLETE;
-        String uri = (String) mImageView.getTag(TAG_KEY);
-        if(uri.equals(mModel)){
+        String uri = (String) mImageView.getTag(mTagKey);
+        if(uri != null && uri.equals(mModel)){
             mImageView.setImageBitmap(bitmap);
         }
     }
@@ -142,7 +140,8 @@ public class Request implements ResourceCallback {
     }
 
     private void onSizeReady() {
-        mImageView.setTag(TAG_KEY, mModel);
+        mTagKey = mImageView.getId();
+        mImageView.setTag(mTagKey, mModel);
         mEngineDecodeJob = mEngine.load(
                 mModel,
                 mWidth,
